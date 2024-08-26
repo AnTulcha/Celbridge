@@ -1,4 +1,5 @@
 ﻿using Celbridge.Resources;
+using Microsoft.Extensions.FileProviders;
 using Newtonsoft.Json.Linq;
 
 namespace Celbridge.Projects.Services;
@@ -33,40 +34,34 @@ public class ProjectService : IProjectService
 
     public async Task<Result> CreateProjectAsync(NewProjectConfig config)
     {
-        // Todo: Check that the config is valid
-
         try
         {
-            // Todo: Create the data files in a temp directory and moved them into place if all operations succeed
+            var fileProvider = new PhysicalFileProvider(config.Folder);
+            var projectFolder = config.ProjectFolder;
 
-            if (Directory.Exists(config.ProjectFolder))
+            // Check if the project folder already exists using the file provider
+            if (fileProvider.GetDirectoryContents(config.ProjectName).Exists)
             {
-                return Result<string>.Fail($"Project folder already exists: {config.ProjectFolder}");
+                return Result<string>.Fail($"Project folder already exists: {projectFolder}");
             }
 
-            Directory.CreateDirectory(config.ProjectFolder);
+            // Create the project directory
+            Directory.CreateDirectory(projectFolder);
 
-            //
             // Write the .celbridge Json file in the project folder
-            //
-
             var projectJson = $$"""
                 {
-                    "{{ProjectDataFileKey}}": "{{DefaultProjectDataFile}}",
+                    "{{ProjectDataFileKey}}": "{{DefaultProjectDataFile}}"
                 }
                 """;
-
             await File.WriteAllTextAsync(config.ProjectFilePath, projectJson);
 
-            //
             // Create a database file inside a folder named after the project
-            //
-
-            var databasePath = Path.Combine(config.ProjectFolder, DefaultProjectDataFile);
+            var databasePath = Path.Combine(projectFolder, DefaultProjectDataFile);
             string dataFolderPath = Path.GetDirectoryName(databasePath)!;
             Directory.CreateDirectory(dataFolderPath);
 
-            var logFolderPath = Path.Combine(config.ProjectFolder, DefaultLogFolder);
+            var logFolderPath = Path.Combine(projectFolder, DefaultLogFolder);
             Directory.CreateDirectory(logFolderPath);
 
             var createResult = await Project.CreateProjectAsync(config.ProjectFilePath, databasePath, logFolderPath);
@@ -87,15 +82,25 @@ public class ProjectService : IProjectService
     {
         try
         {
-            var projectJsonData = File.ReadAllText(projectPath);
+            var projectFolder = Path.GetDirectoryName(projectPath)!;
+            var fileProvider = new PhysicalFileProvider(projectFolder);
+
+            var projectJsonFileInfo = fileProvider.GetFileInfo(Path.GetFileName(projectPath));
+            if (!projectJsonFileInfo.Exists)
+            {
+                return Result.Fail($"Project file does not exist: {projectPath}");
+            }
+
+            using var stream = projectJsonFileInfo.CreateReadStream();
+            using var reader = new StreamReader(stream);
+            var projectJsonData = reader.ReadToEnd();
+
             var jsonObject = JObject.Parse(projectJsonData);
             Guard.IsNotNull(jsonObject);
 
-            var projectFolderPath = Path.GetDirectoryName(projectPath)!; 
-
-            string projectDataPathRelative = jsonObject["projectDataFile"]!.ToString();
-            string projectDataPath = Path.GetFullPath(Path.Combine(projectFolderPath, projectDataPathRelative));
-            string logFolderPath = Path.GetFullPath(Path.Combine(projectFolderPath, DefaultLogFolder));
+            string projectDataPathRelative = jsonObject[ProjectDataFileKey]!.ToString();
+            string projectDataPath = Path.GetFullPath(Path.Combine(projectFolder, projectDataPathRelative));
+            string logFolderPath = Path.GetFullPath(Path.Combine(projectFolder, DefaultLogFolder));
 
             var loadResult = Project.LoadProject(projectPath, projectDataPath, logFolderPath);
             if (loadResult.IsFailure)
@@ -103,7 +108,6 @@ public class ProjectService : IProjectService
                 return Result.Fail($"Failed to load project database: {projectDataPath}");
             }
 
-            // Both data files have successfully loaded, so we can now populate the member variables
             LoadedProject = loadResult.Value;
 
             return Result.Ok();
@@ -118,7 +122,6 @@ public class ProjectService : IProjectService
     {
         if (LoadedProject is null)
         {
-            // Unloading a project that is not loaded is a no-op
             return Result.Ok();
         }
 
