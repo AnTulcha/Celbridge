@@ -128,6 +128,60 @@
       "Description": "Generates an image using dal-e-3 based on a prompt",
       "Id": "07767ac6-8b1a-4d47-ab31-2fb5d183e043",
       "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Start",
+      "Input": [],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "speech"
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "5bf3a72e-0758-449e-ac43-1d3eab8bf61d",
+              "CelScriptName": "Project",
+              "CelName": "MakeASpeech",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.Project+MakeASpeech, CelSignatures.dll",
+                "topic": {
+                  "Expression": "Snails"
+                },
+                "ReturnType": "String"
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "Print",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Print, Celbridge",
+            "Message": {
+              "Expression": "{speech}"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "5bf3a72e-0758-449e-ac43-1d3eab8bf61d"
+      ],
+      "X": 210,
+      "Y": 62,
+      "Name": "Start",
+      "Description": "",
+      "Id": "800ed79e-0e37-48a3-8a20-a247df74603d",
+      "Children": []
     }
   ]
 }

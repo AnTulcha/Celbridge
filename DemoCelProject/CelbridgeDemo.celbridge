@@ -86,6 +86,15 @@
           "Description": "",
           "Id": "85076efe-49bd-41cd-961d-bb8a39653107",
           "Children": []
+        },
+        {
+          "$type": "Celbridge.Models.TextFileResource, Celbridge",
+          "Permissions": "",
+          "SomePath": "",
+          "Name": "Readme.txt",
+          "Description": "",
+          "Id": "bcbaa58d-ae33-4b0b-8c5e-0b7f01b4cc4d",
+          "Children": []
         }
       ]
     }

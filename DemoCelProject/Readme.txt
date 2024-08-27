@@ -1,0 +1,1 @@
+1. Open Settings2. Change to Dark Mode and restart the app3. Set the Open AI API key & Google API key in settings. See "Demo Credentials" topic in Obsidian.4. Open Slideshow.html in Celbridge5. Sign into Google6. Presenter notes are here:https://docs.google.com/document/d/1k1L-VwbKkGYIpBbgsTnIrpXv8Ez_7DG5AQ6VZUOE8q8/edit
