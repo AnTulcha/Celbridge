@@ -1,0 +1,93 @@
+{
+  "Name": "RGPresentation",
+  "Description": "",
+  "Id": "4eebdd4d-e561-460b-8879-3070309ddd8f",
+  "_name": "RGPresentation",
+  "_description": "",
+  "ResourceRegistry": {
+    "Root": {
+      "Name": "Root",
+      "Description": "",
+      "Id": "00000000-0000-0000-0000-000000000000",
+      "Children": [
+        {
+          "$type": "Celbridge.Models.FolderResource, Celbridge",
+          "Name": "DungeonsAndDatasheets",
+          "Description": "",
+          "Id": "a831bb13-57e3-45f8-8802-aa0c5bf94b2d",
+          "Children": [
+            {
+              "$type": "Celbridge.Models.HTMLResource, Celbridge",
+              "StartURL": "https://docs.google.com/spreadsheets/d/1TL6JRiiS0nMc8q4S1Mg3gplScXhAkmZvRuzR9iqk1tw/edit#gid=0",
+              "Name": "Datasheet.html",
+              "Description": "Character data Google Sheet",
+              "Id": "879d608b-6b69-4a7e-b929-1c28a2c095fc",
+              "Children": []
+            },
+            {
+              "$type": "Celbridge.Models.CelScriptResource, Celbridge",
+              "Name": "MakeCharacterSheets.cel",
+              "Description": "",
+              "Id": "5ada750c-7cc8-4f48-b747-2a5436653d02",
+              "Children": []
+            }
+          ]
+        },
+        {
+          "$type": "Celbridge.Models.FolderResource, Celbridge",
+          "Name": "Utility",
+          "Description": "",
+          "Id": "beb0f9bb-8a70-4ea6-be2a-9687c6894503",
+          "Children": [
+            {
+              "$type": "Celbridge.Models.CelScriptResource, Celbridge",
+              "Name": "PythonUtils.cel",
+              "Description": "",
+              "Id": "625a16ed-a693-4ad1-9124-ae4273f0c414",
+              "Children": []
+            }
+          ]
+        },
+        {
+          "$type": "Celbridge.Models.FolderResource, Celbridge",
+          "Name": "Presentation",
+          "Description": "",
+          "Id": "9775a640-5cdb-41fd-9970-d6644db42fdf",
+          "Children": [
+            {
+              "$type": "Celbridge.Models.HTMLResource, Celbridge",
+              "StartURL": "https://docs.google.com/presentation/d/16UwRFnOjDVv38CwMWhp4GvwRf_eGvuq1i03DjjURNMo/edit#slide=id.p",
+              "Name": "Slideshow.html",
+              "Description": "",
+              "Id": "383d7d72-95a9-45b1-96b0-bca197e9e4ab",
+              "Children": []
+            }
+          ]
+        },
+        {
+          "$type": "Celbridge.Models.FolderResource, Celbridge",
+          "Name": "OMT",
+          "Description": "",
+          "Id": "8896882e-23b3-4d12-9242-82983c01a277",
+          "Children": [
+            {
+              "$type": "Celbridge.Models.HTMLResource, Celbridge",
+              "StartURL": "https://dosdeck.com/game/doom",
+              "Name": "A.html",
+              "Description": "",
+              "Id": "4c0569ff-5806-488b-abf4-d8ad9159338d",
+              "Children": []
+            }
+          ]
+        },
+        {
+          "$type": "Celbridge.Models.CelScriptResource, Celbridge",
+          "Name": "Project.cel",
+          "Description": "",
+          "Id": "85076efe-49bd-41cd-961d-bb8a39653107",
+          "Children": []
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "Cels": [
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "topic"
+          }
+        }
+      ],
+      "Output": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": ""
+          }
+        }
+      ],
+      "Instructions": [
+        {
+          "Keyword": "StartChat",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+StartChat, Celbridge",
+            "Context": {
+              "Expression": "You are the kings speech composer. Compose a short emotional speech in 20 words. Do not use quotation marks in the response."
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "speech"
+          }
+        },
+        {
+          "Keyword": "Ask",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+Ask, Celbridge",
+            "Question": {
+              "Expression": "Write a speech about: {topic}"
+            }
+          }
+        },
+        {
+          "Keyword": "EndChat",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+EndChat, Celbridge"
+          }
+        },
+        {
+          "Keyword": "Return",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Return, Celbridge",
+            "Result": {
+              "Expression": "speech"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [],
+      "X": 379,
+      "Y": 119,
+      "Name": "MakeASpeech",
+      "Description": "Composes a speech on a topic using ChatGPT",
+      "Id": "5bf3a72e-0758-449e-ac43-1d3eab8bf61d",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "prompt"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "ebb36706-b81c-4e11-aeb3-d059812b10de",
+              "CelScriptName": "PythonUtils",
+              "CelName": "GenerateImage",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.PythonUtils+GenerateImage, CelSignatures.dll",
+                "prompt": {
+                  "Expression": "{prompt}"
+                },
+                "imageResource": {
+                  "Expression": "@Example.png"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "ebb36706-b81c-4e11-aeb3-d059812b10de"
+      ],
+      "X": 197,
+      "Y": 236,
+      "Name": "MakeAPicture",
+      "Description": "Generates an image using dal-e-3 based on a prompt",
+      "Id": "07767ac6-8b1a-4d47-ab31-2fb5d183e043",
+      "Children": []
+    }
+  ]
+}

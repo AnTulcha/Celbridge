@@ -1,0 +1,928 @@
+{
+  "Cels": [
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "name"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "description"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "ebb36706-b81c-4e11-aeb3-d059812b10de",
+              "CelScriptName": "PythonUtils",
+              "CelName": "GenerateImage",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.PythonUtils+GenerateImage, CelSignatures.dll",
+                "prompt": {
+                  "Expression": "{description}"
+                },
+                "imageResource": {
+                  "Expression": "@Characters/{name}.png"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "ebb36706-b81c-4e11-aeb3-d059812b10de"
+      ],
+      "X": 464,
+      "Y": 290,
+      "Name": "CreateCharacterImage",
+      "Description": "Generates an image for \ra character using AI magic",
+      "Id": "5d7bbb10-c6b9-4bc2-a62d-7394cfe10f33",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "sheetName"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "ReadSheet",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+ReadSheet, Celbridge",
+            "SheetName": {
+              "Expression": "{sheetName}"
+            }
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "numRows"
+          }
+        },
+        {
+          "Keyword": "GetNumRows",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetNumRows, Celbridge"
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": "1"
+            },
+            "Name": "rowIndex"
+          }
+        },
+        {
+          "Keyword": "While",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+While, Celbridge",
+            "Condition": {
+              "Expression": "rowIndex < numRows"
+            }
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "5e35aed1-2dc4-413e-9c1c-72c67891c1a0",
+              "CelScriptName": "",
+              "CelName": "AddCharacterSlide",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+AddCharacterSlide, CelSignatures.dll",
+                "rowIndex": {
+                  "Expression": "rowIndex"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "Set",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Set, Celbridge",
+            "Name": "rowIndex",
+            "Expression": {
+              "Expression": "rowIndex + 1"
+            }
+          }
+        },
+        {
+          "Keyword": "End",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+End, Celbridge"
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "e4ea7f8c-0fb8-4d6a-b218-bdeeffa66012",
+              "CelScriptName": "",
+              "CelName": "MakeSlideshow",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+MakeSlideshow, CelSignatures.dll",
+                "ReturnType": ""
+              }
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "5e35aed1-2dc4-413e-9c1c-72c67891c1a0",
+        "e4ea7f8c-0fb8-4d6a-b218-bdeeffa66012"
+      ],
+      "X": 147,
+      "Y": 36,
+      "Name": "CreateCharacterSlideshow",
+      "Description": "Makes a basic RPG character \rsheet for all characters defined \rin a Google Sheet",
+      "Id": "e780d188-77ad-499f-8a84-46564daf4ef9",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "prompt"
+          }
+        }
+      ],
+      "Output": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": ""
+          }
+        }
+      ],
+      "Instructions": [
+        {
+          "Keyword": "StartChat",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+StartChat, Celbridge",
+            "Context": {
+              "Expression": "You are a whimsical dungeon master adept at creating detailed back stories for characters. Limit your response to 30 carefully chosen words. Provide a back story based on my short description."
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "story"
+          }
+        },
+        {
+          "Keyword": "Ask",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+Ask, Celbridge",
+            "Question": {
+              "Expression": "{prompt}"
+            }
+          }
+        },
+        {
+          "Keyword": "Return",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Return, Celbridge",
+            "Result": {
+              "Expression": "story"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [],
+      "X": 462,
+      "Y": 86,
+      "Name": "MakeCharacterStory",
+      "Description": "Generate a back story for a \rcharacter using AI magic",
+      "Id": "9f08b8a3-35bb-4b8f-b497-5dc37a08bd2c",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "rowIndex"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "name"
+          }
+        },
+        {
+          "Keyword": "GetString",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetString, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "0"
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "description"
+          }
+        },
+        {
+          "Keyword": "GetString",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetString, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "1"
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "race"
+          }
+        },
+        {
+          "Keyword": "GetString",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetString, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "2"
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "klass"
+          }
+        },
+        {
+          "Keyword": "GetString",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetString, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "3"
+            }
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "con"
+          }
+        },
+        {
+          "Keyword": "GetNumber",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetNumber, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "4"
+            }
+          }
+        },
+        {
+          "Keyword": "Check",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Check, Celbridge",
+            "Expression": {
+              "Expression": "con >=1 && con <=20"
+            },
+            "ErrorMessage": {
+              "Expression": "{name}'s CON must be between 1 and 20"
+            }
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "dex"
+          }
+        },
+        {
+          "Keyword": "GetNumber",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetNumber, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "5"
+            }
+          }
+        },
+        {
+          "Keyword": "Check",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Check, Celbridge",
+            "Expression": {
+              "Expression": "dex >=1 && dex <=20"
+            },
+            "ErrorMessage": {
+              "Expression": "{name}'s DEX must be between 1 and 20"
+            }
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "wis"
+          }
+        },
+        {
+          "Keyword": "GetNumber",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.SheetMixin+GetNumber, Celbridge",
+            "RowIndex": {
+              "Expression": "rowIndex"
+            },
+            "ColumnIndex": {
+              "Expression": "6"
+            }
+          }
+        },
+        {
+          "Keyword": "Check",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Check, Celbridge",
+            "Expression": {
+              "Expression": "wis >=1 && wis <=20"
+            },
+            "ErrorMessage": {
+              "Expression": "{name}'s WIS must be between 1 and 20"
+            }
+          }
+        },
+        {
+          "Keyword": "Note",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Note, Celbridge",
+            "Comment": {
+              "Expression": "Something wicked this way comes!"
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "backStory"
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "9f08b8a3-35bb-4b8f-b497-5dc37a08bd2c",
+              "CelScriptName": "",
+              "CelName": "MakeCharacterStory",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+MakeCharacterStory, CelSignatures.dll",
+                "prompt": {
+                  "Expression": "My name is {name}. I am a {race} {klass}. {description}"
+                },
+                "ReturnType": "String"
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": "{name}"
+            },
+            "Name": "nameTrimmed"
+          }
+        },
+        {
+          "Keyword": "Set",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Set, Celbridge",
+            "Name": "nameTrimmed",
+            "Expression": {
+              "Expression": "name.Replace(\" \", \"\").Trim()"
+            }
+          }
+        },
+        {
+          "Keyword": "Speak",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.ChatMixin+Speak, Celbridge",
+            "Text": {
+              "Expression": "Making slide for {name}"
+            }
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "5d7bbb10-c6b9-4bc2-a62d-7394cfe10f33",
+              "CelScriptName": "MakeCharacterSheets",
+              "CelName": "CreateCharacterImage",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+CreateCharacterImage, CelSignatures.dll",
+                "name": {
+                  "Expression": "{nameTrimmed}"
+                },
+                "description": {
+                  "Expression": "{description}"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "7c03056e-dcf8-4d2b-8dce-a2b82397b184",
+              "CelScriptName": "",
+              "CelName": "AddSlide",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+AddSlide, CelSignatures.dll",
+                "name": {
+                  "Expression": "{name}"
+                },
+                "backStory": {
+                  "Expression": "{backStory}"
+                },
+                "imageName": {
+                  "Expression": "{nameTrimmed}"
+                },
+                "con": {
+                  "Expression": "con"
+                },
+                "dex": {
+                  "Expression": "dex"
+                },
+                "wis": {
+                  "Expression": "wis"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "9f08b8a3-35bb-4b8f-b497-5dc37a08bd2c",
+        "5d7bbb10-c6b9-4bc2-a62d-7394cfe10f33",
+        "7c03056e-dcf8-4d2b-8dce-a2b82397b184"
+      ],
+      "X": 348,
+      "Y": 174,
+      "Name": "AddCharacterSlide",
+      "Description": "Add markdown text to \rcreate a slide with the info\rfor a character",
+      "Id": "5e35aed1-2dc4-413e-9c1c-72c67891c1a0",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Start",
+      "Input": [],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "e780d188-77ad-499f-8a84-46564daf4ef9",
+              "CelScriptName": "",
+              "CelName": "CreateCharacterSlideshow",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+CreateCharacterSlideshow, CelSignatures.dll",
+                "sheetName": {
+                  "Expression": "CharacterData"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "Print",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Print, Celbridge",
+            "Message": {
+              "Expression": "ok:Done!"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "e780d188-77ad-499f-8a84-46564daf4ef9"
+      ],
+      "X": 13,
+      "Y": 9,
+      "Name": "Start",
+      "Description": "",
+      "Id": "38a4e8ee-07b7-4b89-9dd4-86710a757d0d",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "markdownText"
+          }
+        },
+        {
+          "Keyword": "GetMarkdown",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+GetMarkdown, Celbridge"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": "@Characters/Characters.md"
+            },
+            "Name": "inputFile"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": "@Characters/Characters.html"
+            },
+            "Name": "outputFile"
+          }
+        },
+        {
+          "Keyword": "Write",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.FileMixin+Write, Celbridge",
+            "Resource": {
+              "Expression": "{inputFile}"
+            },
+            "Text": {
+              "Expression": "{markdownText}"
+            }
+          }
+        },
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "6f650d31-dc85-4c6b-8998-aa702d0cbc23",
+              "CelScriptName": "",
+              "CelName": "RunMarp",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.MakeCharacterSheets+RunMarp, CelSignatures.dll",
+                "inputFile": {
+                  "Expression": "{inputFile}"
+                },
+                "outputFile": {
+                  "Expression": "{outputFile}"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        },
+        {
+          "Keyword": "Print",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Print, Celbridge",
+            "Message": {
+              "Expression": "Created slideshow"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "6f650d31-dc85-4c6b-8998-aa702d0cbc23"
+      ],
+      "X": 66,
+      "Y": 153,
+      "Name": "MakeSlideshow",
+      "Description": "Make the slideshow using the\rmarkdown text added for\reach character",
+      "Id": "e4ea7f8c-0fb8-4d6a-b218-bdeeffa66012",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "inputFile"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "outputFile"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "StartProcess",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+StartProcess, Celbridge",
+            "Executable": {
+              "Expression": "@Library/Marp/marp.exe"
+            },
+            "Arguments": {
+              "Expression": "\"{inputFile}\" -o \"{outputFile}\" --allow-local-files"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [],
+      "X": 68,
+      "Y": 277,
+      "Name": "RunMarp",
+      "Description": "Run the Marp command line tool\rto convert a markdown file to a \rslideshow format",
+      "Id": "6f650d31-dc85-4c6b-8998-aa702d0cbc23",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Basic",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "name"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "backStory"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "imageName"
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "con"
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "dex"
+          }
+        },
+        {
+          "Keyword": "Number",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+Number, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "wis"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "AddLine",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddLine, Celbridge",
+            "MarkdownText": {
+              "Expression": "![bg right:40% 80%]({imageName}.png)"
+            }
+          }
+        },
+        {
+          "Keyword": "StartSection",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+StartSection, Celbridge",
+            "Title": {
+              "Expression": "{name}"
+            }
+          }
+        },
+        {
+          "Keyword": "AddLine",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddLine, Celbridge",
+            "MarkdownText": {
+              "Expression": "{backStory}"
+            }
+          }
+        },
+        {
+          "Keyword": "AddLine",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddLine, Celbridge",
+            "MarkdownText": {
+              "Expression": "| CON | DEX | WIS |"
+            }
+          }
+        },
+        {
+          "Keyword": "AddLine",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddLine, Celbridge",
+            "MarkdownText": {
+              "Expression": "|----------|----------|----------|"
+            }
+          }
+        },
+        {
+          "Keyword": "AddLine",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddLine, Celbridge",
+            "MarkdownText": {
+              "Expression": "| {con} | {dex} | {wis}"
+            }
+          }
+        },
+        {
+          "Keyword": "EndSection",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+EndSection, Celbridge"
+          }
+        },
+        {
+          "Keyword": "AddSeparator",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.MarkdownMixin+AddSeparator, Celbridge"
+          }
+        }
+      ],
+      "ConnectedCelIds": [],
+      "X": 323,
+      "Y": 369,
+      "Name": "AddSlide",
+      "Description": "Adds a slide for the character\rusing all the information\rread in from the sheet row",
+      "Id": "7c03056e-dcf8-4d2b-8dce-a2b82397b184",
+      "Children": []
+    }
+  ]
+}

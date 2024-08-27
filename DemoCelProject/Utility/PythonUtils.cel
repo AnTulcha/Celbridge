@@ -1,0 +1,109 @@
+{
+  "Cels": [
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Script",
+      "Input": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "prompt"
+          }
+        },
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "imageResource"
+          }
+        }
+      ],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "String",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.PrimitivesMixin+String, Celbridge",
+            "Expression": {
+              "Expression": ""
+            },
+            "Name": "result"
+          }
+        },
+        {
+          "Keyword": "StartProcess",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+StartProcess, Celbridge",
+            "Executable": {
+              "Expression": "Library/Python/RunPython.ps1"
+            },
+            "Arguments": {
+              "Expression": "Library/Python/generate_image.py \"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\" \"{prompt}\" \"{imageResource}\""
+            }
+          }
+        },
+        {
+          "Keyword": "Print",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Print, Celbridge",
+            "Message": {
+              "Expression": "ok:{result}"
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [],
+      "X": 101,
+      "Y": 182,
+      "Name": "GenerateImage",
+      "Description": "Generates an image using dall-e-3 \rgiven a prompt and a resource path \rto save the image to",
+      "Id": "ebb36706-b81c-4e11-aeb3-d059812b10de",
+      "Children": []
+    },
+    {
+      "$type": "Celbridge.Models.Cel, Celbridge",
+      "CelTypeName": "Test",
+      "Input": [],
+      "Output": [],
+      "Instructions": [
+        {
+          "Keyword": "Call",
+          "Instruction": {
+            "$type": "Celbridge.Models.CelMixins.BasicMixin+Call, Celbridge",
+            "Arguments": {
+              "CelId": "ebb36706-b81c-4e11-aeb3-d059812b10de",
+              "CelScriptName": "PythonUtils",
+              "CelName": "GenerateImage",
+              "CelSignature": {
+                "$type": "Celbridge.Models.CelSignatures.PythonUtils+GenerateImage, CelSignatures.dll",
+                "prompt": {
+                  "Expression": "A duck smoking a cigar"
+                },
+                "imageResource": {
+                  "Expression": "@Test/Test.png"
+                },
+                "ReturnType": ""
+              }
+            }
+          }
+        }
+      ],
+      "ConnectedCelIds": [
+        "ebb36706-b81c-4e11-aeb3-d059812b10de"
+      ],
+      "X": 104,
+      "Y": 53,
+      "Name": "TestGenerateImage",
+      "Description": "Tests that the Generate Image Cel \ris functioning correctly by generating a test image",
+      "Id": "9d77934c-6d6a-4386-986f-f9341f89f900",
+      "Children": []
+    }
+  ]
+}
