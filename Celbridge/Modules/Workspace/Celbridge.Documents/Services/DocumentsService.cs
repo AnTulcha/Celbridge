@@ -317,15 +317,6 @@ public class DocumentsService : IDocumentsService, IDisposable
 
     public Result AddPreviewProvider(PreviewProvider previewProvider)
     {
-        var extensions = previewProvider.SupportedFileExtensions;
-
-        // Check for duplicate file extension entries
-        bool hasDuplicates = extensions.Select(s => s.ToLower()).Distinct().Count() != extensions.Count();
-        if (hasDuplicates)
-        {
-            return Result.Fail("SupportedFileExtensions list contains duplicate entries");
-        }
-
         // Check for conflicts with previously registered providers
         foreach (var fileExtension in previewProvider.SupportedFileExtensions)
         {
@@ -410,14 +401,39 @@ public class DocumentsService : IDocumentsService, IDisposable
         var newExtension = Path.GetExtension(newResource);
         var newDocumentType = _fileTypeHelper.GetDocumentViewType(newExtension);
 
+        // Rename the resource in the list of open documents
+        //for (int i = 0; i < OpenDocuments.Count; i++)
+        //{
+        //    var openDocument = OpenDocuments[i];
+        //    if (openDocument == oldResource)
+        //    {
+        //        OpenDocuments[i] = newResource;
+        //        break;
+        //    }
+        //}
+
         var changeDocumentResource = async Task () =>
         {
+            // Note if the renamed document is the currently selected document
+            // bool isSelected = (oldResource == SelectedDocument.ToString());
+
             var changeResult = await DocumentsPanel.ChangeDocumentResource(oldResource, oldDocumentType, newResource, newResourcePath, newDocumentType);
             if (changeResult.IsFailure)
             {
                 // Log the error and close the document to get back to a consistent state
                 _logger.LogError(changeResult, $"Failed to change document resource from '{oldResource}' to '{newResource}'");
                 await CloseDocument(oldResource, true);
+            }
+            else
+            {
+                //if (isSelected)
+                {
+                    // Also need to update previously loaded document
+
+                    // Notify listeners that the resource key for the selected document has changed
+                    // var selectedChangeMessage = new SelectedDocumentChangedMessage(newResource);
+                    // _messengerService.Send(message);
+                }
             }
         };
 
