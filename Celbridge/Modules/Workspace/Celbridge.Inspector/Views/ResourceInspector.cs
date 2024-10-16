@@ -30,6 +30,7 @@ public partial class ResourceInspector : UserControl, IInspector
             .Content(
                 new StackPanel()
                     .Orientation(Orientation.Horizontal)
+                    .Height(28)
                     .Children(
                         new FontIcon()
                             .Name(out _fontIcon)
