@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using Celbridge.ResourceData;
 
 namespace Celbridge.Tests;
@@ -8,33 +8,33 @@ public class EntityPatcherTests
     [Test]
     public void Set_AddNewProperty_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Set("age", 30);
+        patcher.Set("age", JsonValue.Create(30));
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
-        json["age"]!.Value<int>().Should().Be(30);
+        json["age"]!.GetValue<int>().Should().Be(30);
     }
 
     [Test]
     public void Set_ReplaceExistingProperty_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Set("name", "Jane");
+        patcher.Set("name", JsonValue.Create("Jane"));
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
-        json["name"]!.Value<string>().Should().Be("Jane");
+        json["name"]!.GetValue<string>().Should().Be("Jane");
     }
 
     [Test]
     public void Remove_ExistingProperty_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John', 'age': 30 }");
+        var json = JsonNode.Parse("{\"name\": \"John\", \"age\": 30}")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Remove("age");
@@ -47,7 +47,7 @@ public class EntityPatcherTests
     [Test]
     public void Remove_NonExistentProperty_ShouldFail()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Remove("age");
@@ -59,21 +59,21 @@ public class EntityPatcherTests
     [Test]
     public void Move_PropertyToNewPath_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John', 'address': { 'street': '123 Main St' } }");
+        var json = JsonNode.Parse("{\"name\": \"John\", \"address\": { \"street\": \"123 Main St\" } }")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Move("address.street", "street");
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
-        json["street"]!.Value<string>().Should().Be("123 Main St");
+        json["street"]!.GetValue<string>().Should().Be("123 Main St");
         json.SelectToken("address.street").Should().BeNull();
     }
 
     [Test]
     public void Move_NonExistentSourcePath_ShouldFail()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Move("address.street", "street");
@@ -85,21 +85,21 @@ public class EntityPatcherTests
     [Test]
     public void Copy_PropertyToNewPath_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John', 'address': { 'street': '123 Main St' } }");
+        var json = JsonNode.Parse("{\"name\": \"John\", \"address\": { \"street\": \"123 Main St\" } }")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Copy("address.street", "street");
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
-        json["street"]!.Value<string>().Should().Be("123 Main St");
-        json.SelectToken("address.street")!.Value<string>().Should().Be("123 Main St");
+        json["street"]!.GetValue<string>().Should().Be("123 Main St");
+        json.SelectToken("address.street")!.GetValue<string>().Should().Be("123 Main St");
     }
 
     [Test]
     public void Copy_NonExistentSourcePath_ShouldFail()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Copy("address.street", "street");
@@ -111,10 +111,10 @@ public class EntityPatcherTests
     [Test]
     public void Test_PropertyMatches_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Test("name", "John");
+        patcher.Test("name", JsonValue.Create("John"));
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
@@ -123,10 +123,10 @@ public class EntityPatcherTests
     [Test]
     public void Test_PropertyDoesNotMatch_ShouldFail()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Test("name", "Jane");
+        patcher.Test("name", JsonValue.Create("Jane"));
         var result = patcher.Apply(json);
 
         result.IsFailure.Should().BeTrue();
@@ -135,41 +135,41 @@ public class EntityPatcherTests
     [Test]
     public void Apply_MultipleOperations_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Set("age", 30);
-        patcher.Set("name", "Jane");
+        patcher.Set("age", JsonValue.Create(30));
+        patcher.Set("name", JsonValue.Create("Jane"));
         patcher.Remove("name");
 
         var result = patcher.Apply(json);
 
         result.IsSuccess.Should().BeTrue();
-        json["age"]!.Value<int>().Should().Be(30);
+        json["age"]!.GetValue<int>().Should().Be(30);
         json["name"].Should().BeNull();
     }
 
     [Test]
     public void Undo_SetAndRemoveOperations_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Set("age", 30);
+        patcher.Set("age", JsonValue.Create(30));
         patcher.Remove("name");
 
         patcher.Apply(json);
         var undoResult = patcher.Undo(json);
 
         undoResult.IsSuccess.Should().BeTrue();
-        json["name"]!.Value<string>().Should().Be("John");
+        json["name"]!.GetValue<string>().Should().Be("John");
         json["age"].Should().BeNull();
     }
 
     [Test]
     public void Undo_MoveOperation_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John', 'address': { 'street': '123 Main St' } }");
+        var json = JsonNode.Parse("{\"name\": \"John\", \"address\": { \"street\": \"123 Main St\" } }")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Move("address.street", "street");
@@ -178,14 +178,14 @@ public class EntityPatcherTests
         var undoResult = patcher.Undo(json);
 
         undoResult.IsSuccess.Should().BeTrue();
-        json.SelectToken("address.street")!.Value<string>().Should().Be("123 Main St");
+        json.SelectToken("address.street")!.GetValue<string>().Should().Be("123 Main St");
         json["street"].Should().BeNull();
     }
 
     [Test]
     public void Undo_CopyOperation_ShouldSucceed()
     {
-        var json = JObject.Parse("{ 'name': 'John', 'address': { 'street': '123 Main St' } }");
+        var json = JsonNode.Parse("{\"name\": \"John\", \"address\": { \"street\": \"123 Main St\" } }")!.AsObject();
         var patcher = new EntityPatcher();
 
         patcher.Copy("address.street", "street");
@@ -195,21 +195,21 @@ public class EntityPatcherTests
 
         undoResult.IsSuccess.Should().BeTrue();
         json["street"].Should().BeNull();
-        json.SelectToken("address.street")!.Value<string>().Should().Be("123 Main St");
+        json.SelectToken("address.street")!.GetValue<string>().Should().Be("123 Main St");
     }
 
     [Test]
     public void Undo_TestOperation_ShouldDoNothing()
     {
-        var json = JObject.Parse("{ 'name': 'John' }");
+        var json = JsonNode.Parse("{\"name\": \"John\"}")!.AsObject();
         var patcher = new EntityPatcher();
 
-        patcher.Test("name", "John");
+        patcher.Test("name", JsonValue.Create("John"));
 
         patcher.Apply(json);
         var undoResult = patcher.Undo(json);
 
         undoResult.IsSuccess.Should().BeTrue();
-        json["name"]!.Value<string>().Should().Be("John");
+        json["name"]!.GetValue<string>().Should().Be("John");
     }
 }

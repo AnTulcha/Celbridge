@@ -1,55 +1,42 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 
 namespace Celbridge.ResourceData;
 
 public class EntityPatcher
 {
-    private readonly List<Func<JObject, Result>> _operations = new();
-    private readonly List<Func<JObject, Result>> _undoOperations = new();
+    private readonly List<Func<JsonObject, Result>> _operations = new();
+    private readonly List<Func<JsonObject, Result>> _undoOperations = new();
 
-    public void Set(string path, JToken value)
+    public void Set(string path, JsonNode value)
     {
         _operations.Add(json =>
         {
             var token = json.SelectToken(path);
-            var parent = json.SelectToken(path.ParentPath()) as JObject;
+            var parentPath = path.ParentPath();
+            var parent = json.SelectToken(parentPath) as JsonObject;
 
             if (parent == null)
             {
-                return Result.Fail($"Set operation failed: Parent path '{path.ParentPath()}' not found.");
+                parent = json;
             }
 
             if (token != null)
             {
                 var originalValue = token.DeepClone();
-                token.Replace(value);
-                _undoOperations.Insert(0, json => 
-                { 
-                    json.SelectToken(path)?.Replace(originalValue); 
-                    return Result.Ok(); 
+                token.ReplaceWith(value);
+                _undoOperations.Insert(0, json =>
+                {
+                    json.SelectToken(path)?.ReplaceWith(originalValue);
+                    return Result.Ok();
                 });
             }
             else
             {
                 parent[path.LastSegment()] = value;
-                _undoOperations.Insert(0, json => 
+                _undoOperations.Insert(0, json =>
                 {
-                    var parentToken = parent[path.LastSegment()];
-
-                    if (parentToken is not null)
-                    {
-                        // Ensure we remove the property from its parent
-                        if (parentToken.Parent is JProperty property)
-                        {
-                            property.Remove();
-                        }
-                        else
-                        {
-                            parentToken.Remove();
-                        }
-                    }
-
-                    return Result.Ok(); 
+                    parent.Remove(path.LastSegment());
+                    return Result.Ok();
                 });
             }
 
@@ -69,25 +56,24 @@ public class EntityPatcher
 
             var originalValue = token.DeepClone();
 
-            // Ensure we remove the property from its parent
-            if (token.Parent is JProperty property)
+            if (token.Parent is JsonObject parent)
             {
-                property.Remove();
-            }
-            else
-            {
-                token.Remove();
+                parent.Remove(token.GetPropertyName());
             }
 
-            _undoOperations.Insert(0, json => 
+            _undoOperations.Insert(0, json =>
             {
-                var parentToken = json.SelectToken(path.ParentPath());
-                if (parentToken is not null)
+                var parentToken = json.SelectToken(path.ParentPath()) as JsonObject;
+                if (parentToken is null)
+                {
+                    json[path.LastSegment()] = originalValue;
+                }
+                else
                 {
                     parentToken[path.LastSegment()] = originalValue;
-                }                
+                }
 
-                return Result.Ok(); 
+                return Result.Ok();
             });
 
             return Result.Ok();
@@ -104,51 +90,31 @@ public class EntityPatcher
                 return Result.Fail($"Move operation failed: Path '{fromPath}' not found.");
             }
 
-            var toParent = json.SelectToken(toPath.ParentPath()) as JObject;
+            var toParent = json.SelectToken(toPath.ParentPath()) as JsonObject;
             if (toParent == null)
             {
-                return Result.Fail($"Move operation failed: Target path '{toPath.ParentPath()}' not found.");
+                toParent = json;
             }
 
             var movedValue = fromToken.DeepClone();
 
-            // Ensure we remove the property from its parent
-            if (fromToken.Parent is JProperty property)
+            if (fromToken.Parent is JsonObject fromParent)
             {
-                property.Remove();
-            }
-            else
-            {
-                fromToken.Remove();
+                fromParent.Remove(fromPath.LastSegment());
             }
 
             toParent[toPath.LastSegment()] = movedValue;
 
-            _undoOperations.Insert(0, json => 
-            { 
-                var toToken = toParent[toPath.LastSegment()];
+            _undoOperations.Insert(0, json =>
+            {
+                toParent.Remove(toPath.LastSegment());
 
-                if (toToken == null)
-                {
-                    return Result.Fail($"Undo move operation failed: Path '{toPath}' not found.");
-                }
-
-                // Ensure we remove the property from its parent
-                if (toToken.Parent is JProperty property)
-                {
-                    property.Remove();
-                }
-                else
-                {
-                    toToken.Remove();
-                }
-
-                var parentToken = json.SelectToken(fromPath.ParentPath());
-                if (parentToken is not null)
+                var parentToken = json.SelectToken(fromPath.ParentPath()) as JsonObject;
+                if (parentToken != null)
                 {
                     parentToken[fromPath.LastSegment()] = movedValue;
                 }
-                return Result.Ok(); 
+                return Result.Ok();
             });
 
             return Result.Ok();
@@ -163,39 +129,29 @@ public class EntityPatcher
             if (fromToken == null)
                 return Result.Fail($"Copy operation failed: Path '{fromPath}' not found.");
 
-            var toParent = json.SelectToken(toPath.ParentPath()) as JObject;
+            var toParent = json.SelectToken(toPath.ParentPath()) as JsonObject;
             if (toParent == null)
-                return Result.Fail($"Copy operation failed: Target path '{toPath.ParentPath()}' not found.");
+            {
+                toParent = json;
+            }
 
             toParent[toPath.LastSegment()] = fromToken.DeepClone();
-            _undoOperations.Insert(0, json => 
+            _undoOperations.Insert(0, json =>
             {
-                var parent = toParent[toPath.LastSegment()];
-                if (parent is not null)
-                {
-                    // Ensure we remove the property from its parent
-                    if (parent.Parent is JProperty property)
-                    {
-                        property.Remove();
-                    }
-                    else
-                    {
-                        parent.Remove();
-                    }
-                }
-                return Result.Ok(); 
+                toParent.Remove(toPath.LastSegment());
+                return Result.Ok();
             });
 
             return Result.Ok();
         });
     }
 
-    public void Test(string path, JToken expectedValue)
+    public void Test(string path, JsonNode expectedValue)
     {
         _operations.Add(json =>
         {
             var token = json.SelectToken(path);
-            if (token == null || !JToken.DeepEquals(token, expectedValue))
+            if (token == null || !JsonNode.DeepEquals(token, expectedValue))
             {
                 return Result.Fail($"Test operation failed: Value at '{path}' does not match expected value.");
             }
@@ -204,7 +160,7 @@ public class EntityPatcher
         });
     }
 
-    public Result Apply(JObject json)
+    public Result Apply(JsonObject json)
     {
         foreach (var operation in _operations)
         {
@@ -217,7 +173,7 @@ public class EntityPatcher
         return Result.Ok();
     }
 
-    public Result Undo(JObject json)
+    public Result Undo(JsonObject json)
     {
         foreach (var undoOperation in _undoOperations)
         {
@@ -235,4 +191,24 @@ public static class JsonPathExtensions
 {
     public static string ParentPath(this string path) => path.Contains('.') ? path.Substring(0, path.LastIndexOf('.')) : string.Empty;
     public static string LastSegment(this string path) => path.Contains('.') ? path.Substring(path.LastIndexOf('.') + 1) : path;
+
+    public static JsonNode? SelectToken(this JsonObject json, string path)
+    {
+        var segments = path.Split('.');
+        JsonNode? current = json;
+
+        foreach (var segment in segments)
+        {
+            if (current is JsonObject obj && obj.TryGetPropertyValue(segment, out var value))
+            {
+                current = value;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        return current;
+    }
 }
