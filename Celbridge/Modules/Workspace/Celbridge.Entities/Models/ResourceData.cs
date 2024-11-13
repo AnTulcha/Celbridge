@@ -24,8 +24,6 @@ public class ResourceData : ObservableObject
 
         _jsonData = new JObject();
         _isModified = false;
-
-        EnsurePropertiesExists();
     }
 
     public void SetResourceKey(ResourceKey resource, string resourceDataPath)
@@ -52,8 +50,6 @@ public class ResourceData : ObservableObject
                 {
                     MergeArrayHandling = MergeArrayHandling.Replace
                 });
-
-                EnsurePropertiesExists();
             }
 
             return Result.Ok();
@@ -105,14 +101,9 @@ public class ResourceData : ObservableObject
     {
         try
         {
-            EnsurePropertiesExists();
-
-            var properties = (JObject)_jsonData["Properties"]!;
-            Guard.IsNotNull(properties);
-
-            if (properties.ContainsKey(propertyName))
+            if (_jsonData.ContainsKey(propertyName))
             {
-                var value = properties[propertyName]!.ToObject<T>();
+                var value = _jsonData[propertyName]!.ToObject<T>();
                 if (value is not null)
                 {
                     return Result<T>.Ok(value);
@@ -136,10 +127,7 @@ public class ResourceData : ObservableObject
     {
         try
         {
-            EnsurePropertiesExists();
-
-            var properties = (JObject)_jsonData["Properties"]!;
-            properties[propertyName] = JToken.FromObject(newValue);
+            _jsonData[propertyName] = JToken.FromObject(newValue);
 
             _isModified = true; // Compare the previous and new values
             NotifyChanges(propertyName);
@@ -155,14 +143,5 @@ public class ResourceData : ObservableObject
     {
         var message = new EntityPropertyChangedMessage(Resource, propertyName, EntityPropertyChangeType.Update);
         _messengerService.Send(message);
-    }
-
-    private void EnsurePropertiesExists()
-    {
-        // Ensure the Properties object exists in the root
-        if (!_jsonData.ContainsKey("Properties"))
-        {
-            _jsonData["Properties"] = new JObject();
-        }
     }
 }
