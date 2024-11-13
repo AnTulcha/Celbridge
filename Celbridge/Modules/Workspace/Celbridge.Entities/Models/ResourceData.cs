@@ -8,7 +8,7 @@ using Path = System.IO.Path;
 
 namespace Celbridge.Entities.Models;
 
-public class ResourceData : ObservableObject
+public class ResourceData : ObservableObject, IResourceData
 {
     private readonly IMessengerService _messengerService;
 
@@ -97,7 +97,37 @@ public class ResourceData : ObservableObject
         }
     }
 
-    public Result<T> GetProperty<T>(string propertyName) where T : notnull
+    public T? GetProperty<T>(string propertyName, T? defaultValue)
+        where T : notnull
+    {
+        var getResult = GetPropertyChecked<T>(propertyName);
+        if (getResult.IsFailure)
+        {
+            return defaultValue;
+        }
+
+        return getResult.Value;
+    }
+
+    public T? GetProperty<T>(string propertyName)
+        where T : notnull
+    {
+        return GetProperty<T>(propertyName, default(T));
+    }
+
+    public void SetProperty<T>(string propertyName, T newValue) where T : notnull
+    {
+        var setResult = SetPropertyChecked(propertyName, newValue);
+        if (setResult.IsFailure)
+        {
+            var failure = Result<T>.Fail($"Failed to set property '{propertyName}'")
+                .WithErrors(setResult);
+
+            throw new InvalidOperationException(failure.Error);
+        }
+    }
+
+    public Result<T> GetPropertyChecked<T>(string propertyName) where T : notnull
     {
         try
         {
@@ -123,25 +153,22 @@ public class ResourceData : ObservableObject
     /// <summary>
     /// Sets the value of a property in the "Properties" object in the root.
     /// </summary>
-    public Result SetProperty<T>(string propertyName, T newValue) where T : notnull
+    public Result SetPropertyChecked<T>(string propertyName, T newValue) where T : notnull
     {
         try
         {
             _jsonData[propertyName] = JToken.FromObject(newValue);
 
-            _isModified = true; // Compare the previous and new values
-            NotifyChanges(propertyName);
+            _isModified = true;
+
+            var message = new EntityPropertyChangedMessage(Resource, propertyName, EntityPropertyChangeType.Update);
+            _messengerService.Send(message);
+
             return Result.Ok();
         }
         catch (Exception ex)
         {
             return Result.Fail($"Failed to set property '{propertyName}' in resource '{Resource}'").WithException(ex);
         }
-    }
-
-    private void NotifyChanges(string propertyName)
-    {
-        var message = new EntityPropertyChangedMessage(Resource, propertyName, EntityPropertyChangeType.Update);
-        _messengerService.Send(message);
     }
 }

@@ -84,8 +84,17 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     {
         try
         {
-            ShowEditor = _resourceDataService.GetProperty(_fileResource, ResourceDataConstants.TextEditor_ShowEditor, true);
-            ShowPreview = _resourceDataService.GetProperty(_fileResource, ResourceDataConstants.TextEditor_ShowPreview, true);
+            // Todo: Is it safe to hold onto the acquired resource data?
+            var acquireResult = _resourceDataService.AcquireResourceData(_fileResource);
+            if (acquireResult.IsFailure)
+            {
+                _logger.LogError(acquireResult.Error);
+                return;
+            }
+            var resourceData = acquireResult.Value;
+
+            ShowEditor = resourceData.GetProperty(ResourceDataConstants.TextEditor_ShowEditor, true);
+            ShowPreview = resourceData.GetProperty(ResourceDataConstants.TextEditor_ShowPreview, true);
         }
         catch (Exception ex)
         {

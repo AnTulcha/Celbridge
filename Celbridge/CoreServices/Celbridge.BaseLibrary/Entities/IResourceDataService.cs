@@ -11,24 +11,9 @@ public delegate void ResourcePropertyChangedNotifier(ResourceKey resource, strin
 public interface IResourceDataService
 {
     /// <summary>
-    /// Gets the value of a property from the "Properties" object in the root of the resource data.
-    /// If the property is not found, defaultValue is returned instead.
-    /// Throws an invalid operation exception if an error occurs while getting the property.
+    /// Acquire resource data for a resource.
     /// </summary>
-    T? GetProperty<T>(ResourceKey resource, string propertyName, T? defaultValue) where T : notnull;
-
-    /// <summary>
-    /// Gets the value of a property from the "Properties" object in the root of the resource data.
-    /// If the property is not found, default(T) is returned instead.
-    /// Throws an invalid operation exception if an error occurs while getting the property.
-    /// </summary>
-    T? GetProperty<T>(ResourceKey resource, string propertyName) where T : notnull;
-
-    /// <summary>
-    /// Sets the value of a property in the "Properties" object in the root of the resource data.
-    /// Throws an invalid operation exception if an error occurs while setting the property.
-    /// </summary>
-    void SetProperty<T>(ResourceKey resource, string propertyName, T newValue) where T : notnull;
+    Result<IResourceData> AcquireResourceData(ResourceKey resource);
 
     /// <summary>
     /// Remaps the old resource key to a new resource key.

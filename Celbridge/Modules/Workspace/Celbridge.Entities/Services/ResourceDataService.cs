@@ -22,56 +22,8 @@ public class ResourceDataService : IResourceDataService, IDisposable
     {
         _messengerService = messengerService;
         _projectService = projectService;
-    }
 
-    public T? GetProperty<T>(ResourceKey resource, string propertyName, T? defaultValue) 
-        where T : notnull
-    {
-        var acquireResult = AcquireResourceData(resource);
-        if (acquireResult.IsFailure)
-        {
-            var failure = Result<T>.Fail($"Failed to acquire resource data for '{resource}'")
-                .WithErrors(acquireResult);
-
-            throw new InvalidOperationException(failure.Error);
-        }
-
-        var getResult = _resourceDataCache[resource].GetProperty<T>(propertyName);
-        if (getResult.IsFailure)
-        {
-            return defaultValue;
-        }
-
-        return getResult.Value;
-    }
-
-    public T? GetProperty<T>(ResourceKey resource, string propertyName) 
-        where T : notnull
-    {
-        return GetProperty<T>(resource, propertyName, default(T));
-    }
-
-    public void SetProperty<T>(ResourceKey resource, string propertyName, T newValue) where T : notnull
-    {
-        var acquireResult = AcquireResourceData(resource);
-        if (acquireResult.IsFailure)
-        {
-            var failure = Result<T>.Fail($"Failed to acquire resource data for '{resource}'")
-                .WithErrors(acquireResult);
-
-            throw new InvalidOperationException(failure.Error);
-        }
-
-        var setResult = _resourceDataCache[resource].SetProperty(propertyName, newValue);
-        if (setResult.IsFailure)
-        {
-            var failure = Result<T>.Fail($"Failed to set property '{propertyName}' for '{resource}'")
-                .WithErrors(setResult);
-
-            throw new InvalidOperationException(failure.Error);
-        }
-
-        _modifiedResources.Add(resource); // Mark resource as modified
+        _messengerService.Register<EntityPropertyChangedMessage>(this, OnEntityPropertyChangedMessage);
     }
 
     /// <summary>
@@ -142,15 +94,24 @@ public class ResourceDataService : IResourceDataService, IDisposable
         return Result.Ok();
     }
 
+    private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
+    {
+        var (resource, _, _) = message;
+
+        _modifiedResources.Add(resource);
+    }
+
     /// <summary>
     /// Acquires a ResourceData object for the given resource key.
     /// If it doesn't exist in the cache, it will load it from disk or create a new one.
     /// </summary>
-    private Result AcquireResourceData(ResourceKey resource)
+    public Result<IResourceData> AcquireResourceData(ResourceKey resource)
     {
         if (_resourceDataCache.ContainsKey(resource))
         {
-            return Result.Ok();
+            var resourceData = _resourceDataCache[resource] as IResourceData;
+
+            return Result<IResourceData>.Ok(resourceData);
         }
 
         try
@@ -162,15 +123,17 @@ public class ResourceDataService : IResourceDataService, IDisposable
             var loadResult = resourceData.Load(resource, resourcePath);
             if (loadResult.IsFailure)
             {
-                return loadResult;
+                return Result<IResourceData>.Fail($"Failed to load resource data: {resource}")
+                    .WithErrors(loadResult);
             }
 
             _resourceDataCache[resource] = resourceData;
-            return Result.Ok();
+
+            return Result<IResourceData>.Ok(resourceData);
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when loading resource data: '{resource}'")
+            return Result<IResourceData>.Fail($"An exception occurred when loading resource data: '{resource}'")
                 .WithException(ex);
         }
     }

@@ -88,8 +88,17 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
 
         try
         {
-            _resourceDataService.SetProperty(Resource, ResourceDataConstants.TextEditor_ShowEditor, showEditor);
-            _resourceDataService.SetProperty(Resource, ResourceDataConstants.TextEditor_ShowPreview, showPreview);
+            // Todo: Is it safe to hold onto the acquired resource data?
+            var acquireResult = _resourceDataService.AcquireResourceData(Resource);
+            if (acquireResult.IsFailure)
+            {
+                _logger.LogError(acquireResult.Error);
+                return;
+            }
+            var resourceData = acquireResult.Value;
+
+            resourceData.SetProperty(ResourceDataConstants.TextEditor_ShowEditor, showEditor);
+            resourceData.SetProperty(ResourceDataConstants.TextEditor_ShowPreview, showPreview);
 
             UpdateButtonState();
 
@@ -106,8 +115,17 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
     {
         try
         {
-            bool showingEditor = _resourceDataService.GetProperty(Resource, ResourceDataConstants.TextEditor_ShowEditor, true);
-            bool showingPreview = _resourceDataService.GetProperty(Resource, ResourceDataConstants.TextEditor_ShowPreview, true);
+            // Todo: Is it safe to hold onto the acquired resource data?
+            var acquireResult = _resourceDataService.AcquireResourceData(Resource);
+            if (acquireResult.IsFailure)
+            {
+                _logger.LogError(acquireResult.Error);
+                return;
+            }
+            var resourceData = acquireResult.Value;
+
+            bool showingEditor = resourceData.GetProperty(ResourceDataConstants.TextEditor_ShowEditor, true);
+            bool showingPreview = resourceData.GetProperty(ResourceDataConstants.TextEditor_ShowPreview, true);
             bool showingBoth = showingEditor && showingPreview;
 
             ShowEditorEnabled = !showingEditor || (showingBoth);
