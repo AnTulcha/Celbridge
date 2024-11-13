@@ -1,9 +1,9 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Enum representing the type of change made to an entity.
+/// Enum representing the type of change made to an entity property.
 /// </summary>
-public enum EntityChangeType
+public enum EntityPropertyChangeType
 {
     Add,
     Update,

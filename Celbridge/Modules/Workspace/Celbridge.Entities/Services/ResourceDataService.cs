@@ -1,4 +1,5 @@
 using Celbridge.Entities.Models;
+using Celbridge.Messaging;
 using Celbridge.Projects;
 using Celbridge.Workspace;
 using System.Collections.Concurrent;
@@ -9,20 +10,20 @@ namespace Celbridge.Entities.Services;
 
 public class ResourceDataService : IResourceDataService, IDisposable
 {
+    private readonly IMessengerService _messengerService;
     private readonly IProjectService _projectService;
     private readonly ConcurrentDictionary<ResourceKey, ResourceData> _resourceDataCache = new(); // Cache for ResourceData objects
     private readonly ConcurrentBag<ResourceKey> _modifiedResources = new(); // Track modified resources
 
     public ResourceDataService(
+        IMessengerService messengerService,
         IProjectService projectService,
         IWorkspaceWrapper workspaceWrapper)
     {
+        _messengerService = messengerService;
         _projectService = projectService;
     }
 
-    /// <summary>
-    /// Gets the value of a property from the "Properties" object in the root of the resource data.
-    /// </summary>
     public T? GetProperty<T>(ResourceKey resource, string propertyName, T? defaultValue) 
         where T : notnull
     {
@@ -71,30 +72,6 @@ public class ResourceDataService : IResourceDataService, IDisposable
         }
 
         _modifiedResources.Add(resource); // Mark resource as modified
-    }
-
-    /// <summary>
-    /// Registers a notifier that gets triggered when a property in the resource is modified.
-    /// </summary>
-    public void RegisterNotifier(ResourceKey resourceKey, object recipient, ResourcePropertyChangedNotifier notifier)
-    {
-        var loadResult = AcquireResourceData(resourceKey);
-        if (loadResult.IsSuccess)
-        {
-            _resourceDataCache[resourceKey].RegisterNotifier(recipient, notifier);
-        }
-    }
-
-    /// <summary>
-    /// Unregisters a callback for the given resource key and recipient.
-    /// </summary>
-    public void UnregisterNotifier(ResourceKey resourceKey, object recipient)
-    {
-        var loadResult = AcquireResourceData(resourceKey);
-        if (loadResult.IsSuccess)
-        {
-            _resourceDataCache[resourceKey].UnregisterNotifier(recipient);
-        }
     }
 
     /// <summary>
@@ -179,7 +156,7 @@ public class ResourceDataService : IResourceDataService, IDisposable
         try
         {
             // Create and load the ResourceData object
-            var resourceData = new ResourceData();
+            var resourceData = new ResourceData(_messengerService);
             string resourcePath = GetResourceDataPath(resource);
 
             var loadResult = resourceData.Load(resource, resourcePath);

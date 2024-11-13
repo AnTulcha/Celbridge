@@ -1,7 +1,6 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// A message describing a change made to an entity, including the resource key, 
-/// the affected JSON pointer, and the type of change.
+/// A message describing a change made to an entity property.
 /// </summary>
-public record EntityChangedMessage(ResourceKey Resource, string JsonPointer, EntityChangeType ChangeType);
+public record EntityPropertyChangedMessage(ResourceKey Resource, string PropertyPath, EntityPropertyChangeType ChangeType);

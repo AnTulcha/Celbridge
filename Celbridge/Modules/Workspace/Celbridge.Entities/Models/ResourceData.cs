@@ -1,25 +1,28 @@
+using Celbridge.Messaging;
 using CommunityToolkit.Diagnostics;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Concurrent;
 
 using Path = System.IO.Path;
 
 namespace Celbridge.Entities.Models;
 
-public class ResourceData
+public class ResourceData : ObservableObject
 {
+    private readonly IMessengerService _messengerService;
+
     private readonly JObject _jsonData;
-    private readonly ConcurrentDictionary<WeakReference<object>, ResourcePropertyChangedNotifier> _notifiers;
     private bool _isModified;
 
     public ResourceKey Resource { get; private set; }
     public string ResourceDataPath { get; private set; } = string.Empty;
 
-    public ResourceData()
+    public ResourceData(IMessengerService messengerService)
     {
+        _messengerService = messengerService;
+
         _jsonData = new JObject();
-        _notifiers = new ConcurrentDictionary<WeakReference<object>, ResourcePropertyChangedNotifier>();
         _isModified = false;
 
         EnsurePropertiesExists();
@@ -98,9 +101,6 @@ public class ResourceData
         }
     }
 
-    /// <summary>
-    /// Gets the value of a property from the "Properties" object in the root.
-    /// </summary>
     public Result<T> GetProperty<T>(string propertyName) where T : notnull
     {
         try
@@ -151,62 +151,10 @@ public class ResourceData
         }
     }
 
-    /// <summary>
-    /// Registers a callback to be triggered when a property is modified.
-    /// Uses WeakReference to allow automatic cleanup when the recipient goes out of scope.
-    /// </summary>
-    public void RegisterNotifier(object recipient, ResourcePropertyChangedNotifier notifier)
-    {
-        var weakRecipient = new WeakReference<object>(recipient);
-        _notifiers[weakRecipient] = notifier;
-    }
-
-    /// <summary>
-    /// Manually unregisters a callback for the given recipient.
-    /// This is optional and allows explicit control over unsubscription.
-    /// </summary>
-    public void UnregisterNotifier(object recipient)
-    {
-        foreach (var entry in _notifiers)
-        {
-            if (entry.Key.TryGetTarget(out var target) && ReferenceEquals(target, recipient))
-            {
-                _notifiers.TryRemove(entry.Key, out _);
-                break;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Unregisters callbacks whose recipients are no longer alive.
-    /// This can be run periodically or at specific points in your workflow.
-    /// </summary>
-    public void CleanupNotifiers()
-    {
-        foreach (var entry in _notifiers)
-        {
-            if (!entry.Key.TryGetTarget(out _))
-            {
-                // Recipient is no longer alive, so remove the callback
-                _notifiers.TryRemove(entry.Key, out _);
-            }
-        }
-    }
-
     private void NotifyChanges(string propertyName)
     {
-        foreach (var notifier in _notifiers)
-        {
-            if (notifier.Key.TryGetTarget(out var recipient))
-            {
-                notifier.Value.Invoke(Resource, propertyName);
-            }
-            else
-            {
-                // Recipient has been garbage collected, so cleanup
-                _notifiers.TryRemove(notifier.Key, out _);
-            }
-        }
+        var message = new EntityPropertyChangedMessage(Resource, propertyName, EntityPropertyChangeType.Update);
+        _messengerService.Send(message);
     }
 
     private void EnsurePropertiesExists()

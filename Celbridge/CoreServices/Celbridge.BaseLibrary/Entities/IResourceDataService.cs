@@ -31,16 +31,6 @@ public interface IResourceDataService
     void SetProperty<T>(ResourceKey resource, string propertyName, T newValue) where T : notnull;
 
     /// <summary>
-    /// Registers a callback that gets triggered when a property in the resource is modified.
-    /// </summary>
-    void RegisterNotifier(ResourceKey resource, object recipient, ResourcePropertyChangedNotifier notifier);
-
-    /// <summary>
-    /// Unregisters a callback for the given resource key and recipient.
-    /// </summary>
-    void UnregisterNotifier(ResourceKey resource, object recipient);
-
-    /// <summary>
     /// Remaps the old resource key to a new resource key.
     /// </summary>
     Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource);
