@@ -114,7 +114,12 @@ public class EntityService : IEntityService, IDisposable
                         .WithErrors(validateResult);
                 }
 
-                _prototypeService.AddPrototype(json);
+                var addResult = _prototypeService.AddPrototype(json, schema);
+                if (addResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to add prototype: {jsonFile.DisplayName}")
+                        .WithErrors(addResult);
+                }
             }
 
             return Result.Ok();
