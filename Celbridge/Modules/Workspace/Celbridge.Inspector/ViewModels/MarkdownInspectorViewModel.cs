@@ -2,7 +2,7 @@ using Celbridge.Commands;
 using Celbridge.Documents;
 using Celbridge.Explorer;
 using Celbridge.Logging;
-using Celbridge.ResourceData;
+using Celbridge.Entities;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;

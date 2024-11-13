@@ -1,6 +1,6 @@
 using Celbridge.ExtensionAPI;
 using Celbridge.Logging;
-using Celbridge.ResourceData;
+using Celbridge.Entities;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
 

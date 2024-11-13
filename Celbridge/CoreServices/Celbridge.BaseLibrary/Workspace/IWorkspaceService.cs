@@ -5,7 +5,6 @@ using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.GenerativeAI;
 using Celbridge.Inspector;
-using Celbridge.ResourceData;
 using Celbridge.Scripting;
 using Celbridge.Status;
 

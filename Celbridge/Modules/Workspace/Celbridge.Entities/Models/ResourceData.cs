@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 
 using Path = System.IO.Path;
 
-namespace Celbridge.ResourceData.Services;
+namespace Celbridge.Entities.Models;
 
 public class ResourceData
 {

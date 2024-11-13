@@ -1,10 +1,11 @@
+using Celbridge.Entities.Models;
 using Celbridge.Projects;
 using Celbridge.Workspace;
 using System.Collections.Concurrent;
 
 using Path = System.IO.Path;
 
-namespace Celbridge.ResourceData.Services;
+namespace Celbridge.Entities.Services;
 
 public class ResourceDataService : IResourceDataService, IDisposable
 {

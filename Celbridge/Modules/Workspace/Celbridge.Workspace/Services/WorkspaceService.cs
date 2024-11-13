@@ -7,7 +7,6 @@ using Celbridge.Extensions;
 using Celbridge.GenerativeAI;
 using Celbridge.Inspector;
 using Celbridge.Projects;
-using Celbridge.ResourceData;
 using Celbridge.Scripting;
 using Celbridge.Settings;
 using Celbridge.Status;

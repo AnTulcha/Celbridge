@@ -1,4 +1,4 @@
-namespace Celbridge.ResourceData;
+namespace Celbridge.Entities;
 
 /// <summary>
 /// Represents a callback method that is triggered when a property in a resource is modified.
