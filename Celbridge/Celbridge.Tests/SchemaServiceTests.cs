@@ -1,4 +1,4 @@
-using Celbridge.ResourceData.Services;
+using Celbridge.Entities.Services;
 using CommunityToolkit.Diagnostics;
 using System.Text.Json.Nodes;
 
@@ -7,7 +7,7 @@ namespace Celbridge.Tests;
 [TestFixture]
 public class SchemaServiceTests
 {
-    private SchemaService? _schemaService;
+    private EntitySchemaService? _schemaService;
 
     private string? _validSchemaJson;
     private string? _invalidSchemaJson;
@@ -20,7 +20,7 @@ public class SchemaServiceTests
     [SetUp]
     public void SetUp()
     {
-        _schemaService = new SchemaService();
+        _schemaService = new EntitySchemaService();
 
         // Sample valid schema with _schemaName and _schemaVersion
         _validSchemaJson = @"
@@ -114,10 +114,15 @@ public class SchemaServiceTests
         Guard.IsNotNull(_validDataJson);
 
         _schemaService.AddSchema(_validSchemaJson);
+
         var dataNode = JsonNode.Parse(_validDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var result = _schemaService.ValidateJsonNode(dataNode);
+        var getSchema = _schemaService.GetSchemaFromJson(_validDataJson);
+        getSchema.IsSuccess.Should().BeTrue();
+        var schema = getSchema.Value;
+
+        var result = schema.ValidateJsonObject(dataNode);
         result.IsSuccess.Should().BeTrue();
     }
 
@@ -132,8 +137,8 @@ public class SchemaServiceTests
         var dataNode = JsonNode.Parse(_mismatchedSchemaNameDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var result = _schemaService.ValidateJsonNode(dataNode);
-        result.IsSuccess.Should().BeFalse();
+        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedSchemaNameDataJson);
+        getSchema.IsSuccess.Should().BeFalse();
     }
 
     [Test]
@@ -147,7 +152,11 @@ public class SchemaServiceTests
         var dataNode = JsonNode.Parse(_mismatchedSchemaVersionDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var result = _schemaService.ValidateJsonNode(dataNode);
+        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedSchemaVersionDataJson);
+        getSchema.IsSuccess.Should().BeTrue();
+        var schema = getSchema.Value;
+
+        var result = schema.ValidateJsonObject(dataNode);
         result.IsSuccess.Should().BeFalse();
     }
 
@@ -159,31 +168,6 @@ public class SchemaServiceTests
 
         _schemaService.AddSchema(_validSchemaJson);
         var result = _schemaService.AddSchema(_validSchemaJson);
-        result.IsSuccess.Should().BeFalse();
-    }
-
-    [Test]
-    public void LoadSchemaFromFile_WithValidSchemaFile_ShouldReturnSuccess()
-    {
-        Guard.IsNotNull(_schemaService);
-        Guard.IsNotNull(_tempSchemaFilePath);
-        Guard.IsNotNull(_validSchemaJson);
-
-        File.WriteAllText(_tempSchemaFilePath, _validSchemaJson);
-
-        var result = _schemaService.LoadSchemaFromFile(_tempSchemaFilePath);
-        result.IsSuccess.Should().BeTrue();
-    }
-
-    [Test]
-    public void LoadSchemaFromFile_WithInvalidSchemaFile_ShouldReturnFailure()
-    {
-        Guard.IsNotNull(_schemaService);
-        Guard.IsNotNull(_tempSchemaFilePath);
-
-        File.WriteAllText(_tempSchemaFilePath, _invalidSchemaJson);
-
-        var result = _schemaService.LoadSchemaFromFile(_tempSchemaFilePath);
         result.IsSuccess.Should().BeFalse();
     }
 }

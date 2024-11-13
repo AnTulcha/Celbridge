@@ -1,8 +1,9 @@
-using System.Reflection;
 using System.Text.Json.Nodes;
+using Celbridge.Entities.Models;
 
-namespace Celbridge.ResourceData.Services;
+namespace Celbridge.Entities.Services;
 
+// Todo: Merge with Entity class
 public class JsonDatastore
 {
     private JsonObject? _jsonData;
@@ -10,7 +11,7 @@ public class JsonDatastore
     public string SchemaName { get; private set; } = string.Empty;
     public int SchemaVersion { get; private set; } = 0;
 
-    public Result Initialize(string json, SchemaService schemaService)
+    public Result Initialize(string json, EntitySchema entitySchema)
     {
         try
         {
@@ -50,7 +51,7 @@ public class JsonDatastore
                 return Result.Fail("The '_schemaVersion' property must be an integer.");
             }
 
-            var validateResult = schemaService.ValidateJsonNode(jsonObject);
+            var validateResult = entitySchema.ValidateJsonObject(jsonObject);
             if (validateResult.IsFailure)
             {
                 return Result.Fail($"Validation failed with schema '{schemaName}' v{schemaVersion}.");
@@ -66,53 +67,6 @@ public class JsonDatastore
         catch (Exception ex)
         {
             return Result.Fail($"Failed to initialize JSON Data: {ex.Message}")
-                .WithException(ex);
-        }
-    }
-
-    public Result LoadFromFile(string filePath, SchemaService schemaService)
-    {
-        try
-        {
-            if (!File.Exists(filePath))
-            {
-                return Result.Fail("File does not exist.");
-            }
-
-            var json = File.ReadAllText(filePath);
-            return Initialize(json, schemaService);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to load JSON from file: {ex.Message}")
-                .WithException(ex);
-        }
-    }
-
-    public Result LoadFromEmbeddedResource(string resourcePath, string? assemblyName = null)
-    {
-        try
-        {
-            var assembly = assemblyName != null ? Assembly.Load(assemblyName) : Assembly.GetExecutingAssembly();
-            if (assembly == null)
-            {
-                return Result.Fail($"Assembly '{assemblyName}' could not be loaded.");
-            }
-
-            using var stream = assembly.GetManifestResourceStream(resourcePath);
-            if (stream is null)
-            {
-                return Result.Fail($"Embedded resource '{resourcePath}' not found in assembly '{assembly.FullName}'.");
-            }
-
-            using var reader = new StreamReader(stream);
-            var json = reader.ReadToEnd();
-
-            return Initialize(json, new SchemaService());
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to load JSON from embedded resource '{resourcePath}' in assembly '{assemblyName}'")
                 .WithException(ex);
         }
     }

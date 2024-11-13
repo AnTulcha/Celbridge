@@ -1,6 +1,7 @@
 using Celbridge.Console;
 using Celbridge.DataTransfer;
 using Celbridge.Documents;
+using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Extensions;
 using Celbridge.GenerativeAI;
@@ -31,6 +32,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
     public IStatusService StatusService { get; }
     public IDataTransferService DataTransferService { get; }
     public IResourceDataService ResourceDataService { get; }
+    public IEntityService EntityService { get; }
     public IGenerativeAIService GenerativeAIService { get; }
 
     private bool _workspaceStateIsDirty;
@@ -57,6 +59,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
         StatusService = serviceProvider.GetRequiredService<IStatusService>();
         DataTransferService = serviceProvider.GetRequiredService<IDataTransferService>();
         ResourceDataService = serviceProvider.GetRequiredService<IResourceDataService>();
+        EntityService = serviceProvider.GetRequiredService<IEntityService>();
         GenerativeAIService = serviceProvider.GetRequiredService<IGenerativeAIService>();
 
         //
@@ -175,6 +178,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
                 (StatusService as IDisposable)!.Dispose();
                 (DataTransferService as IDisposable)!.Dispose();
                 (ResourceDataService as IDisposable)!.Dispose();
+                (EntityService as IDisposable)!.Dispose();
                 (GenerativeAIService as IDisposable)!.Dispose();
             }
 

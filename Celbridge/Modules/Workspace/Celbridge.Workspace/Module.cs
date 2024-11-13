@@ -21,6 +21,7 @@ public class Extension : IModule
         Explorer.ServiceConfiguration.ConfigureServices(config);
         Inspector.ServiceConfiguration.ConfigureServices(config);
         ResourceData.ServiceConfiguration.ConfigureServices(config);
+        Entities.ServiceConfiguration.ConfigureServices(config);
         Scripting.ServiceConfiguration.ConfigureServices(config);
         Status.ServiceConfiguration.ConfigureServices(config);
         GenerativeAI.ServiceConfiguration.ConfigureServices(config);

@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "_schemaName": {
+      "type": "string",
+      "const": "Web"
+    },
+    "_schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "previewMode": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "_schemaName",
+    "_schemaVersion",
+    "startUrl"
+  ]
+}
