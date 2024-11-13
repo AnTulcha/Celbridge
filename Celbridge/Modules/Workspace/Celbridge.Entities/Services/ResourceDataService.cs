@@ -1,7 +1,9 @@
 using Celbridge.Entities.Models;
+using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Projects;
 using Celbridge.Workspace;
+using CommunityToolkit.Diagnostics;
 using System.Collections.Concurrent;
 
 using Path = System.IO.Path;
@@ -10,16 +12,19 @@ namespace Celbridge.Entities.Services;
 
 public class ResourceDataService : IResourceDataService, IDisposable
 {
+    private readonly ILogger<ResourceDataService> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IProjectService _projectService;
     private readonly ConcurrentDictionary<ResourceKey, ResourceData> _resourceDataCache = new(); // Cache for ResourceData objects
     private readonly ConcurrentBag<ResourceKey> _modifiedResources = new(); // Track modified resources
 
     public ResourceDataService(
+        ILogger<ResourceDataService> logger,
         IMessengerService messengerService,
         IProjectService projectService,
         IWorkspaceWrapper workspaceWrapper)
     {
+        _logger = logger;
         _messengerService = messengerService;
         _projectService = projectService;
 
@@ -136,6 +141,39 @@ public class ResourceDataService : IResourceDataService, IDisposable
             return Result<IResourceData>.Fail($"An exception occurred when loading resource data: '{resource}'")
                 .WithException(ex);
         }
+    }
+
+    public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
+    {
+        var acquireResult = AcquireResourceData(resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return defaultValue;
+        }
+        var resourceData = acquireResult.Value as ResourceData;
+        Guard.IsNotNull(resourceData);
+
+        return resourceData.GetProperty(propertyPath, defaultValue);
+    }
+
+    public T? GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
+    {
+        return GetProperty(resource, propertyPath, default(T));
+    }
+
+    public void SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
+    {
+        var acquireResult = AcquireResourceData(resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return;
+        }
+        var resourceData = acquireResult.Value as ResourceData;
+        Guard.IsNotNull(resourceData);
+
+        resourceData.SetProperty(propertyPath, newValue);
     }
 
     private string GetResourceDataPath(ResourceKey resourceKey)

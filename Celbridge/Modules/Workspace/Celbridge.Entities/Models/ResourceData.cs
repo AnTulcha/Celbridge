@@ -89,6 +89,7 @@ public class ResourceData : ObservableObject, IResourceData
             }
 
             _isModified = false; // Reset modification status after saving
+
             return Result.Ok();
         }
         catch (Exception ex)
@@ -109,12 +110,6 @@ public class ResourceData : ObservableObject, IResourceData
         return getResult.Value;
     }
 
-    public T? GetProperty<T>(string propertyName)
-        where T : notnull
-    {
-        return GetProperty<T>(propertyName, default(T));
-    }
-
     public void SetProperty<T>(string propertyName, T newValue) where T : notnull
     {
         var setResult = SetPropertyChecked(propertyName, newValue);
@@ -127,7 +122,7 @@ public class ResourceData : ObservableObject, IResourceData
         }
     }
 
-    public Result<T> GetPropertyChecked<T>(string propertyName) where T : notnull
+    private Result<T> GetPropertyChecked<T>(string propertyName) where T : notnull
     {
         try
         {
@@ -150,14 +145,20 @@ public class ResourceData : ObservableObject, IResourceData
         }
     }
 
-    /// <summary>
-    /// Sets the value of a property in the "Properties" object in the root.
-    /// </summary>
-    public Result SetPropertyChecked<T>(string propertyName, T newValue) where T : notnull
+    private Result SetPropertyChecked<T>(string propertyName, T newValue) where T : notnull
     {
         try
         {
-            _jsonData[propertyName] = JToken.FromObject(newValue);
+            var newToken = JToken.FromObject(newValue);
+
+            if (_jsonData.ContainsKey(propertyName) && 
+                _jsonData[propertyName] == newToken)
+            {
+                // No change
+                return Result.Ok();
+            }
+
+            _jsonData[propertyName] = newToken;
 
             _isModified = true;
 
