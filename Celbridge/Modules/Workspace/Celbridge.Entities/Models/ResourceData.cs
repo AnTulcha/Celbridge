@@ -8,7 +8,7 @@ using Path = System.IO.Path;
 
 namespace Celbridge.Entities.Models;
 
-public class ResourceData : ObservableObject, IResourceData
+public class ResourceData : ObservableObject
 {
     private readonly IMessengerService _messengerService;
 

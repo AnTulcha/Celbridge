@@ -11,11 +11,6 @@ public delegate void ResourcePropertyChangedNotifier(ResourceKey resource, strin
 public interface IResourceDataService
 {
     /// <summary>
-    /// Acquire resource data for a resource.
-    /// </summary>
-    Result<IResourceData> AcquireResourceData(ResourceKey resource);
-
-    /// <summary>
     /// Gets the value of a property from a resource.
     /// </summary>
     T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;

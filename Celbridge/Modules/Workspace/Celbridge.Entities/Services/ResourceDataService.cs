@@ -99,50 +99,6 @@ public class ResourceDataService : IResourceDataService, IDisposable
         return Result.Ok();
     }
 
-    private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
-    {
-        var (resource, _, _) = message;
-
-        _modifiedResources.Add(resource);
-    }
-
-    /// <summary>
-    /// Acquires a ResourceData object for the given resource key.
-    /// If it doesn't exist in the cache, it will load it from disk or create a new one.
-    /// </summary>
-    public Result<IResourceData> AcquireResourceData(ResourceKey resource)
-    {
-        if (_resourceDataCache.ContainsKey(resource))
-        {
-            var resourceData = _resourceDataCache[resource] as IResourceData;
-
-            return Result<IResourceData>.Ok(resourceData);
-        }
-
-        try
-        {
-            // Create and load the ResourceData object
-            var resourceData = new ResourceData(_messengerService);
-            string resourcePath = GetResourceDataPath(resource);
-
-            var loadResult = resourceData.Load(resource, resourcePath);
-            if (loadResult.IsFailure)
-            {
-                return Result<IResourceData>.Fail($"Failed to load resource data: {resource}")
-                    .WithErrors(loadResult);
-            }
-
-            _resourceDataCache[resource] = resourceData;
-
-            return Result<IResourceData>.Ok(resourceData);
-        }
-        catch (Exception ex)
-        {
-            return Result<IResourceData>.Fail($"An exception occurred when loading resource data: '{resource}'")
-                .WithException(ex);
-        }
-    }
-
     public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
     {
         var acquireResult = AcquireResourceData(resource);
@@ -174,6 +130,46 @@ public class ResourceDataService : IResourceDataService, IDisposable
         Guard.IsNotNull(resourceData);
 
         resourceData.SetProperty(propertyPath, newValue);
+    }
+
+    private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
+    {
+        var (resource, _, _) = message;
+
+        _modifiedResources.Add(resource);
+    }
+
+    private Result<ResourceData> AcquireResourceData(ResourceKey resource)
+    {
+        if (_resourceDataCache.ContainsKey(resource))
+        {
+            var resourceData = _resourceDataCache[resource];
+
+            return Result<ResourceData>.Ok(resourceData);
+        }
+
+        try
+        {
+            // Create and load the ResourceData object
+            var resourceData = new ResourceData(_messengerService);
+            string resourcePath = GetResourceDataPath(resource);
+
+            var loadResult = resourceData.Load(resource, resourcePath);
+            if (loadResult.IsFailure)
+            {
+                return Result<ResourceData>.Fail($"Failed to load resource data: {resource}")
+                    .WithErrors(loadResult);
+            }
+
+            _resourceDataCache[resource] = resourceData;
+
+            return Result<ResourceData>.Ok(resourceData);
+        }
+        catch (Exception ex)
+        {
+            return Result<ResourceData>.Fail($"An exception occurred when loading resource data: '{resource}'")
+                .WithException(ex);
+        }
     }
 
     private string GetResourceDataPath(ResourceKey resourceKey)
