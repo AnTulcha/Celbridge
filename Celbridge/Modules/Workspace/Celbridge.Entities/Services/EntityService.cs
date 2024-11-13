@@ -1,3 +1,5 @@
+using Celbridge.Entities.Models;
+
 namespace Celbridge.Entities.Services;
 
 public class EntityService : IEntityService, IDisposable
@@ -129,6 +131,21 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"An exception occurred when loading prototypes")
                 .WithException(ex);
         }
+    }
+
+    private Result<Entity> CreateEntity(string schemaName)
+    {
+        var getResult = _prototypeService.GetPrototype(schemaName);
+        if (getResult.IsFailure)
+        {
+            return Result<Entity>.Fail($"Failed to get prototype for schema: {schemaName}")
+                .WithErrors(getResult);
+        }
+        var prototype = getResult.Value;
+
+        var entity = Entity.Create(prototype);
+
+        return Result<Entity>.Ok(entity);
     }
 
     private bool _disposed;

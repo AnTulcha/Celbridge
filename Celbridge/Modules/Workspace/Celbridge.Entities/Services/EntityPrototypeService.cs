@@ -1,12 +1,11 @@
 using Celbridge.Entities.Models;
-using Json.Pointer;
 using System.Text.Json.Nodes;
 
 namespace Celbridge.Entities.Services;
 
 public class EntityPrototypeService
 {
-    private readonly Dictionary<string, EntityPrototype> _prototypes = new();
+    private readonly Dictionary<string, EntityData> _prototypes = new();
 
     public Result AddPrototype(string prototypeJson, EntitySchema entitySchema)
     {
@@ -28,7 +27,9 @@ public class EntityPrototypeService
             // The prototype JSON has already been validated against the schema, so there's no
             // need to do it again here.
 
-            _prototypes[schemaName] = new EntityPrototype(jsonObject, entitySchema);
+            var prototype = EntityData.Create(jsonObject, entitySchema);
+
+            _prototypes[schemaName] = prototype;
 
             return Result.Ok();
         }
@@ -39,13 +40,13 @@ public class EntityPrototypeService
         }
     }
 
-    public Result<EntityPrototype> GetPrototype(string schemaName)
+    public Result<EntityData> GetPrototype(string schemaName)
     {
         if (!_prototypes.TryGetValue(schemaName, out var prototype))
         {
-            return Result<EntityPrototype>.Fail($"Prototype for schema '{schemaName}' not found");
+            return Result<EntityData>.Fail($"Prototype for schema '{schemaName}' not found");
         }
 
-        return Result<EntityPrototype>.Ok(prototype);
+        return Result<EntityData>.Ok(prototype);
     }
 }
