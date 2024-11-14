@@ -30,11 +30,6 @@ public interface IEntityService
     void SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
 
     /// <summary>
-    /// Remaps the old resource key to a new resource key.
-    /// </summary>
-    Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource);
-
-    /// <summary>
     /// Saves all modified entities to disk asynchronously.
     /// </summary>
     Task<Result> SaveModifiedEntities();

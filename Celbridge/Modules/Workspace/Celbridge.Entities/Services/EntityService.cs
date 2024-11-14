@@ -1,4 +1,5 @@
 using Celbridge.Entities.Models;
+using Celbridge.Explorer;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Projects;
@@ -42,6 +43,8 @@ public class EntityService : IEntityService, IDisposable
         _prototypeService = serviceProvider.GetRequiredService<EntityPrototypeService>();
 
         _messengerService.Register<EntityPropertyChangedMessage>(this, OnEntityPropertyChangedMessage);
+        _messengerService.Register<ResourceKeyChangedMessage>(this, OnResourceKeyChangedMessage);
+        _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
     }
 
     public async Task<Result> InitializeAsync()
@@ -68,45 +71,6 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return Result.Ok();
-    }
-
-    public Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource)
-    {
-        try
-        {
-            if (_entityCache.ContainsKey(oldResource))
-            {
-                var entity = _entityCache[oldResource];
-
-                var newEntityPath = GetEntityDataPath(newResource);
-                entity.SetResourceKey(newResource, newEntityPath);
-
-                _entityCache[newResource] = entity;
-                _entityCache.TryRemove(oldResource, out _);
-
-                // Update the modified resources list
-                if (_modifiedEntities.Contains(oldResource))
-                {
-                    _modifiedEntities.Add(newResource);
-                    _modifiedEntities.TryTake(out oldResource);
-                }
-
-                // Rename the backing JSON file
-                string oldEntityPath = GetEntityDataPath(oldResource);
-                string newResourcePath = GetEntityDataPath(newResource);
-                if (File.Exists(oldEntityPath))
-                {
-                    File.Move(oldEntityPath, newResourcePath);
-                }
-            }
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to remap entities for resource: '{oldResource}' to '{newResource}'")
-                .WithException(ex);
-        }
     }
 
     public async Task<Result> SaveModifiedEntities()
@@ -176,6 +140,21 @@ public class EntityService : IEntityService, IDisposable
         var (resource, _, _) = message;
 
         _modifiedEntities.Add(resource);
+    }
+
+    private void OnResourceKeyChangedMessage(object recipient, ResourceKeyChangedMessage message)
+    {
+        var (sourceResource, destResource) = message;
+        var remapResult = RemapResourceKey(sourceResource, destResource);
+        if (remapResult.IsFailure)
+        {
+            _logger.LogError(remapResult.Error);
+        }
+    }
+
+    private void OnResourceRegistryUpdatedMessage(object recipient, ResourceRegistryUpdatedMessage message)
+    {
+        CleanupEntities();
     }
 
     private Result<Entity> AcquireEntity(ResourceKey resource)
@@ -365,6 +344,87 @@ public class EntityService : IEntityService, IDisposable
         var entityData = entityPrototype.DeepClone();
 
         return Result<EntityData>.Ok(entityData);
+    }
+
+    private Result CleanupEntities()
+    {
+        try
+        {
+            var projectDataFolderPath = _projectService.CurrentProject!.ProjectDataFolderPath;
+            var entitiesFolderPath = Path.Combine(projectDataFolderPath, "Entities");
+
+            if (!Directory.Exists(entitiesFolderPath))
+            {
+                return Result.Fail("The entities folder does not exist.");
+            }
+
+            var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+
+            var entityFiles = Directory.EnumerateFiles(entitiesFolderPath, "*.json", SearchOption.AllDirectories);
+            foreach (var entityFile in entityFiles)
+            {
+                var resourcePath = Path.GetRelativePath(entitiesFolderPath, entityFile);
+                resourcePath = Path.ChangeExtension(resourcePath, null);
+                var resourceKey = new ResourceKey(resourcePath);
+
+                var getResult = resourceRegistry.GetResource(resourceKey);
+                if (getResult.IsSuccess)
+                {
+                    continue;
+                }
+
+                _entityCache.TryRemove(resourceKey, out _);
+                _modifiedEntities.TryTake(out resourceKey);
+
+                File.Delete(entityFile);
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail("An exception occurred when cleaning up entities")
+                .WithException(ex);
+        }
+    }
+
+    private Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource)
+    {
+        try
+        {
+            if (_entityCache.ContainsKey(oldResource))
+            {
+                var entity = _entityCache[oldResource];
+
+                var newEntityPath = GetEntityDataPath(newResource);
+                entity.SetResourceKey(newResource, newEntityPath);
+
+                _entityCache[newResource] = entity;
+                _entityCache.TryRemove(oldResource, out _);
+
+                // Update the modified resources list
+                if (_modifiedEntities.Contains(oldResource))
+                {
+                    _modifiedEntities.Add(newResource);
+                    _modifiedEntities.TryTake(out oldResource);
+                }
+
+                // Rename the backing JSON file
+                string oldEntityPath = GetEntityDataPath(oldResource);
+                string newResourcePath = GetEntityDataPath(newResource);
+                if (File.Exists(oldEntityPath))
+                {
+                    File.Move(oldEntityPath, newResourcePath);
+                }
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to remap entities for resource: '{oldResource}' to '{newResource}'")
+                .WithException(ex);
+        }
     }
 
     private bool _disposed;
