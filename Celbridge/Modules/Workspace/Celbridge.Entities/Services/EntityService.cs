@@ -140,10 +140,10 @@ public class EntityService : IEntityService, IDisposable
             _logger.LogError(acquireResult.Error);
             return defaultValue;
         }
-        var entity = acquireResult.Value as Entity;
+        var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
-        return entity.GetProperty(propertyPath, defaultValue);
+        return entity.EntityData.GetProperty(propertyPath, defaultValue);
     }
 
     public T? GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
@@ -162,9 +162,12 @@ public class EntityService : IEntityService, IDisposable
         var entity = acquireResult.Value as Entity;
         Guard.IsNotNull(entity);
 
-        if (entity.SetProperty(propertyPath, newValue))
+        if (entity.EntityData.SetProperty(propertyPath, newValue))
         {
             _modifiedEntities.Add(resource);
+
+            var message = new EntityPropertyChangedMessage(resource, propertyPath, EntityPropertyChangeType.Update);
+            _messengerService.Send(message);
         }
     }
 
@@ -308,9 +311,7 @@ public class EntityService : IEntityService, IDisposable
             }
 
             // Create the entity and add it to the cache
-            var entity = _serviceProvider.GetRequiredService<Entity>();
-            entity.SetEntityData(entityData);
-            entity.SetResourceKey(resource, entityDataPath);
+            var entity = Entity.CreateEntity(resource, entityDataPath, entityData);
 
             _entityCache[resource] = entity;
 

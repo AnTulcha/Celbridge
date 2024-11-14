@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using CommunityToolkit.Diagnostics;
 
@@ -25,6 +26,94 @@ public class EntityData
         Guard.IsNotNull(jsonClone);
 
         return new EntityData(jsonClone, EntitySchema);
+    }
+
+    public T? GetProperty<T>(string propertyName, T? defaultValue)
+    where T : notnull
+    {
+        var getResult = GetPropertyChecked<T>(propertyName);
+        if (getResult.IsFailure)
+        {
+            return defaultValue;
+        }
+
+        return getResult.Value;
+    }
+
+    public bool SetProperty<T>(string propertyName, T newValue)
+        where T : notnull
+    {
+        var setResult = SetPropertyChecked(propertyName, newValue);
+        if (setResult.IsFailure)
+        {
+            var failure = Result<T>.Fail($"Failed to set property '{propertyName}'")
+                .WithErrors(setResult);
+
+            throw new InvalidOperationException(failure.Error);
+        }
+
+        return setResult.Value;
+    }
+
+    private Result<T> GetPropertyChecked<T>(string propertyName)
+        where T : notnull
+    {
+        try
+        {
+            if (JsonObject.ContainsKey(propertyName))
+            {
+                var valueNode = JsonObject[propertyName];
+                if (valueNode != null)
+                {
+                    T? value = valueNode.Deserialize<T>();
+                    if (value is not null)
+                    {
+                        return Result<T>.Ok(value);
+                    }
+                }
+            }
+
+            // Property value not found
+            return Result<T>.Fail();
+        }
+        catch (Exception ex)
+        {
+            return Result<T>.Fail($"An exception occurred when getting entity property '{propertyName}'")
+                .WithException(ex);
+        }
+    }
+
+    private Result<bool> SetPropertyChecked<T>(string propertyName, T newValue) where T : notnull
+    {
+        try
+        {
+            var oldNode = JsonObject[propertyName];
+            var newNode = JsonNode.Parse(JsonSerializer.Serialize(newValue));
+
+            if (oldNode is null && newNode is null)
+            {
+                // No change
+                return Result<bool>.Ok(false);
+            }
+
+            if (newNode is not null && oldNode is not null &&
+                newNode.GetValueKind() == oldNode.GetValueKind() &&
+                newNode.ToJsonString() == oldNode.ToJsonString())
+            {
+                // No change
+                return Result<bool>.Ok(false);
+            }
+
+            // Update the JSON data
+            JsonObject[propertyName] = newNode;
+
+            return Result<bool>.Ok(true);
+        }
+        catch (Exception ex)
+        {
+            return Result<bool>.Fail($"Failed to set entity property '{propertyName}'")
+                .WithException(ex);
+        }
     }
 
     public Result Copy(string fromPointer, string toPointer)
