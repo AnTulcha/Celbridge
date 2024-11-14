@@ -188,126 +188,38 @@ public class EntityService : IEntityService, IDisposable
 
         try
         {
-            EntityData? entityData = null;
-
+            // Try to load existing entity data from disk
             string entityDataPath = GetEntityDataPath(resource);
+
+            EntityData? entityData = null;
             if (File.Exists(entityDataPath))
             {
-                // Load the EntityData json
-                var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
-                if (jsonObject is null)
+                var getDataResult = LoadEntityDataFromFile(entityDataPath);
+                if (getDataResult.IsSuccess)
                 {
-                    // Log an error and fall through to create a new entity
-                    _logger.LogError($"Failed to parse entity data for resource: {resource}");
+                    entityData = getDataResult.Value;
                 }
                 else
                 {
-                    // Get the entity type from the JSON object
-                    if (jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) &&
-                        entityTypeValue?.GetValueKind() == System.Text.Json.JsonValueKind.String)
-                    {
-                        // Check if this is a valid entity type
-                        var entityType = entityTypeValue.ToString();
-                        if (!string.IsNullOrEmpty(entityType))
-                        {
-                            // Get the schema for the entity type
-                            var getSchemaResult = _schemaService.GetSchemaByEntityType(entityType);
-                            if (getSchemaResult.IsSuccess)
-                            {
-                                var entitySchema = getSchemaResult.Value;
-
-                                // Validate the data against the schema
-                                var validateResult = entitySchema.ValidateJsonObject(jsonObject);
-                                if (validateResult.IsFailure)
-                                {
-                                    // Log an error and fall through to create a new entity
-                                    _logger.LogError($"Entity data failed schema validation: {resource}");
-                                }
-                                else
-                                {
-                                    // We've passed validation so now we can create the EntityData object
-                                    entityData = EntityData.Create(jsonObject, entitySchema);
-                                }
-                            }
-                        }
-                    }
+                    _logger.LogError(getDataResult.Error);
                 }
-            }
-
-            // We were unable to load an existing EntityData object, so we need to create a new one
-            if (entityData is null)
-            {
-                EntityData? entityPrototype = null;
-
-                // Attempt to find an entity type for the resource's file extension
-                var fileExtension = Path.GetExtension(resource.ToString());
-                if (!string.IsNullOrEmpty(fileExtension))
-                {
-                    var entityTypes = _prototypeService.GetFileEntityTypes(fileExtension);
-                    if (entityTypes.Count > 0)
-                    {
-                        // Default entity type is the first in the list
-                        var entityTypeFromConfig = entityTypes[0];
-
-                        // Get the prototype for the entity type
-                        var getPrototypeResult = _prototypeService.GetPrototype(entityTypeFromConfig);
-                        if (getPrototypeResult.IsFailure)
-                        {
-                            return Result<Entity>.Fail($"Failed to get prototype for entity type: {entityTypeFromConfig}")
-                                .WithErrors(getPrototypeResult);
-                        }
-
-                        entityPrototype = getPrototypeResult.Value;
-                    }
-                }
-
-                if (entityPrototype == null)
-                {
-                    // This resource does not have a registered entity type, so we need to assign a default entity
-                    // type based on the resource type (file or folder).
-
-                    var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
-                    var path = resourceRegistry.GetResourcePath(resource);
-
-                    if (Directory.Exists(path))
-                    {
-                        // Folder resource
-                        var getPrototypeResult = _prototypeService.GetPrototype("Folder");
-                        if (getPrototypeResult.IsFailure)
-                        {
-                            return Result<Entity>.Fail($"Failed to get prototype for folder entity type")
-                                .WithErrors(getPrototypeResult);
-                        }
-
-                        entityPrototype = getPrototypeResult.Value;
-                    }
-                    else if (File.Exists(path))
-                    {
-                        // File resource
-                        var getPrototypeResult = _prototypeService.GetPrototype("File");
-                        if (getPrototypeResult.IsFailure)
-                        {
-                            return Result<Entity>.Fail($"Failed to get prototype for file entity type")
-                                .WithErrors(getPrototypeResult);
-                        }
-
-                        entityPrototype = getPrototypeResult.Value;
-                    }
-                }
-
-                if (entityPrototype is null)
-                {
-                    // We should always have a prototype at this point
-                    return Result<Entity>.Fail($"Failed to get entity prototype for resource: {resource}");
-                }
-
-                entityData = entityPrototype.DeepClone();
             }
 
             if (entityData is null)
             {
-                // We should always have an EntityData at this point
-                return Result<Entity>.Fail($"Failed to get entity prototype for resource: {resource}");
+                // We were unable to load an existing entity data, so we need to create a new one
+                var acquireResult = AcquireEntityData(resource);
+                if (acquireResult.IsSuccess)
+                {
+                    entityData = acquireResult.Value;
+                }
+                else
+                {
+                    // At this point we should always have an EntityData.
+                    // This is probably a configuration issue in the application.
+                    _logger.LogError(acquireResult.Error);
+                    return Result<Entity>.Fail($"Failed to acquire entity data for resource: {resource}");
+                }
             }
 
             // Create the entity and add it to the cache
@@ -315,7 +227,8 @@ public class EntityService : IEntityService, IDisposable
 
             _entityCache[resource] = entity;
 
-            _modifiedEntities.Add(resource);
+            // This line will always create the entity data file, instead of only when the entity is modified.
+            // _modifiedEntities.Add(resource);
 
             return Result<Entity>.Ok(entity);
         }
@@ -332,6 +245,126 @@ public class EntityService : IEntityService, IDisposable
         var path = Path.Combine(projectDataFolderPath, "Entities", $"{resourceKey}.json");
 
         return Path.GetFullPath(path);
+    }
+
+    private Result<EntityData> LoadEntityDataFromFile(string entityDataPath)
+    {
+        // Load the EntityData json
+        var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
+        if (jsonObject is null)
+        {
+            return Result<EntityData>.Fail($"Failed to parse entity data from file: '{entityDataPath}'");
+        }
+
+        // Get the entity type from the JSON object
+        if (!jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) ||
+            entityTypeValue is null ||
+            entityTypeValue?.GetValueKind() != System.Text.Json.JsonValueKind.String)
+        {
+            return Result<EntityData>.Fail($"Entity data does not contain an '_entityType' property: '{entityDataPath}'");
+        }
+
+        // Check if this is a valid entity type
+        var entityType = entityTypeValue!.ToString();
+        if (string.IsNullOrEmpty(entityType))
+        {
+            return Result<EntityData>.Fail($"'_entityType' property is empty: '{entityDataPath}'");
+        }
+
+        // Get the schema for the entity type
+        var getSchemaResult = _schemaService.GetSchemaByEntityType(entityType);
+        if (getSchemaResult.IsFailure)
+        {
+            return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
+        }
+
+        var entitySchema = getSchemaResult.Value;
+
+        // Validate the data against the schema
+        var validateResult = entitySchema.ValidateJsonObject(jsonObject);
+        if (validateResult.IsFailure)
+        {
+            return Result<EntityData>.Fail($"Entity data failed schema validation: '{entityDataPath}'");
+        }
+
+        // We've passed validation so now we can create the EntityData object
+        var entityData = EntityData.Create(jsonObject, entitySchema);
+
+        return Result<EntityData>.Ok(entityData);
+    }
+
+    private Result<EntityData> AcquireEntityData(ResourceKey resource)
+    {
+        EntityData? entityPrototype = null;
+
+        // Attempt to find an entity type for the resource's file extension
+        var fileExtension = Path.GetExtension(resource.ToString());
+        if (!string.IsNullOrEmpty(fileExtension))
+        {
+            var entityTypes = _prototypeService.GetFileEntityTypes(fileExtension);
+            if (entityTypes.Count > 0)
+            {
+                // Default entity type is the first in the list
+                var entityTypeFromConfig = entityTypes[0];
+
+                // Get the prototype for the entity type
+                var getPrototypeResult = _prototypeService.GetPrototype(entityTypeFromConfig);
+                if (getPrototypeResult.IsFailure)
+                {
+                    // No prototype was found for the entity type.
+                    // This means the prototype is missing from the configuration.
+                    return Result<EntityData>.Fail($"Failed to get prototype for entity type: {entityTypeFromConfig}");
+                }
+
+                entityPrototype = getPrototypeResult.Value;
+            }
+        }
+
+        if (entityPrototype == null)
+        {
+            // This resource does not have a registered entity type, so we need to assign a default entity
+            // type based on the resource type (file or folder).
+
+            var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+            var path = resourceRegistry.GetResourcePath(resource);
+
+            if (Directory.Exists(path))
+            {
+                // Folder resource
+                var getPrototypeResult = _prototypeService.GetPrototype("Folder");
+                if (getPrototypeResult.IsFailure)
+                {
+                    // No Folder prototype was found.
+                    // This means the prototype is missing from the configuration.
+                    return Result<EntityData>.Fail($"Failed to get prototype for Folder entity type");
+                }
+
+                entityPrototype = getPrototypeResult.Value;
+            }
+            else if (File.Exists(path))
+            {
+                // File resource
+                var getPrototypeResult = _prototypeService.GetPrototype("File");
+                if (getPrototypeResult.IsFailure)
+                {
+                    // No File prototype was found.
+                    // This means the prototype is missing from the configuration.
+                    return Result<EntityData>.Fail($"Failed to get prototype for File entity type");
+                }
+
+                entityPrototype = getPrototypeResult.Value;
+            }
+        }
+
+        if (entityPrototype is null)
+        {
+            // We should always have a prototype at this point
+            return Result<EntityData>.Fail($"Failed to get entity prototype for resource: {resource}");
+        }
+
+        var entityData = entityPrototype.DeepClone();
+
+        return Result<EntityData>.Ok(entityData);
     }
 
     private bool _disposed;
