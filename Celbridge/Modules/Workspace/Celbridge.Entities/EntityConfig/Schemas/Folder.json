@@ -3,19 +3,15 @@
   "properties": {
     "_schemaName": {
       "type": "string",
-      "const": "Web"
+      "const": "Folder"
     },
     "_schemaVersion": {
       "type": "integer",
       "const": 1
-    },
-    "previewMode": {
-      "type": "string"
     }
   },
   "required": [
     "_schemaName",
-    "_schemaVersion",
-    "startUrl"
+    "_schemaVersion"
   ]
 }

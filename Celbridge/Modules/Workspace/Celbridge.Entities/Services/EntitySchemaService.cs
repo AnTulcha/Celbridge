@@ -5,7 +5,41 @@ namespace Celbridge.Entities.Services;
 
 public class EntitySchemaService
 {
+    private const string EntityConfigFolder = "EntityConfig";
+    private const string SchemasFolder = "Schemas";
+
     private readonly Dictionary<string, EntitySchema> _schemas = new();
+
+    public async Task<Result> LoadSchemasAsync()
+    {
+        try
+        {
+            List<string> jsonContents = new List<string>();
+
+            // The Uno docs only discuss using StorageFile.GetFileFromApplicationUriAsync()
+            // to load files from the app package, but Package.Current.InstalledLocation appears
+            // to work fine on both Windows and Skia+Gtk platforms.
+            // https://platform.uno/docs/articles/features/file-management.html#support-for-storagefilegetfilefromapplicationuriasync
+            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
+            var schemasFolder = await configFolder.GetFolderAsync(SchemasFolder);
+
+            var jsonFiles = await schemasFolder.GetFilesAsync();
+            foreach (var jsonFile in jsonFiles)
+            {
+                var content = await FileIO.ReadTextAsync(jsonFile);
+
+                AddSchema(content);
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An exception occurred when loading schemas")
+                .WithException(ex);
+        }
+    }
+
 
     public Result AddSchema(string schemaJson)
     {

@@ -18,10 +18,6 @@ public class EntityService : IEntityService, IDisposable
     private readonly ConcurrentDictionary<ResourceKey, ResourceData> _resourceDataCache = new(); // Cache for ResourceData objects
     private readonly ConcurrentBag<ResourceKey> _modifiedResources = new(); // Track modified resources
 
-    private const string EntityConfigFolder = "EntityConfig";
-    private const string SchemasFolder = "Schemas";
-    private const string PrototypesFolder = "Prototypes";
-
     private EntitySchemaService _schemaService;
     private EntityPrototypeService _prototypeService;
 
@@ -44,96 +40,28 @@ public class EntityService : IEntityService, IDisposable
 
     public async Task<Result> InitializeAsync()
     {
-        var loadSchemasResult = await LoadSchemasAsync();
+        var loadSchemasResult = await _schemaService.LoadSchemasAsync();
         if (loadSchemasResult.IsFailure)
         {
-            return loadSchemasResult;
+            return Result.Fail("Failed to load schemas")
+                .WithErrors(loadSchemasResult);
         }
 
-        var loadPrototypesResult = await LoadPrototypesAsync();
+        var loadPrototypesResult = await _prototypeService.LoadPrototypesAsync(_schemaService);
         if (loadPrototypesResult.IsFailure)
         {
-            return loadPrototypesResult;
+            return Result.Fail("Failed to load prototypes")
+                .WithErrors(loadPrototypesResult);
+        }
+
+        var loadDefaultsResult = await _prototypeService.LoadFileEntityTypesAsync();
+        if (loadDefaultsResult.IsFailure)
+        {
+            return Result.Fail("Failed to load default prototypes")
+                .WithErrors(loadDefaultsResult);
         }
 
         return Result.Ok();
-    }
-
-    private async Task<Result> LoadSchemasAsync()
-    {
-        try
-        {
-            List<string> jsonContents = new List<string>();
-
-            // The Uno docs only discuss using StorageFile.GetFileFromApplicationUriAsync()
-            // to load files from the app package, but Package.Current.InstalledLocation appears
-            // to work fine on both Windows and Skia+Gtk platforms.
-            // https://platform.uno/docs/articles/features/file-management.html#support-for-storagefilegetfilefromapplicationuriasync
-            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
-            var schemasFolder = await configFolder.GetFolderAsync(SchemasFolder);
-
-            var jsonFiles = await schemasFolder.GetFilesAsync();
-            foreach (var jsonFile in jsonFiles)
-            {
-                var content = await FileIO.ReadTextAsync(jsonFile);
-
-                _schemaService.AddSchema(content);
-            }
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An exception occurred when loading schemas")
-                .WithException(ex);
-        }
-    }
-
-    private async Task<Result> LoadPrototypesAsync()
-    {
-        try
-        {
-            List<string> jsonContents = new List<string>();
-
-            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
-            var prototypesFolder = await configFolder.GetFolderAsync(PrototypesFolder);
-
-            var jsonFiles = await prototypesFolder.GetFilesAsync();
-            foreach (var jsonFile in jsonFiles)
-            {
-                var json = await FileIO.ReadTextAsync(jsonFile);
-
-                var getResult = _schemaService.GetSchemaFromJson(json);
-                if (getResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to get schema for prototype: {jsonFile.DisplayName}")
-                        .WithErrors(getResult);
-                }
-
-                var schema = getResult.Value;
-
-                var validateResult = schema.ValidateJson(json);
-                if (validateResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to validate prototype")
-                        .WithErrors(validateResult);
-                }
-
-                var addResult = _prototypeService.AddPrototype(json, schema);
-                if (addResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to add prototype: {jsonFile.DisplayName}")
-                        .WithErrors(addResult);
-                }
-            }
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An exception occurred when loading prototypes")
-                .WithException(ex);
-        }
     }
 
     private Result<Entity> CreateEntity(string schemaName)
@@ -151,9 +79,6 @@ public class EntityService : IEntityService, IDisposable
         return Result<Entity>.Ok(entity);
     }
 
-    /// <summary>
-    /// Remaps the old resource key to a new resource key.
-    /// </summary>
     public Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource)
     {
         try
@@ -193,9 +118,6 @@ public class EntityService : IEntityService, IDisposable
         }
     }
 
-    /// <summary>
-    /// Saves all modified resources to disk asynchronously.
-    /// </summary>
     public async Task<Result> SavePendingAsync()
     {
         foreach (var resourceKey in _modifiedResources)

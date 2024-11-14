@@ -1,0 +1,17 @@
+{
+  "type": "object",
+  "properties": {
+    "_schemaName": {
+      "type": "string",
+      "const": "Markdown"
+    },
+    "_schemaVersion": {
+      "type": "integer",
+      "const": 1
+    }
+  },
+  "required": [
+    "_schemaName",
+    "_schemaVersion"
+  ]
+}
