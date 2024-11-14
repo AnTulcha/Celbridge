@@ -64,12 +64,12 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
-    private Result<Entity> CreateEntity(string schemaName)
+    private Result<Entity> CreateEntity(string entityType)
     {
-        var getResult = _prototypeService.GetPrototype(schemaName);
+        var getResult = _prototypeService.GetPrototype(entityType);
         if (getResult.IsFailure)
         {
-            return Result<Entity>.Fail($"Failed to get prototype for schema: {schemaName}")
+            return Result<Entity>.Fail($"Failed to get prototype for entity type: {entityType}")
                 .WithErrors(getResult);
         }
         var prototype = getResult.Value;

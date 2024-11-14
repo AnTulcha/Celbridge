@@ -111,11 +111,11 @@ public class EntityPrototypeService
                 return Result.Fail("Failed to parse prototype JSON as an object");
             }
 
-            var schemaNameValue = jsonNode["_schemaName"] as JsonValue;
-            if (schemaNameValue?.TryGetValue(out string? schemaName) != true || 
-                string.IsNullOrEmpty(schemaName))
+            var entityTypeValue = jsonNode["_entityType"] as JsonValue;
+            if (entityTypeValue?.TryGetValue(out string? entityType) != true || 
+                string.IsNullOrEmpty(entityType))
             {
-                return Result.Fail("Schema name is missing or empty");
+                return Result.Fail("Entity type is missing or empty");
             }
 
             // The prototype JSON has already been validated against the schema, so there's no
@@ -123,7 +123,7 @@ public class EntityPrototypeService
 
             var prototype = EntityData.Create(jsonObject, entitySchema);
 
-            _prototypes[schemaName] = prototype;
+            _prototypes[entityType] = prototype;
 
             return Result.Ok();
         }
@@ -134,15 +134,13 @@ public class EntityPrototypeService
         }
     }
 
-    public Result<EntityData> GetPrototype(string schemaName)
+    public Result<EntityData> GetPrototype(string entityType)
     {
-        if (!_prototypes.TryGetValue(schemaName, out var prototype))
+        if (!_prototypes.TryGetValue(entityType, out var prototype))
         {
-            return Result<EntityData>.Fail($"Prototype for schema '{schemaName}' not found");
+            return Result<EntityData>.Fail($"Prototype for entity type '{entityType}' not found");
         }
 
         return Result<EntityData>.Ok(prototype);
     }
-
-
 }

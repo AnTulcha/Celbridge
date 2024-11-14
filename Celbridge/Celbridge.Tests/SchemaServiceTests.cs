@@ -13,8 +13,8 @@ public class SchemaServiceTests
     private string? _invalidSchemaJson;
     private string? _validDataJson;
     private string? _invalidDataJson;
-    private string? _mismatchedSchemaNameDataJson;
-    private string? _mismatchedSchemaVersionDataJson;
+    private string? _mismatchedEntityTypeDataJson;
+    private string? _mismatchedEntityVersionDataJson;
     private string? _tempSchemaFilePath;
 
     [SetUp]
@@ -22,22 +22,22 @@ public class SchemaServiceTests
     {
         _schemaService = new EntitySchemaService();
 
-        // Sample valid schema with _schemaName and _schemaVersion
+        // Sample valid schema with _entityType and _entityVersion
         _validSchemaJson = @"
         {
-            ""_schemaName"": ""TestSchema"",
-            ""_schemaVersion"": 1,
+            ""_entityType"": ""TestSchema"",
+            ""_entityVersion"": 1,
             ""type"": ""object"",
             ""properties"": {
-                ""_schemaName"": { ""type"": ""string"", ""const"": ""TestSchema"" },
-                ""_schemaVersion"": { ""type"": ""integer"", ""const"": 1 },
+                ""_entityType"": { ""type"": ""string"", ""const"": ""TestSchema"" },
+                ""_entityVersion"": { ""type"": ""integer"", ""const"": 1 },
                 ""name"": { ""type"": ""string"" },
                 ""age"": { ""type"": ""integer"" }
             },
-            ""required"": [""_schemaName"", ""_schemaVersion"", ""name"", ""age""]
+            ""required"": [""_entityType"", ""_entityVersion"", ""name"", ""age""]
         }";
 
-        // Sample invalid schema without _schemaName or _schemaVersion
+        // Sample invalid schema without _entityType or _entityVersion
         _invalidSchemaJson = @"
         {
             ""type"": ""object"",
@@ -49,26 +49,26 @@ public class SchemaServiceTests
         // Sample valid JSON data matching the schema
         _validDataJson = @"
         {
-            ""_schemaName"": ""TestSchema"",
-            ""_schemaVersion"": 1,
+            ""_entityType"": ""TestSchema"",
+            ""_entityVersion"": 1,
             ""name"": ""John Doe"",
             ""age"": 30
         }";
 
-        // Sample JSON data with mismatched _schemaName
-        _mismatchedSchemaNameDataJson = @"
+        // Sample JSON data with mismatched _entityType
+        _mismatchedEntityTypeDataJson = @"
         {
-            ""_schemaName"": ""DifferentSchema"",
-            ""_schemaVersion"": 1,
+            ""_entityType"": ""DifferentSchema"",
+            ""_entityVersion"": 1,
             ""name"": ""John Doe"",
             ""age"": 30
         }";
 
-        // Sample JSON data with mismatched _schemaVersion
-        _mismatchedSchemaVersionDataJson = @"
+        // Sample JSON data with mismatched _entityVersion
+        _mismatchedEntityVersionDataJson = @"
         {
-            ""_schemaName"": ""TestSchema"",
-            ""_schemaVersion"": 2,
+            ""_entityType"": ""TestSchema"",
+            ""_entityVersion"": 2,
             ""name"": ""John Doe"",
             ""age"": 30
         }";
@@ -107,7 +107,7 @@ public class SchemaServiceTests
     }
 
     [Test]
-    public void ValidateJsonNode_WithMatchingSchemaNameAndVersion_ShouldReturnSuccess()
+    public void ValidateJsonNode_WithMatchingEntityTypeAndVersion_ShouldReturnSuccess()
     {
         Guard.IsNotNull(_schemaService);
         Guard.IsNotNull(_validSchemaJson);
@@ -127,32 +127,32 @@ public class SchemaServiceTests
     }
 
     [Test]
-    public void ValidateJsonNode_WithMismatchedSchemaName_ShouldReturnFailure()
+    public void ValidateJsonNode_WithMismatchedEntityType_ShouldReturnFailure()
     {
         Guard.IsNotNull(_schemaService);
-        Guard.IsNotNull(_mismatchedSchemaNameDataJson);
+        Guard.IsNotNull(_mismatchedEntityTypeDataJson);
         Guard.IsNotNull(_validSchemaJson);
 
         _schemaService.AddSchema(_validSchemaJson);
-        var dataNode = JsonNode.Parse(_mismatchedSchemaNameDataJson) as JsonObject;
+        var dataNode = JsonNode.Parse(_mismatchedEntityTypeDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedSchemaNameDataJson);
+        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedEntityTypeDataJson);
         getSchema.IsSuccess.Should().BeFalse();
     }
 
     [Test]
-    public void ValidateJsonNode_WithMismatchedSchemaVersion_ShouldReturnFailure()
+    public void ValidateJsonNode_WithMismatchedEntityVersion_ShouldReturnFailure()
     {
         Guard.IsNotNull(_schemaService);
         Guard.IsNotNull(_validSchemaJson);
-        Guard.IsNotNull(_mismatchedSchemaVersionDataJson);
+        Guard.IsNotNull(_mismatchedEntityVersionDataJson);
 
         _schemaService.AddSchema(_validSchemaJson);
-        var dataNode = JsonNode.Parse(_mismatchedSchemaVersionDataJson) as JsonObject;
+        var dataNode = JsonNode.Parse(_mismatchedEntityVersionDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedSchemaVersionDataJson);
+        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedEntityVersionDataJson);
         getSchema.IsSuccess.Should().BeTrue();
         var schema = getSchema.Value;
 
@@ -161,7 +161,7 @@ public class SchemaServiceTests
     }
 
     [Test]
-    public void AddSchema_WithDuplicateSchemaName_ShouldReturnFailure()
+    public void AddSchema_WithDuplicateEntityType_ShouldReturnFailure()
     {
         Guard.IsNotNull(_schemaService);
         Guard.IsNotNull(_validSchemaJson);

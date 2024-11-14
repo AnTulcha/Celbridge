@@ -1,17 +1,17 @@
 {
   "type": "object",
   "properties": {
-    "_schemaName": {
+    "_entityType": {
       "type": "string",
       "const": "File"
     },
-    "_schemaVersion": {
+    "_entityVersion": {
       "type": "integer",
       "const": 1
     }
   },
   "required": [
-    "_schemaName",
-    "_schemaVersion"
+    "_entityType",
+    "_entityVersion"
   ]
 }

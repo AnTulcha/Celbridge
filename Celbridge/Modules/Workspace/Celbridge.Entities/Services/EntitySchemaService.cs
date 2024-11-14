@@ -40,7 +40,6 @@ public class EntitySchemaService
         }
     }
 
-
     public Result AddSchema(string schemaJson)
     {
         try
@@ -54,13 +53,13 @@ public class EntitySchemaService
 
             var entitySchema = createResult.Value;
 
-            var schemaName = entitySchema.SchemaName;
-            if (_schemas.ContainsKey(schemaName))
+            var entityType = entitySchema.EntityType;
+            if (_schemas.ContainsKey(entityType))
             {
-                return Result.Fail($"Schema '{schemaName}' already exists");
+                return Result.Fail($"Entity schema '{entityType}' already exists");
             }
 
-            _schemas[schemaName] = entitySchema;
+            _schemas[entityType] = entitySchema;
 
             return Result.Ok();
         }
@@ -71,11 +70,11 @@ public class EntitySchemaService
         }
     }
 
-    public Result<EntitySchema> GetSchemaByName(string schemaName)
+    public Result<EntitySchema> GetSchemaByEntityType(string entityType)
     {
-        if (!_schemas.TryGetValue(schemaName, out var entitySchema))
+        if (!_schemas.TryGetValue(entityType, out var entitySchema))
         {
-            return Result<EntitySchema>.Fail($"Schema '{schemaName}' not found");
+            return Result<EntitySchema>.Fail($"Schema '{entityType}' not found");
         }
 
         return Result<EntitySchema>.Ok(entitySchema);
@@ -93,19 +92,19 @@ public class EntitySchemaService
                 return Result<EntitySchema>.Fail("Failed to parse JSON as an object");
             }
 
-            if (!root.TryGetProperty("_schemaName", out var schemaNameElement) 
-                || schemaNameElement.ValueKind != JsonValueKind.String)
+            if (!root.TryGetProperty("_entityType", out var entityTypeElement) 
+                || entityTypeElement.ValueKind != JsonValueKind.String)
             {
-                return Result<EntitySchema>.Fail("Schema name not found or is not a string in JSON data");
+                return Result<EntitySchema>.Fail("Entity type not found");
             }
 
-            var schemaName = schemaNameElement.GetString();
-            if (string.IsNullOrEmpty(schemaName))
+            var entityType = entityTypeElement.GetString();
+            if (string.IsNullOrEmpty(entityType))
             {
-                return Result<EntitySchema>.Fail("Schema name is empty");
+                return Result<EntitySchema>.Fail("Entity type is empty");
             }
 
-            return GetSchemaByName(schemaName);
+            return GetSchemaByEntityType(entityType);
         }
         catch (Exception ex)
         {

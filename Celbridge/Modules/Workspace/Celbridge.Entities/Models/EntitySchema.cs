@@ -7,15 +7,15 @@ namespace Celbridge.Entities.Models;
 
 public class EntitySchema
 {
-    public string SchemaName { get; }
-    public int SchemaVersion { get; }
+    public string EntityType { get; }
+    public int EntityVersion { get; }
 
     private readonly JsonSchema _jsonSchema;
 
-    private EntitySchema(string schemaName, int schemaVersion, JsonSchema jsonSchema)
+    private EntitySchema(string entityType, int entityVersion, JsonSchema jsonSchema)
     {
-        SchemaName = schemaName;
-        SchemaVersion = schemaVersion;
+        EntityType = entityType;
+        EntityVersion = entityVersion;
         _jsonSchema = jsonSchema;
     }
 
@@ -31,44 +31,42 @@ public class EntitySchema
                 return Result<EntitySchema>.Fail("Failed to parse schema JSON as an object");
             }
 
-            // Get schema name
-            var schemaNamePointer = JsonPointer.Parse("/properties/_schemaName/const");
-            var schemaNameElement = schemaNamePointer.Evaluate(root);
-            if (schemaNameElement is null)
+            // Get entity type
+            var entityTypePointer = JsonPointer.Parse("/properties/_entityType/const");
+            var entityTypeElement = entityTypePointer.Evaluate(root);
+
+            if (entityTypeElement is null ||
+                entityTypeElement.Value.ValueKind != JsonValueKind.String)
             {
-                return Result<EntitySchema>.Fail("Schema name not found in the schema JSON");
+                return Result<EntitySchema>.Fail("Entity type element is not valid");
             }
 
-            if (schemaNameElement is not JsonElement nameElement ||
-                nameElement.ValueKind != JsonValueKind.String)
+            var entityType = entityTypeElement.Value.GetString();
+            if (string.IsNullOrEmpty(entityType))
             {
-                return Result<EntitySchema>.Fail("Schema name element is not a string");
+                return Result<EntitySchema>.Fail("Entity type is empty");
             }
 
-            var schemaName = nameElement.GetString();
-            if (string.IsNullOrEmpty(schemaName))
+            // Get entity version 
+            var entityVersionPointer = JsonPointer.Parse("/properties/_entityVersion/const");
+            var entityVersionElement = entityVersionPointer.Evaluate(root);
+
+            if (entityVersionElement is null ||
+                entityVersionElement.Value.ValueKind != JsonValueKind.Number)
             {
-                return Result<EntitySchema>.Fail("Schema name is empty");
+                return Result<EntitySchema>.Fail("Entity version element is not valid");
             }
 
-            // Get schema version 
-            var schemaVersionPointer = JsonPointer.Parse("/properties/_schemaVersion/const");
-            var schemaVersionElement = schemaVersionPointer.Evaluate(root);
-            if (schemaVersionElement is not JsonElement versionElement ||
-                versionElement.ValueKind != JsonValueKind.Number)
-            {
-                return Result<EntitySchema>.Fail("Schema version not found or is not an integer in the schema JSON");
-            }
-            var schemaVersion = versionElement.GetInt32();
+            var entityVersion = entityVersionElement.Value.GetInt32();
 
             // Create the JsonSchema object
             var jsonSchema = JsonSchema.FromText(schemaJson);
             if (jsonSchema is null)
             {
-                return Result<EntitySchema>.Fail($"Failed to parse schema '{schemaName}'");
+                return Result<EntitySchema>.Fail($"Failed to parse schema for entity type: '{entityType}'");
             }
 
-            return Result<EntitySchema>.Ok(new EntitySchema(schemaName, schemaVersion, jsonSchema));
+            return Result<EntitySchema>.Ok(new EntitySchema(entityType, entityVersion, jsonSchema));
         }
         catch (Exception ex)
         {
@@ -82,7 +80,7 @@ public class EntitySchema
         var validationResult = _jsonSchema.Evaluate(jsonObject);
         return validationResult.IsValid
             ? Result.Ok()
-            : Result.Fail($"Validation failed with schema '{SchemaName}'");
+            : Result.Fail($"Validation failed with schema '{EntityType}'");
     }
 
     public Result ValidateJson(string json)
