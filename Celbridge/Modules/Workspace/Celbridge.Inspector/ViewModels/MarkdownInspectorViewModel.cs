@@ -92,9 +92,6 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
             _entityService.SetProperty(Resource, EntityConstants.TextEditor_ShowPreview, showPreview);
 
             UpdateButtonState();
-
-            // Todo: Save the resource data on a timer
-            _entityService.SavePendingAsync();
         }
         catch (Exception ex)
         {

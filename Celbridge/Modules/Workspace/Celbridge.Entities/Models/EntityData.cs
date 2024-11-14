@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using CommunityToolkit.Diagnostics;
 
 namespace Celbridge.Entities.Models;
 
@@ -18,22 +19,12 @@ public class EntityData
         return new EntityData(jsonObject, entitySchema);
     }
 
-    public T? GetProperty<T>(ResourceKey resource, string propertyName, T? defaultValue)
-        where T : notnull
+    public EntityData DeepClone()
     {
-        throw new NotImplementedException();
-    }
+        var jsonClone = JsonObject.DeepClone() as JsonObject;
+        Guard.IsNotNull(jsonClone);
 
-    public T? GetProperty<T>(ResourceKey resource, string propertyName)
-        where T : notnull
-    {
-        throw new NotImplementedException();
-    }
-
-    public void SetProperty<T>(ResourceKey resource, string propertyName, T newValue)
-        where T : notnull
-    {
-        throw new NotImplementedException();
+        return new EntityData(jsonClone, EntitySchema);
     }
 
     public Result Copy(string fromPointer, string toPointer)

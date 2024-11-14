@@ -134,6 +134,16 @@ public class EntityPrototypeService
         }
     }
 
+    public List<string> GetFileEntityTypes(string fileExtension)
+    {
+        if (_fileEntityTypes.TryGetValue(fileExtension, out var entityTypes))
+        {
+            return entityTypes;
+        }
+
+        return new List<string>();
+    }
+
     public Result<EntityData> GetPrototype(string entityType)
     {
         if (!_prototypes.TryGetValue(entityType, out var prototype))

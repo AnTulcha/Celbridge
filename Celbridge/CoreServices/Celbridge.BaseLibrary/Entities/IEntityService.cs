@@ -35,8 +35,8 @@ public interface IEntityService
     Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource);
 
     /// <summary>
-    /// Saves all modified resources to disk asynchronously.
+    /// Saves all modified entities to disk asynchronously.
     /// </summary>
-    Task<Result> SavePendingAsync();
+    Task<Result> SaveModifiedEntities();
 }
 

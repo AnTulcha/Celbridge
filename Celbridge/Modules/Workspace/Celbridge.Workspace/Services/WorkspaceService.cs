@@ -109,17 +109,24 @@ public class WorkspaceService : IWorkspaceService, IDisposable
 
     public async Task<Result> FlushPendingSaves(double deltaTime)
     {
-        // Todo: Save the workspace state after a delay to avoid saving too frequently
-
         if (_workspaceStateIsDirty)
         {
             _workspaceStateIsDirty = false;
+            
+            // Todo: Save the workspace state after a delay to avoid saving too frequently
             var saveWorkspaceResult = await SaveWorkspaceStateAsync();
             if (saveWorkspaceResult.IsFailure)
             {
                 return Result.Fail($"Failed to save workspace state")
                     .WithErrors(saveWorkspaceResult);
             }
+        }
+
+        var saveEntitiesResult = await EntityService.SaveModifiedEntities();
+        if (saveEntitiesResult.IsFailure)
+        {
+            return Result.Fail($"Failed to save modified entities")
+                .WithErrors(saveEntitiesResult);
         }
 
         var saveDocumentsResult = await DocumentsService.SaveModifiedDocuments(deltaTime);

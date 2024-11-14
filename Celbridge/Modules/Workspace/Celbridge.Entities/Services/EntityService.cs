@@ -5,6 +5,7 @@ using Celbridge.Projects;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
 using System.Collections.Concurrent;
+using System.Text.Json.Nodes;
 
 using Path = System.IO.Path;
 
@@ -12,11 +13,14 @@ namespace Celbridge.Entities.Services;
 
 public class EntityService : IEntityService, IDisposable
 {
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EntityService> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IProjectService _projectService;
-    private readonly ConcurrentDictionary<ResourceKey, ResourceData> _resourceDataCache = new(); // Cache for ResourceData objects
-    private readonly ConcurrentBag<ResourceKey> _modifiedResources = new(); // Track modified resources
+    private readonly IWorkspaceWrapper _workspaceWrapper;
+
+    private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
+    private readonly ConcurrentBag<ResourceKey> _modifiedEntities = new(); // Track modified entities
 
     private EntitySchemaService _schemaService;
     private EntityPrototypeService _prototypeService;
@@ -28,9 +32,11 @@ public class EntityService : IEntityService, IDisposable
         IProjectService projectService,
         IWorkspaceWrapper workspaceWrapper)
     {
+        _serviceProvider = serviceProvider;
         _logger = logger;
         _messengerService = messengerService;
         _projectService = projectService;
+        _workspaceWrapper = workspaceWrapper;
 
         _schemaService = serviceProvider.GetRequiredService<EntitySchemaService>();
         _prototypeService = serviceProvider.GetRequiredService<EntityPrototypeService>();
@@ -64,48 +70,33 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
-    private Result<Entity> CreateEntity(string entityType)
-    {
-        var getResult = _prototypeService.GetPrototype(entityType);
-        if (getResult.IsFailure)
-        {
-            return Result<Entity>.Fail($"Failed to get prototype for entity type: {entityType}")
-                .WithErrors(getResult);
-        }
-        var prototype = getResult.Value;
-
-        var entity = Entity.Create(prototype);
-
-        return Result<Entity>.Ok(entity);
-    }
-
     public Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource)
     {
         try
         {
-            if (_resourceDataCache.ContainsKey(oldResource))
+            if (_entityCache.ContainsKey(oldResource))
             {
-                var resourceData = _resourceDataCache[oldResource];
+                var entity = _entityCache[oldResource];
 
-                var newResourceDataPath = GetResourceDataPath(newResource);
-                resourceData.SetResourceKey(newResource, newResourceDataPath);
+                var newEntityPath = GetEntityDataPath(newResource);
+                entity.SetResourceKey(newResource, newEntityPath);
 
-                _resourceDataCache[newResource] = resourceData;
-                _resourceDataCache.TryRemove(oldResource, out _);
+                _entityCache[newResource] = entity;
+                _entityCache.TryRemove(oldResource, out _);
 
                 // Update the modified resources list
-                if (_modifiedResources.Contains(oldResource))
+                if (_modifiedEntities.Contains(oldResource))
                 {
-                    _modifiedResources.Add(newResource);
-                    _modifiedResources.TryTake(out oldResource);
+                    _modifiedEntities.Add(newResource);
+                    _modifiedEntities.TryTake(out oldResource);
                 }
 
                 // Rename the backing JSON file
-                string oldResourcePath = GetResourceDataPath(oldResource);
-                string newResourcePath = GetResourceDataPath(newResource);
-                if (File.Exists(oldResourcePath))
+                string oldEntityPath = GetEntityDataPath(oldResource);
+                string newResourcePath = GetEntityDataPath(newResource);
+                if (File.Exists(oldEntityPath))
                 {
-                    File.Move(oldResourcePath, newResourcePath);
+                    File.Move(oldEntityPath, newResourcePath);
                 }
             }
 
@@ -113,46 +104,46 @@ public class EntityService : IEntityService, IDisposable
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to remap resource: '{oldResource}' to '{newResource}'")
+            return Result.Fail($"Failed to remap entities for resource: '{oldResource}' to '{newResource}'")
                 .WithException(ex);
         }
     }
 
-    public async Task<Result> SavePendingAsync()
+    public async Task<Result> SaveModifiedEntities()
     {
-        foreach (var resourceKey in _modifiedResources)
+        foreach (var resourceKey in _modifiedEntities)
         {
-            if (_resourceDataCache.ContainsKey(resourceKey))
+            if (_entityCache.ContainsKey(resourceKey))
             {
-                var resourceData = _resourceDataCache[resourceKey];
+                var entity = _entityCache[resourceKey];
 
-                var saveResult = await resourceData.SaveAsync();
+                var saveResult = await entity.SaveAsync();
                 if (saveResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to save resource data: '{resourceKey}'")
+                    return Result.Fail($"Failed to save entity data for resource: '{resourceKey}'")
                         .WithErrors(saveResult);
                 }
             }
         }
 
-        // Clear the modified resources list
-        _modifiedResources.Clear();
+        // Clear the modified entities list
+        _modifiedEntities.Clear();
 
         return Result.Ok();
     }
 
     public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
     {
-        var acquireResult = AcquireResourceData(resource);
+        var acquireResult = AcquireEntity(resource);
         if (acquireResult.IsFailure)
         {
             _logger.LogError(acquireResult.Error);
             return defaultValue;
         }
-        var resourceData = acquireResult.Value as ResourceData;
-        Guard.IsNotNull(resourceData);
+        var entity = acquireResult.Value as Entity;
+        Guard.IsNotNull(entity);
 
-        return resourceData.GetProperty(propertyPath, defaultValue);
+        return entity.GetProperty(propertyPath, defaultValue);
     }
 
     public T? GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
@@ -162,62 +153,182 @@ public class EntityService : IEntityService, IDisposable
 
     public void SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
     {
-        var acquireResult = AcquireResourceData(resource);
+        var acquireResult = AcquireEntity(resource);
         if (acquireResult.IsFailure)
         {
             _logger.LogError(acquireResult.Error);
             return;
         }
-        var resourceData = acquireResult.Value as ResourceData;
-        Guard.IsNotNull(resourceData);
+        var entity = acquireResult.Value as Entity;
+        Guard.IsNotNull(entity);
 
-        resourceData.SetProperty(propertyPath, newValue);
+        if (entity.SetProperty(propertyPath, newValue))
+        {
+            _modifiedEntities.Add(resource);
+        }
     }
 
     private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
     {
         var (resource, _, _) = message;
 
-        _modifiedResources.Add(resource);
+        _modifiedEntities.Add(resource);
     }
 
-    private Result<ResourceData> AcquireResourceData(ResourceKey resource)
+    private Result<Entity> AcquireEntity(ResourceKey resource)
     {
-        if (_resourceDataCache.ContainsKey(resource))
+        if (_entityCache.ContainsKey(resource))
         {
-            var resourceData = _resourceDataCache[resource];
-
-            return Result<ResourceData>.Ok(resourceData);
+            var entity = _entityCache[resource];
+            return Result<Entity>.Ok(entity);
         }
 
         try
         {
-            // Create and load the ResourceData object
-            var resourceData = new ResourceData(_messengerService);
-            string resourcePath = GetResourceDataPath(resource);
+            EntityData? entityData = null;
 
-            var loadResult = resourceData.Load(resource, resourcePath);
-            if (loadResult.IsFailure)
+            string entityDataPath = GetEntityDataPath(resource);
+            if (File.Exists(entityDataPath))
             {
-                return Result<ResourceData>.Fail($"Failed to load resource data: {resource}")
-                    .WithErrors(loadResult);
+                // Load the EntityData json
+                var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
+                if (jsonObject is null)
+                {
+                    // Log an error and fall through to create a new entity
+                    _logger.LogError($"Failed to parse entity data for resource: {resource}");
+                }
+                else
+                {
+                    // Get the entity type from the JSON object
+                    if (jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) &&
+                        entityTypeValue?.GetValueKind() == System.Text.Json.JsonValueKind.String)
+                    {
+                        // Check if this is a valid entity type
+                        var entityType = entityTypeValue.ToString();
+                        if (!string.IsNullOrEmpty(entityType))
+                        {
+                            // Get the schema for the entity type
+                            var getSchemaResult = _schemaService.GetSchemaByEntityType(entityType);
+                            if (getSchemaResult.IsSuccess)
+                            {
+                                var entitySchema = getSchemaResult.Value;
+
+                                // Validate the data against the schema
+                                var validateResult = entitySchema.ValidateJsonObject(jsonObject);
+                                if (validateResult.IsFailure)
+                                {
+                                    // Log an error and fall through to create a new entity
+                                    _logger.LogError($"Entity data failed schema validation: {resource}");
+                                }
+                                else
+                                {
+                                    // We've passed validation so now we can create the EntityData object
+                                    entityData = EntityData.Create(jsonObject, entitySchema);
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
-            _resourceDataCache[resource] = resourceData;
+            // We were unable to load an existing EntityData object, so we need to create a new one
+            if (entityData is null)
+            {
+                EntityData? entityPrototype = null;
 
-            return Result<ResourceData>.Ok(resourceData);
+                // Attempt to find an entity type for the resource's file extension
+                var fileExtension = Path.GetExtension(resource.ToString());
+                if (!string.IsNullOrEmpty(fileExtension))
+                {
+                    var entityTypes = _prototypeService.GetFileEntityTypes(fileExtension);
+                    if (entityTypes.Count > 0)
+                    {
+                        // Default entity type is the first in the list
+                        var entityTypeFromConfig = entityTypes[0];
+
+                        // Get the prototype for the entity type
+                        var getPrototypeResult = _prototypeService.GetPrototype(entityTypeFromConfig);
+                        if (getPrototypeResult.IsFailure)
+                        {
+                            return Result<Entity>.Fail($"Failed to get prototype for entity type: {entityTypeFromConfig}")
+                                .WithErrors(getPrototypeResult);
+                        }
+
+                        entityPrototype = getPrototypeResult.Value;
+                    }
+                }
+
+                if (entityPrototype == null)
+                {
+                    // This resource does not have a registered entity type, so we need to assign a default entity
+                    // type based on the resource type (file or folder).
+
+                    var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+                    var path = resourceRegistry.GetResourcePath(resource);
+
+                    if (Directory.Exists(path))
+                    {
+                        // Folder resource
+                        var getPrototypeResult = _prototypeService.GetPrototype("Folder");
+                        if (getPrototypeResult.IsFailure)
+                        {
+                            return Result<Entity>.Fail($"Failed to get prototype for folder entity type")
+                                .WithErrors(getPrototypeResult);
+                        }
+
+                        entityPrototype = getPrototypeResult.Value;
+                    }
+                    else if (File.Exists(path))
+                    {
+                        // File resource
+                        var getPrototypeResult = _prototypeService.GetPrototype("File");
+                        if (getPrototypeResult.IsFailure)
+                        {
+                            return Result<Entity>.Fail($"Failed to get prototype for file entity type")
+                                .WithErrors(getPrototypeResult);
+                        }
+
+                        entityPrototype = getPrototypeResult.Value;
+                    }
+                }
+
+                if (entityPrototype is null)
+                {
+                    // We should always have a prototype at this point
+                    return Result<Entity>.Fail($"Failed to get entity prototype for resource: {resource}");
+                }
+
+                entityData = entityPrototype.DeepClone();
+            }
+
+            if (entityData is null)
+            {
+                // We should always have an EntityData at this point
+                return Result<Entity>.Fail($"Failed to get entity prototype for resource: {resource}");
+            }
+
+            // Create the entity and add it to the cache
+            var entity = _serviceProvider.GetRequiredService<Entity>();
+            entity.SetEntityData(entityData);
+            entity.SetResourceKey(resource, entityDataPath);
+
+            _entityCache[resource] = entity;
+
+            _modifiedEntities.Add(resource);
+
+            return Result<Entity>.Ok(entity);
         }
         catch (Exception ex)
         {
-            return Result<ResourceData>.Fail($"An exception occurred when loading resource data: '{resource}'")
+            return Result<Entity>.Fail($"An exception occurred when loading entity data for resource: '{resource}'")
                 .WithException(ex);
         }
     }
 
-    private string GetResourceDataPath(ResourceKey resourceKey)
+    private string GetEntityDataPath(ResourceKey resourceKey)
     {
         var projectDataFolderPath = _projectService.CurrentProject!.ProjectDataFolderPath;
-        var path = Path.Combine(projectDataFolderPath, "ResourceData", $"{resourceKey}.json");
+        var path = Path.Combine(projectDataFolderPath, "Entities", $"{resourceKey}.json");
 
         return Path.GetFullPath(path);
     }
