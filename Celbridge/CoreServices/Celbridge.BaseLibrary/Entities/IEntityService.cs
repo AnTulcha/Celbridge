@@ -10,35 +10,33 @@ public enum EntityPropertyChangeType
     Remove
 }
 
-/// <summary>
-/// Provides methods for managing entities.
-/// </summary>
-public interface IEntityService : IDisposable
+public interface IEntityService
 {
     Task<Result> InitializeAsync();
 
     /// <summary>
-    /// Acquires an Entity instance by its ResourceKey. Creates the Entity if it does not exist.
+    /// Gets the value of a property from a resource.
     /// </summary>
-    IEntity AcquireEntity(ResourceKey resourceKey);
+    T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;
 
     /// <summary>
-    /// Marks an Entity as modified, indicating that it requires saving.
+    /// Gets the value of a property from a resource.
     /// </summary>
-    void MarkEntityModified(ResourceKey resourceKey);
+    T? GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull;
 
     /// <summary>
-    /// Remaps an existing Entity's ResourceKey to a new ResourceKey.
+    /// Sets the value of a property in a resource.
+    /// </summary>
+    void SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
+
+    /// <summary>
+    /// Remaps the old resource key to a new resource key.
     /// </summary>
     Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource);
 
     /// <summary>
-    /// Saves all modified Entity instances to disk asynchronously.
+    /// Saves all modified resources to disk asynchronously.
     /// </summary>
     Task<Result> SavePendingAsync();
-
-    /// <summary>
-    /// Destroys an Entity, removing it from the service and broadcasting a destruction event.
-    /// </summary>
-    void DestroyEntity(ResourceKey resourceKey);
 }
+

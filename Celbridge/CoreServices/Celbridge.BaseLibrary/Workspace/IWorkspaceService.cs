@@ -61,11 +61,6 @@ public interface IWorkspaceService
     IDataTransferService DataTransferService { get; }
 
     /// <summary>
-    /// Returns the Resource Data Service associated with the workspace.
-    /// </summary>
-    IResourceDataService ResourceDataService { get; }
-
-    /// <summary>
     /// Returns the Entity Service associated with the workspace.
     /// </summary>
     IEntityService EntityService { get; }

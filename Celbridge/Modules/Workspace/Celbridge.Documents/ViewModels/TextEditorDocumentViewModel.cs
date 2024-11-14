@@ -14,7 +14,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     private readonly ILogger<TextEditorDocumentViewModel> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IDocumentsService _documentsService;
-    private readonly IResourceDataService _resourceDataService;
+    private readonly IEntityService _entityService;
 
     private ResourceKey _fileResource;
 
@@ -32,7 +32,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
         _logger = logger;
         _messengerService = messengerService;
         _documentsService = workspaceWrapper.WorkspaceService.DocumentsService;
-        _resourceDataService = workspaceWrapper.WorkspaceService.ResourceDataService;
+        _entityService = workspaceWrapper.WorkspaceService.EntityService;
     }
 
     public void SetFileResource(ResourceKey fileResource)
@@ -73,8 +73,8 @@ public partial class TextEditorDocumentViewModel : ObservableObject
             return;
         }
 
-        if (propertyPath == ResourceDataConstants.TextEditor_ShowEditor ||
-            propertyPath == ResourceDataConstants.TextEditor_ShowPreview)
+        if (propertyPath == EntityConstants.TextEditor_ShowEditor ||
+            propertyPath == EntityConstants.TextEditor_ShowPreview)
         {
             UpdatePanelVisibility();
         }
@@ -84,8 +84,8 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     {
         try
         {
-            ShowEditor = _resourceDataService.GetProperty(_fileResource, ResourceDataConstants.TextEditor_ShowEditor, true);
-            ShowPreview = _resourceDataService.GetProperty(_fileResource, ResourceDataConstants.TextEditor_ShowPreview, true);
+            ShowEditor = _entityService.GetProperty(_fileResource, EntityConstants.TextEditor_ShowEditor, true);
+            ShowPreview = _entityService.GetProperty(_fileResource, EntityConstants.TextEditor_ShowPreview, true);
         }
         catch (Exception ex)
         {

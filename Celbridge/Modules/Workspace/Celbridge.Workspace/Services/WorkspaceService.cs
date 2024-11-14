@@ -30,7 +30,6 @@ public class WorkspaceService : IWorkspaceService, IDisposable
     public IExplorerService ExplorerService { get; }
     public IStatusService StatusService { get; }
     public IDataTransferService DataTransferService { get; }
-    public IResourceDataService ResourceDataService { get; }
     public IEntityService EntityService { get; }
     public IGenerativeAIService GenerativeAIService { get; }
 
@@ -57,7 +56,6 @@ public class WorkspaceService : IWorkspaceService, IDisposable
         ExplorerService = serviceProvider.GetRequiredService<IExplorerService>();
         StatusService = serviceProvider.GetRequiredService<IStatusService>();
         DataTransferService = serviceProvider.GetRequiredService<IDataTransferService>();
-        ResourceDataService = serviceProvider.GetRequiredService<IResourceDataService>();
         EntityService = serviceProvider.GetRequiredService<IEntityService>();
         GenerativeAIService = serviceProvider.GetRequiredService<IGenerativeAIService>();
 
@@ -176,7 +174,6 @@ public class WorkspaceService : IWorkspaceService, IDisposable
                 (ExplorerService as IDisposable)!.Dispose();
                 (StatusService as IDisposable)!.Dispose();
                 (DataTransferService as IDisposable)!.Dispose();
-                (ResourceDataService as IDisposable)!.Dispose();
                 (EntityService as IDisposable)!.Dispose();
                 (GenerativeAIService as IDisposable)!.Dispose();
             }
