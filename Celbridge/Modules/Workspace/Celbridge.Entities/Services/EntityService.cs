@@ -18,8 +18,9 @@ public class EntityService : IEntityService, IDisposable
     private readonly ConcurrentDictionary<ResourceKey, ResourceData> _resourceDataCache = new(); // Cache for ResourceData objects
     private readonly ConcurrentBag<ResourceKey> _modifiedResources = new(); // Track modified resources
 
-    private const string SchemaPackageFolder = "Schemas";
-    private const string PrototypePackageFolder = "Prototypes";
+    private const string EntityConfigFolder = "EntityConfig";
+    private const string SchemasFolder = "Schemas";
+    private const string PrototypesFolder = "Prototypes";
 
     private EntitySchemaService _schemaService;
     private EntityPrototypeService _prototypeService;
@@ -68,7 +69,8 @@ public class EntityService : IEntityService, IDisposable
             // to load files from the app package, but Package.Current.InstalledLocation appears
             // to work fine on both Windows and Skia+Gtk platforms.
             // https://platform.uno/docs/articles/features/file-management.html#support-for-storagefilegetfilefromapplicationuriasync
-            var schemasFolder = await Package.Current.InstalledLocation.GetFolderAsync(SchemaPackageFolder);
+            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
+            var schemasFolder = await configFolder.GetFolderAsync(SchemasFolder);
 
             var jsonFiles = await schemasFolder.GetFilesAsync();
             foreach (var jsonFile in jsonFiles)
@@ -93,7 +95,8 @@ public class EntityService : IEntityService, IDisposable
         {
             List<string> jsonContents = new List<string>();
 
-            var prototypesFolder = await Package.Current.InstalledLocation.GetFolderAsync(PrototypePackageFolder);
+            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
+            var prototypesFolder = await configFolder.GetFolderAsync(PrototypesFolder);
 
             var jsonFiles = await prototypesFolder.GetFilesAsync();
             foreach (var jsonFile in jsonFiles)

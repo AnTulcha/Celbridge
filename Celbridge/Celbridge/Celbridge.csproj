@@ -32,10 +32,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\Modules\Workspace\Celbridge.Entities\Prototypes\**" Link="Prototypes\%(RecursiveDir)%(FileName)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\Modules\Workspace\Celbridge.Entities\Schemas\**" Link="Schemas\%(RecursiveDir)%(FileName)%(Extension)">
+    <Content Include="..\Modules\Workspace\Celbridge.Entities\EntityConfig\**" Link="EntityConfig\%(RecursiveDir)%(FileName)%(Extension)">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

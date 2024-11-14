@@ -23,8 +23,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Prototypes\**" />
-    <Content Include="Schemas\**" />
+    <Content Include="EntityConfig\**" />
   </ItemGroup>
 
   <ItemGroup>
