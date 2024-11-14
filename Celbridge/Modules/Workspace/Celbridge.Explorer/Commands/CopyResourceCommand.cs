@@ -248,7 +248,7 @@ public class CopyResourceCommand : CommandBase, ICopyResourceCommand
                 File.Move(filePathA, filePathB);
 
                 // Notify opened documents that the resource key for this resource has changed
-                var message = new ResourceKeyChangedMessage(resourceA, resourceB, filePathB);
+                var message = new ResourceKeyChangedMessage(resourceA, resourceB);
                 _messengerService.Send(message);
             }
 
@@ -403,7 +403,7 @@ public class CopyResourceCommand : CommandBase, ICopyResourceCommand
             var destResource = sourceResource.ToString().Replace(folderResourceA, folderResourceB);
             var destPath = resourceRegistry.GetResourcePath(destResource);
 
-            var message = new ResourceKeyChangedMessage(sourceResource, destResource, destPath);
+            var message = new ResourceKeyChangedMessage(sourceResource, destResource);
             _messengerService.Send(message);
         }
     }
