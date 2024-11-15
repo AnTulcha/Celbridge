@@ -40,37 +40,7 @@ public class EntitySchemaRegistry
         }
     }
 
-    public Result AddSchema(string schemaJson)
-    {
-        try
-        {
-            var createResult = EntitySchema.FromJson(schemaJson);
-            if (!createResult.IsSuccess)
-            {
-                return Result.Fail("Failed to create entity schema from JSON")
-                    .WithErrors(createResult);
-            }
-
-            var entitySchema = createResult.Value;
-
-            var entityType = entitySchema.EntityType;
-            if (_schemas.ContainsKey(entityType))
-            {
-                return Result.Fail($"Entity schema '{entityType}' already exists");
-            }
-
-            _schemas[entityType] = entitySchema;
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail("An exception occurred when adding the schema.")
-                .WithException(ex);
-        }
-    }
-
-    public Result<EntitySchema> GetSchemaByEntityType(string entityType)
+    public Result<EntitySchema> GetSchemaForEntityType(string entityType)
     {
         if (!_schemas.TryGetValue(entityType, out var entitySchema))
         {
@@ -104,11 +74,41 @@ public class EntitySchemaRegistry
                 return Result<EntitySchema>.Fail("Entity type is empty");
             }
 
-            return GetSchemaByEntityType(entityType);
+            return GetSchemaForEntityType(entityType);
         }
         catch (Exception ex)
         {
             return Result<EntitySchema>.Fail("An exception occurred when getting schema from JSON.")
+                .WithException(ex);
+        }
+    }
+
+    private Result AddSchema(string schemaJson)
+    {
+        try
+        {
+            var createResult = EntitySchema.FromJson(schemaJson);
+            if (!createResult.IsSuccess)
+            {
+                return Result.Fail("Failed to create entity schema from JSON")
+                    .WithErrors(createResult);
+            }
+
+            var entitySchema = createResult.Value;
+
+            var entityType = entitySchema.EntityType;
+            if (_schemas.ContainsKey(entityType))
+            {
+                return Result.Fail($"Entity schema '{entityType}' already exists");
+            }
+
+            _schemas[entityType] = entitySchema;
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail("An exception occurred when adding the schema.")
                 .WithException(ex);
         }
     }
