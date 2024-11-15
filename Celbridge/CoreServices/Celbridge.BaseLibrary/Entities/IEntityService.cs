@@ -15,6 +15,22 @@ public interface IEntityService
     Task<Result> InitializeAsync();
 
     /// <summary>
+    /// Gets the folder path where entities are stored.
+    /// </summary>
+    public string GetEntitiesFolderPath();
+
+    /// <summary>
+    /// Returns the absolute path of the Entity Data file for a resource.
+    /// The path will be generated regardless of whether the resource or Entity Data file actually exist.
+    /// </summary>
+    string GetEntityDataPath(ResourceKey resource);
+
+    /// <summary>
+    /// Returns the project relative path of the Entity Data file for a resource.
+    /// </summary>
+    string GetEntityDataRelativePath(ResourceKey resource);
+
+    /// <summary>
     /// Gets the value of a property from a resource.
     /// </summary>
     T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;

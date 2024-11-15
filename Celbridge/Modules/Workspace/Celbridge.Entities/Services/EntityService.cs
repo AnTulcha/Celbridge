@@ -1,3 +1,4 @@
+using Celbridge.Core;
 using Celbridge.Entities.Models;
 using Celbridge.Explorer;
 using Celbridge.Logging;
@@ -71,6 +72,26 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return Result.Ok();
+    }
+
+    public string GetEntitiesFolderPath()
+    {
+        var projectDataFolderPath = _projectService.CurrentProject!.ProjectDataFolderPath;
+        var path = Path.Combine(projectDataFolderPath, FileNameConstants.EntitiesFolder);
+        return path;
+    }
+
+    public string GetEntityDataPath(ResourceKey resource)
+    {
+        var entitiesFolderPath = GetEntitiesFolderPath();
+        var path = Path.Combine(entitiesFolderPath, $"{resource}.json");
+        return Path.GetFullPath(path);
+    }
+
+    public string GetEntityDataRelativePath(ResourceKey resource)
+    {
+        var relativePath = $"{FileNameConstants.ProjectDataFolder}/{FileNameConstants.EntitiesFolder}/{resource}.json";
+        return relativePath;
     }
 
     public async Task<Result> SaveModifiedEntities()
@@ -218,14 +239,6 @@ public class EntityService : IEntityService, IDisposable
         }
     }
 
-    private string GetEntityDataPath(ResourceKey resourceKey)
-    {
-        var projectDataFolderPath = _projectService.CurrentProject!.ProjectDataFolderPath;
-        var path = Path.Combine(projectDataFolderPath, "Entities", $"{resourceKey}.json");
-
-        return Path.GetFullPath(path);
-    }
-
     private Result<EntityData> LoadEntityDataFromFile(string entityDataPath)
     {
         // Load the EntityData json
@@ -360,15 +373,19 @@ public class EntityService : IEntityService, IDisposable
 
             var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
 
+            // Find all the entity files in the Entities folder.
+            // Note that an entity .json file may correspond to either a file or folder resource. 
             var entityFiles = Directory.EnumerateFiles(entitiesFolderPath, "*.json", SearchOption.AllDirectories);
             foreach (var entityFile in entityFiles)
             {
-                var resourcePath = Path.GetRelativePath(entitiesFolderPath, entityFile);
-                resourcePath = Path.ChangeExtension(resourcePath, null);
-                var resourceKey = new ResourceKey(resourcePath);
+                // Get the resource key from the entity file path
+                var relativeResourcePath = Path.GetRelativePath(entitiesFolderPath, entityFile);
+                relativeResourcePath = Path.ChangeExtension(relativeResourcePath, null);
+                var resourceKey = new ResourceKey(relativeResourcePath);
 
-                var getResult = resourceRegistry.GetResource(resourceKey);
-                if (getResult.IsSuccess)
+                // Get the resource path (may be a file or a folder)
+                var resourcePath = resourceRegistry.GetResourcePath(resourceKey);
+                if (Path.Exists(resourcePath))
                 {
                     continue;
                 }
