@@ -25,8 +25,8 @@ public class EntityService : IEntityService, IDisposable
     private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
     private readonly ConcurrentDictionary<ResourceKey, bool> _modifiedEntities = new(); // Track modified entities
 
-    private EntitySchemaService _schemaService;
-    private EntityPrototypeService _prototypeService;
+    private EntitySchemaRegistry _schemaRegistry;
+    private EntityPrototypeRegistry _prototypeRegistry;
 
     public EntityService(
         IServiceProvider serviceProvider,
@@ -41,29 +41,29 @@ public class EntityService : IEntityService, IDisposable
         _projectService = projectService;
         _workspaceWrapper = workspaceWrapper;
 
-        _schemaService = serviceProvider.GetRequiredService<EntitySchemaService>();
-        _prototypeService = serviceProvider.GetRequiredService<EntityPrototypeService>();
+        _schemaRegistry = serviceProvider.GetRequiredService<EntitySchemaRegistry>();
+        _prototypeRegistry = serviceProvider.GetRequiredService<EntityPrototypeRegistry>();
 
         _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
     }
 
     public async Task<Result> InitializeAsync()
     {
-        var loadSchemasResult = await _schemaService.LoadSchemasAsync();
+        var loadSchemasResult = await _schemaRegistry.LoadSchemasAsync();
         if (loadSchemasResult.IsFailure)
         {
             return Result.Fail("Failed to load schemas")
                 .WithErrors(loadSchemasResult);
         }
 
-        var loadPrototypesResult = await _prototypeService.LoadPrototypesAsync(_schemaService);
+        var loadPrototypesResult = await _prototypeRegistry.LoadPrototypesAsync(_schemaRegistry);
         if (loadPrototypesResult.IsFailure)
         {
             return Result.Fail("Failed to load prototypes")
                 .WithErrors(loadPrototypesResult);
         }
 
-        var loadDefaultsResult = await _prototypeService.LoadFileEntityTypesAsync();
+        var loadDefaultsResult = await _prototypeRegistry.LoadFileEntityTypesAsync();
         if (loadDefaultsResult.IsFailure)
         {
             return Result.Fail("Failed to load default prototypes")
@@ -337,7 +337,7 @@ public class EntityService : IEntityService, IDisposable
         }
 
         // Get the schema for the entity type
-        var getSchemaResult = _schemaService.GetSchemaByEntityType(entityType);
+        var getSchemaResult = _schemaRegistry.GetSchemaByEntityType(entityType);
         if (getSchemaResult.IsFailure)
         {
             return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
@@ -366,14 +366,14 @@ public class EntityService : IEntityService, IDisposable
         var fileExtension = Path.GetExtension(resource.ToString());
         if (!string.IsNullOrEmpty(fileExtension))
         {
-            var entityTypes = _prototypeService.GetFileEntityTypes(fileExtension);
+            var entityTypes = _prototypeRegistry.GetFileEntityTypes(fileExtension);
             if (entityTypes.Count > 0)
             {
                 // Default entity type is the first in the list
                 var entityTypeFromConfig = entityTypes[0];
 
                 // Get the prototype for the entity type
-                var getPrototypeResult = _prototypeService.GetPrototype(entityTypeFromConfig);
+                var getPrototypeResult = _prototypeRegistry.GetPrototype(entityTypeFromConfig);
                 if (getPrototypeResult.IsFailure)
                 {
                     // No prototype was found for the entity type.
@@ -396,7 +396,7 @@ public class EntityService : IEntityService, IDisposable
             if (Directory.Exists(path))
             {
                 // Folder resource
-                var getPrototypeResult = _prototypeService.GetPrototype("Folder");
+                var getPrototypeResult = _prototypeRegistry.GetPrototype("Folder");
                 if (getPrototypeResult.IsFailure)
                 {
                     // No Folder prototype was found.
@@ -409,7 +409,7 @@ public class EntityService : IEntityService, IDisposable
             else if (File.Exists(path))
             {
                 // File resource
-                var getPrototypeResult = _prototypeService.GetPrototype("File");
+                var getPrototypeResult = _prototypeRegistry.GetPrototype("File");
                 if (getPrototypeResult.IsFailure)
                 {
                     // No File prototype was found.

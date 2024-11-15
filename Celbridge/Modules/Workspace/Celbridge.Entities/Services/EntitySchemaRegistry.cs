@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Celbridge.Entities.Services;
 
-public class EntitySchemaService
+public class EntitySchemaRegistry
 {
     private const string EntityConfigFolder = "EntityConfig";
     private const string SchemasFolder = "Schemas";

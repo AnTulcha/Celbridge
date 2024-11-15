@@ -5,9 +5,9 @@ using System.Text.Json.Nodes;
 namespace Celbridge.Tests;
 
 [TestFixture]
-public class SchemaServiceTests
+public class SchemaRegistryTests
 {
-    private EntitySchemaService? _schemaService;
+    private EntitySchemaRegistry? _schemaRegistry;
 
     private string? _validSchemaJson;
     private string? _invalidSchemaJson;
@@ -20,7 +20,7 @@ public class SchemaServiceTests
     [SetUp]
     public void SetUp()
     {
-        _schemaService = new EntitySchemaService();
+        _schemaRegistry = new EntitySchemaRegistry();
 
         // Sample valid schema with _entityType and _entityVersion
         _validSchemaJson = @"
@@ -89,36 +89,36 @@ public class SchemaServiceTests
     [Test]
     public void AddSchema_WithValidSchema_ShouldReturnSuccess()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_validSchemaJson);
 
-        var result = _schemaService.AddSchema(_validSchemaJson);
+        var result = _schemaRegistry.AddSchema(_validSchemaJson);
         result.IsSuccess.Should().BeTrue();
     }
 
     [Test]
     public void AddSchema_WithInvalidSchema_ShouldReturnFailure()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_invalidSchemaJson);
 
-        var result = _schemaService.AddSchema(_invalidSchemaJson);
+        var result = _schemaRegistry.AddSchema(_invalidSchemaJson);
         result.IsSuccess.Should().BeFalse();
     }
 
     [Test]
     public void ValidateJsonNode_WithMatchingEntityTypeAndVersion_ShouldReturnSuccess()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_validSchemaJson);
         Guard.IsNotNull(_validDataJson);
 
-        _schemaService.AddSchema(_validSchemaJson);
+        _schemaRegistry.AddSchema(_validSchemaJson);
 
         var dataNode = JsonNode.Parse(_validDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var getSchema = _schemaService.GetSchemaFromJson(_validDataJson);
+        var getSchema = _schemaRegistry.GetSchemaFromJson(_validDataJson);
         getSchema.IsSuccess.Should().BeTrue();
         var schema = getSchema.Value;
 
@@ -129,30 +129,30 @@ public class SchemaServiceTests
     [Test]
     public void ValidateJsonNode_WithMismatchedEntityType_ShouldReturnFailure()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_mismatchedEntityTypeDataJson);
         Guard.IsNotNull(_validSchemaJson);
 
-        _schemaService.AddSchema(_validSchemaJson);
+        _schemaRegistry.AddSchema(_validSchemaJson);
         var dataNode = JsonNode.Parse(_mismatchedEntityTypeDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedEntityTypeDataJson);
+        var getSchema = _schemaRegistry.GetSchemaFromJson(_mismatchedEntityTypeDataJson);
         getSchema.IsSuccess.Should().BeFalse();
     }
 
     [Test]
     public void ValidateJsonNode_WithMismatchedEntityVersion_ShouldReturnFailure()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_validSchemaJson);
         Guard.IsNotNull(_mismatchedEntityVersionDataJson);
 
-        _schemaService.AddSchema(_validSchemaJson);
+        _schemaRegistry.AddSchema(_validSchemaJson);
         var dataNode = JsonNode.Parse(_mismatchedEntityVersionDataJson) as JsonObject;
         Guard.IsNotNull(dataNode);
 
-        var getSchema = _schemaService.GetSchemaFromJson(_mismatchedEntityVersionDataJson);
+        var getSchema = _schemaRegistry.GetSchemaFromJson(_mismatchedEntityVersionDataJson);
         getSchema.IsSuccess.Should().BeTrue();
         var schema = getSchema.Value;
 
@@ -163,11 +163,11 @@ public class SchemaServiceTests
     [Test]
     public void AddSchema_WithDuplicateEntityType_ShouldReturnFailure()
     {
-        Guard.IsNotNull(_schemaService);
+        Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_validSchemaJson);
 
-        _schemaService.AddSchema(_validSchemaJson);
-        var result = _schemaService.AddSchema(_validSchemaJson);
+        _schemaRegistry.AddSchema(_validSchemaJson);
+        var result = _schemaRegistry.AddSchema(_validSchemaJson);
         result.IsSuccess.Should().BeFalse();
     }
 }

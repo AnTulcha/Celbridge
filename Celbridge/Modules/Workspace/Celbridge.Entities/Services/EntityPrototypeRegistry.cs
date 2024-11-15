@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace Celbridge.Entities.Services;
 
-public class EntityPrototypeService
+public class EntityPrototypeRegistry
 {
     private const string EntityConfigFolder = "EntityConfig";
     private const string PrototypesFolder = "Prototypes";
@@ -13,7 +13,7 @@ public class EntityPrototypeService
     private readonly Dictionary<string, EntityData> _prototypes = new();
     private readonly Dictionary<string, List<string>> _fileEntityTypes = new();
 
-    public async Task<Result> LoadPrototypesAsync(EntitySchemaService schemaService)
+    public async Task<Result> LoadPrototypesAsync(EntitySchemaRegistry schemaRegistry)
     {
         try
         {
@@ -27,7 +27,7 @@ public class EntityPrototypeService
             {
                 var json = await FileIO.ReadTextAsync(jsonFile);
 
-                var getResult = schemaService.GetSchemaFromJson(json);
+                var getResult = schemaRegistry.GetSchemaFromJson(json);
                 if (getResult.IsFailure)
                 {
                     return Result.Fail($"Failed to get schema for prototype: {jsonFile.DisplayName}")
