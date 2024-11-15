@@ -7,7 +7,7 @@ using Celbridge.Projects;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 
 using Path = System.IO.Path;
@@ -27,6 +27,11 @@ public class EntityService : IEntityService, IDisposable
 
     private EntitySchemaRegistry _schemaRegistry;
     private EntityPrototypeRegistry _prototypeRegistry;
+
+    private static JsonSerializerOptions _serializationOptions = new()
+    {
+        WriteIndented = true
+    };
 
     public EntityService(
         IServiceProvider serviceProvider,
@@ -101,7 +106,7 @@ public class EntityService : IEntityService, IDisposable
             {
                 var entity = _entityCache[resourceKey];
 
-                var saveResult = await entity.SaveAsync();
+                var saveResult = await SaveEntityDataFileAsync(entity);
                 if (saveResult.IsFailure)
                 {
                     return Result.Fail($"Failed to save entity data for resource: '{resourceKey}'")
@@ -267,7 +272,7 @@ public class EntityService : IEntityService, IDisposable
             EntityData? entityData = null;
             if (File.Exists(entityDataPath))
             {
-                var getDataResult = LoadEntityDataFromFile(entityDataPath);
+                var getDataResult = LoadEntityDataFile(entityDataPath);
                 if (getDataResult.IsSuccess)
                 {
                     entityData = getDataResult.Value;
@@ -310,52 +315,6 @@ public class EntityService : IEntityService, IDisposable
             return Result<Entity>.Fail($"An exception occurred when loading entity data for resource: '{resource}'")
                 .WithException(ex);
         }
-    }
-
-    private Result<EntityData> LoadEntityDataFromFile(string entityDataPath)
-    {
-        // Load the EntityData json
-        var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
-        if (jsonObject is null)
-        {
-            return Result<EntityData>.Fail($"Failed to parse entity data from file: '{entityDataPath}'");
-        }
-
-        // Get the entity type from the JSON object
-        if (!jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) ||
-            entityTypeValue is null ||
-            entityTypeValue?.GetValueKind() != System.Text.Json.JsonValueKind.String)
-        {
-            return Result<EntityData>.Fail($"Entity data does not contain an '_entityType' property: '{entityDataPath}'");
-        }
-
-        // Check if this is a valid entity type
-        var entityType = entityTypeValue!.ToString();
-        if (string.IsNullOrEmpty(entityType))
-        {
-            return Result<EntityData>.Fail($"'_entityType' property is empty: '{entityDataPath}'");
-        }
-
-        // Get the schema for the entity type
-        var getSchemaResult = _schemaRegistry.GetSchemaByEntityType(entityType);
-        if (getSchemaResult.IsFailure)
-        {
-            return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
-        }
-
-        var entitySchema = getSchemaResult.Value;
-
-        // Validate the data against the schema
-        var validateResult = entitySchema.ValidateJsonObject(jsonObject);
-        if (validateResult.IsFailure)
-        {
-            return Result<EntityData>.Fail($"Entity data failed schema validation: '{entityDataPath}'");
-        }
-
-        // We've passed validation so now we can create the EntityData object
-        var entityData = EntityData.Create(jsonObject, entitySchema);
-
-        return Result<EntityData>.Ok(entityData);
     }
 
     private Result<EntityData> AcquireEntityData(ResourceKey resource)
@@ -430,6 +389,82 @@ public class EntityService : IEntityService, IDisposable
         var entityData = entityPrototype.DeepClone();
 
         return Result<EntityData>.Ok(entityData);
+    }
+
+    private Result<EntityData> LoadEntityDataFile(string entityDataPath)
+    {
+        // Load the EntityData json
+        var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
+        if (jsonObject is null)
+        {
+            return Result<EntityData>.Fail($"Failed to parse entity data from file: '{entityDataPath}'");
+        }
+
+        // Get the entity type from the JSON object
+        if (!jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) ||
+            entityTypeValue is null ||
+            entityTypeValue?.GetValueKind() != System.Text.Json.JsonValueKind.String)
+        {
+            return Result<EntityData>.Fail($"Entity data does not contain an '_entityType' property: '{entityDataPath}'");
+        }
+
+        // Check if this is a valid entity type
+        var entityType = entityTypeValue!.ToString();
+        if (string.IsNullOrEmpty(entityType))
+        {
+            return Result<EntityData>.Fail($"'_entityType' property is empty: '{entityDataPath}'");
+        }
+
+        // Get the schema for the entity type
+        var getSchemaResult = _schemaRegistry.GetSchemaByEntityType(entityType);
+        if (getSchemaResult.IsFailure)
+        {
+            return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
+        }
+
+        var entitySchema = getSchemaResult.Value;
+
+        // Validate the data against the schema
+        var validateResult = entitySchema.ValidateJsonObject(jsonObject);
+        if (validateResult.IsFailure)
+        {
+            return Result<EntityData>.Fail($"Entity data failed schema validation: '{entityDataPath}'");
+        }
+
+        // We've passed validation so now we can create the EntityData object
+        var entityData = EntityData.Create(jsonObject, entitySchema);
+
+        return Result<EntityData>.Ok(entityData);
+    }
+
+    private async Task<Result> SaveEntityDataFileAsync(Entity entity)
+    {
+        try
+        {
+            Guard.IsNotNull(entity.EntityData);
+
+            var jsonContent = JsonSerializer.Serialize(entity.EntityData.JsonObject, _serializationOptions);
+
+            var folder = Path.GetDirectoryName(entity.EntityDataPath);
+            Guard.IsNotNull(folder);
+
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            using (var writer = new StreamWriter(entity.EntityDataPath))
+            {
+                await writer.WriteAsync(jsonContent);
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to save entity data for '{entity.Resource}'")
+                .WithException(ex);
+        }
     }
 
     private Result CleanupEntities()
