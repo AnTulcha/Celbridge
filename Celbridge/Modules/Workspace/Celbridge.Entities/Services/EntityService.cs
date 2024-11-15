@@ -71,7 +71,7 @@ public class EntityService : IEntityService, IDisposable
         var loadDefaultsResult = await _prototypeRegistry.LoadFileEntityTypesAsync();
         if (loadDefaultsResult.IsFailure)
         {
-            return Result.Fail("Failed to load default prototypes")
+            return Result.Fail("Failed to load file entity types")
                 .WithErrors(loadDefaultsResult);
         }
 
@@ -416,7 +416,7 @@ public class EntityService : IEntityService, IDisposable
         }
 
         // Get the schema for the entity type
-        var getSchemaResult = _schemaRegistry.GetSchemaByEntityType(entityType);
+        var getSchemaResult = _schemaRegistry.GetSchemaForEntityType(entityType);
         if (getSchemaResult.IsFailure)
         {
             return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");

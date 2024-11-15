@@ -68,7 +68,7 @@ public class WorkspaceLoader
         }
 
         //
-        // Initialize the entity system.
+        // Initialize the entity service.
         //
         var entityService = workspaceService.EntityService;
         var initEntitiesResult = await entityService.InitializeAsync();
