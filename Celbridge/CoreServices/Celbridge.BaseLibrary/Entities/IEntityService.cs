@@ -49,5 +49,15 @@ public interface IEntityService
     /// Saves all modified entities to disk asynchronously.
     /// </summary>
     Task<Result> SaveModifiedEntities();
+
+    /// <summary>
+    /// Move the entity data file for a resource, if one exists, to a new resource location.
+    /// </summary>
+    Result MoveEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
+
+    /// <summary>
+    /// Copy the entity data file for a resource, if one exists, to a new resource location.
+    /// </summary>
+    Result CopyEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
 }
 

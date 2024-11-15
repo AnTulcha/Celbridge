@@ -3,6 +3,7 @@ using Celbridge.Dialog;
 using Celbridge.Workspace;
 using Microsoft.Extensions.Localization;
 using Celbridge.Explorer.Services;
+using Celbridge.Logging;
 
 namespace Celbridge.Explorer.Commands;
 
@@ -15,16 +16,19 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
 
     private ResourceArchiver _archiver;
 
+    private readonly ILogger<ResourceArchiver> _logger;
     private readonly IWorkspaceWrapper _workspaceWrapper;
     private readonly IDialogService _dialogService;
     private readonly IStringLocalizer _stringLocalizer;
 
     public DeleteResourceCommand(
+        ILogger<ResourceArchiver> logger,
         IServiceProvider serviceProvider,
         IWorkspaceWrapper workspaceWrapper,
         IDialogService dialogService,
         IStringLocalizer stringLocalizer)
     {
+        _logger = logger;
         _workspaceWrapper = workspaceWrapper;
         _dialogService = dialogService;
         _stringLocalizer = stringLocalizer;
@@ -39,6 +43,8 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
         var getResourceResult = resourceRegistry.GetResource(Resource);
         if (getResourceResult.IsFailure)
         {
+            _logger.LogError(getResourceResult.Error);
+
             return Result.Fail($"Failed to get resource: {Resource}");
         }
 
@@ -49,6 +55,8 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
             var archiveResult = await _archiver.ArchiveResourceAsync(Resource);
             if (archiveResult.IsFailure)
             {
+                _logger.LogError(archiveResult.Error);
+
                 var titleString = _stringLocalizer.GetString("ResourceTree_DeleteFile");
                 var messageString = _stringLocalizer.GetString("ResourceTree_DeleteFileFailed", Resource);
                 await _dialogService.ShowAlertDialogAsync(titleString, messageString);
@@ -61,6 +69,8 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
             var archiveResult = await _archiver.ArchiveResourceAsync(Resource);
             if (archiveResult.IsFailure)
             {
+                _logger.LogError(archiveResult.Error);
+
                 var titleString = _stringLocalizer.GetString("ResourceTree_DeleteFolder");
                 var messageString = _stringLocalizer.GetString("ResourceTree_DeleteFolderFailed", Resource);
                 await _dialogService.ShowAlertDialogAsync(titleString, messageString);
@@ -83,6 +93,8 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
             var unarchiveResult = await _archiver.UnarchiveResourceAsync();
             if (unarchiveResult.IsFailure)
             {
+                _logger.LogError(unarchiveResult.Error);
+
                 var titleString = _stringLocalizer.GetString("ResourceTree_DeleteFile");
                 var messageString = _stringLocalizer.GetString("ResourceTree_UndoDeleteFileFailed", Resource);
                 await _dialogService.ShowAlertDialogAsync(titleString, messageString);
@@ -95,6 +107,8 @@ public class DeleteResourceCommand : CommandBase, IDeleteResourceCommand
             var unarchiveResult = await _archiver.UnarchiveResourceAsync();
             if (unarchiveResult.IsFailure)
             {
+                _logger.LogError(unarchiveResult.Error);
+
                 var titleString = _stringLocalizer.GetString("ResourceTree_DeleteFolder");
                 var messageString = _stringLocalizer.GetString("ResourceTree_UndoDeleteFolderFailed", Resource);
                 await _dialogService.ShowAlertDialogAsync(titleString, messageString);

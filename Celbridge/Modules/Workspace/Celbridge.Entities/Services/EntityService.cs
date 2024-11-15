@@ -7,6 +7,7 @@ using Celbridge.Projects;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 
 using Path = System.IO.Path;
@@ -22,7 +23,7 @@ public class EntityService : IEntityService, IDisposable
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
     private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
-    private readonly ConcurrentBag<ResourceKey> _modifiedEntities = new(); // Track modified entities
+    private readonly ConcurrentDictionary<ResourceKey, bool> _modifiedEntities = new(); // Track modified entities
 
     private EntitySchemaService _schemaService;
     private EntityPrototypeService _prototypeService;
@@ -43,8 +44,6 @@ public class EntityService : IEntityService, IDisposable
         _schemaService = serviceProvider.GetRequiredService<EntitySchemaService>();
         _prototypeService = serviceProvider.GetRequiredService<EntityPrototypeService>();
 
-        _messengerService.Register<EntityPropertyChangedMessage>(this, OnEntityPropertyChangedMessage);
-        _messengerService.Register<ResourceKeyChangedMessage>(this, OnResourceKeyChangedMessage);
         _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
     }
 
@@ -83,9 +82,9 @@ public class EntityService : IEntityService, IDisposable
 
     public string GetEntityDataPath(ResourceKey resource)
     {
-        var entitiesFolderPath = GetEntitiesFolderPath();
-        var path = Path.Combine(entitiesFolderPath, $"{resource}.json");
-        return Path.GetFullPath(path);
+        var resourcePath = Path.Combine(GetEntitiesFolderPath(), resource) + ".json";
+        resourcePath = Path.GetFullPath(resourcePath);
+        return resourcePath;
     }
 
     public string GetEntityDataRelativePath(ResourceKey resource)
@@ -96,7 +95,7 @@ public class EntityService : IEntityService, IDisposable
 
     public async Task<Result> SaveModifiedEntities()
     {
-        foreach (var resourceKey in _modifiedEntities)
+        foreach (var resourceKey in _modifiedEntities.Keys)
         {
             if (_entityCache.ContainsKey(resourceKey))
             {
@@ -144,32 +143,106 @@ public class EntityService : IEntityService, IDisposable
             _logger.LogError(acquireResult.Error);
             return;
         }
-        var entity = acquireResult.Value as Entity;
+        var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
+        // SetProperty returns true if the newValue is different from the existing value
         if (entity.EntityData.SetProperty(propertyPath, newValue))
         {
-            _modifiedEntities.Add(resource);
+            _modifiedEntities[resource] = true;
 
             var message = new EntityPropertyChangedMessage(resource, propertyPath, EntityPropertyChangeType.Update);
             _messengerService.Send(message);
         }
     }
 
-    private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
+    public Result MoveEntityDataFile(ResourceKey oldResource, ResourceKey newResource)
     {
-        var (resource, _, _) = message;
+        try
+        {
+            if (_entityCache.ContainsKey(oldResource))
+            {
+                var entity = _entityCache[oldResource];
 
-        _modifiedEntities.Add(resource);
+                var newEntityPath = GetEntityDataPath(newResource);
+                entity.SetResourceKey(newResource, newEntityPath);
+
+                _entityCache[newResource] = entity;
+                _entityCache.TryRemove(oldResource, out _);
+
+                // Update the modified resources list
+                if (_modifiedEntities.ContainsKey(oldResource))
+                {
+                    _modifiedEntities[newResource] = true;
+                    _modifiedEntities.TryRemove(oldResource, out _);
+                }
+
+                // Rename the backing JSON file
+                string oldEntityPath = GetEntityDataPath(oldResource);
+                string newResourcePath = GetEntityDataPath(newResource);
+                if (File.Exists(oldEntityPath))
+                {
+                    var parentFolder = Path.GetDirectoryName(newResourcePath);
+                    if (!string.IsNullOrEmpty(parentFolder) &&
+                        !Directory.Exists(parentFolder))
+                    {
+                        Directory.CreateDirectory(parentFolder);
+                    }
+                    File.Move(oldEntityPath, newResourcePath);
+                }
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to remap entities for resource: '{oldResource}' to '{newResource}'")
+                .WithException(ex);
+        }
     }
 
-    private void OnResourceKeyChangedMessage(object recipient, ResourceKeyChangedMessage message)
+    public Result CopyEntityDataFile(ResourceKey sourceResource, ResourceKey destResource)
     {
-        var (sourceResource, destResource) = message;
-        var remapResult = RemapResourceKey(sourceResource, destResource);
-        if (remapResult.IsFailure)
+        try
         {
-            _logger.LogError(remapResult.Error);
+            if (_entityCache.ContainsKey(destResource))
+            {
+                // An entity for the destination resource is already cached.
+                // This shouldn't be possible, so fail to prevent the operation from proceeding.
+                return Result.Fail($"An entity for the destination resource already exists: '{destResource}'");
+            }
+
+            var sourceEntityPath = GetEntityDataPath(sourceResource);
+            var destEntityPath = GetEntityDataPath(destResource);
+
+            if (!File.Exists(sourceEntityPath))
+            {
+                // The source entity file does not exist yet, so there's no need to copy it.
+                return Result.Ok();
+            }
+
+            if (File.Exists(destEntityPath))
+            {
+                // There is already an entity file for the destination resource.
+                // This shouldn't be possible, so we'll log an error and return a failure.
+                return Result.Fail($"Destination entity file already exists: '{destEntityPath}'");
+            }
+
+            var parentFolder = Path.GetDirectoryName(destEntityPath);
+            if (!string.IsNullOrEmpty(parentFolder) &&
+                !Directory.Exists(parentFolder))
+            {
+                Directory.CreateDirectory(parentFolder);
+            }
+
+            File.Copy(sourceEntityPath, destEntityPath);
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An exception occurred when copying the entity data fom '{sourceResource}' to '{destResource}'")
+                .WithException(ex);
         }
     }
 
@@ -373,6 +446,19 @@ public class EntityService : IEntityService, IDisposable
 
             var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
 
+            // Remove any cached entities whose resources no longer exist on disk
+            foreach (var resourceKey in _entityCache.Keys.ToArray())
+            {
+                var getResult = resourceRegistry.GetResource(resourceKey);
+                if (getResult.IsFailure)
+                {
+                    _entityCache.TryRemove(resourceKey, out _);
+                    _modifiedEntities.TryRemove(resourceKey, out _);
+
+                    // Todo: Send a message to let listeners know that this entity is now invalid.
+                }
+            }
+
             // Find all the entity files in the Entities folder.
             // Note that an entity .json file may correspond to either a file or folder resource. 
             var entityFiles = Directory.EnumerateFiles(entitiesFolderPath, "*.json", SearchOption.AllDirectories);
@@ -391,9 +477,19 @@ public class EntityService : IEntityService, IDisposable
                 }
 
                 _entityCache.TryRemove(resourceKey, out _);
-                _modifiedEntities.TryTake(out resourceKey);
+                _modifiedEntities.TryRemove(resourceKey, out _);
 
                 File.Delete(entityFile);
+            }
+
+            // Delete any empty folders in the Entities folder
+            var folders = Directory.EnumerateDirectories(entitiesFolderPath, "*", SearchOption.AllDirectories);
+            foreach (var folder in folders)
+            {
+                if (!Directory.EnumerateFileSystemEntries(folder).Any())
+                {
+                    Directory.Delete(folder);
+                }
             }
 
             return Result.Ok();
@@ -401,45 +497,6 @@ public class EntityService : IEntityService, IDisposable
         catch (Exception ex)
         {
             return Result.Fail("An exception occurred when cleaning up entities")
-                .WithException(ex);
-        }
-    }
-
-    private Result RemapResourceKey(ResourceKey oldResource, ResourceKey newResource)
-    {
-        try
-        {
-            if (_entityCache.ContainsKey(oldResource))
-            {
-                var entity = _entityCache[oldResource];
-
-                var newEntityPath = GetEntityDataPath(newResource);
-                entity.SetResourceKey(newResource, newEntityPath);
-
-                _entityCache[newResource] = entity;
-                _entityCache.TryRemove(oldResource, out _);
-
-                // Update the modified resources list
-                if (_modifiedEntities.Contains(oldResource))
-                {
-                    _modifiedEntities.Add(newResource);
-                    _modifiedEntities.TryTake(out oldResource);
-                }
-
-                // Rename the backing JSON file
-                string oldEntityPath = GetEntityDataPath(oldResource);
-                string newResourcePath = GetEntityDataPath(newResource);
-                if (File.Exists(oldEntityPath))
-                {
-                    File.Move(oldEntityPath, newResourcePath);
-                }
-            }
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to remap entities for resource: '{oldResource}' to '{newResource}'")
                 .WithException(ex);
         }
     }
