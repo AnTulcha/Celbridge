@@ -115,34 +115,4 @@ public class EntityData
                 .WithException(ex);
         }
     }
-
-    public Result Copy(string fromPointer, string toPointer)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool HasRedo()
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool HasUndo()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Result Move(string fromPointer, string toPointer)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Result Redo()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Result Undo()
-    {
-        throw new NotImplementedException();
-    }
 }
