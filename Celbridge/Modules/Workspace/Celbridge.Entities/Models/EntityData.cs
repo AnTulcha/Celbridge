@@ -30,34 +30,7 @@ public class EntityData
         return new EntityData(jsonClone, EntitySchema);
     }
 
-    public T? GetProperty<T>(string propertyName, T? defaultValue)
-    where T : notnull
-    {
-        var getResult = GetPropertyChecked<T>(propertyName);
-        if (getResult.IsFailure)
-        {
-            return defaultValue;
-        }
-
-        return getResult.Value;
-    }
-
-    public bool SetProperty<T>(string propertyName, T newValue)
-        where T : notnull
-    {
-        var setResult = SetPropertyChecked(propertyName, newValue);
-        if (setResult.IsFailure)
-        {
-            var failure = Result<T>.Fail($"Failed to set property '{propertyName}'")
-                .WithErrors(setResult);
-
-            throw new InvalidOperationException(failure.Error);
-        }
-
-        return setResult.Value;
-    }
-
-    private Result<T> GetPropertyChecked<T>(string propertyPath)
+    public Result<T> GetProperty<T>(string propertyPath)
         where T : notnull
     {
         try
@@ -75,7 +48,7 @@ public class EntityData
 
             if (valueNode is null)
             {
-                // The property was fgound but it is a JSON null value.
+                // The property was found but it is a JSON null value.
                 // We treat this as an error for Entity Data.
                 return Result<T>.Fail($"Property is a JSON null value: '{propertyPath}'");
             }
@@ -91,39 +64,6 @@ public class EntityData
         catch (Exception ex)
         {
             return Result<T>.Fail($"An exception occurred when getting entity property '{propertyPath}'")
-                .WithException(ex);
-        }
-    }
-
-    private Result<bool> SetPropertyChecked<T>(string propertyName, T newValue) where T : notnull
-    {
-        try
-        {
-            var oldNode = JsonObject[propertyName];
-            var newNode = JsonNode.Parse(JsonSerializer.Serialize(newValue));
-
-            if (oldNode is null && newNode is null)
-            {
-                // No change
-                return Result<bool>.Ok(false);
-            }
-
-            if (newNode is not null && oldNode is not null &&
-                newNode.GetValueKind() == oldNode.GetValueKind() &&
-                newNode.ToJsonString() == oldNode.ToJsonString())
-            {
-                // No change
-                return Result<bool>.Ok(false);
-            }
-
-            // Update the JSON data
-            JsonObject[propertyName] = newNode;
-
-            return Result<bool>.Ok(true);
-        }
-        catch (Exception ex)
-        {
-            return Result<bool>.Fail($"Failed to set entity property '{propertyName}'")
                 .WithException(ex);
         }
     }
