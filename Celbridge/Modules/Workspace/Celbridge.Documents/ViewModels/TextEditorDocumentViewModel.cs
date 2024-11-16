@@ -37,8 +37,8 @@ public partial class TextEditorDocumentViewModel : ObservableObject
 
     public void SetFileResource(ResourceKey fileResource)
     {
-        _messengerService.Unregister<EntityPropertyChangedMessage>(this);
-        _messengerService.Register<EntityPropertyChangedMessage>(this, OnEntityPropertyChangedMessage);
+        _messengerService.Unregister<EntityChangedMessage>(this);
+        _messengerService.Register<EntityChangedMessage>(this, OnEntityChangedMessage);
 
         _fileResource = fileResource;
 
@@ -64,17 +64,17 @@ public partial class TextEditorDocumentViewModel : ObservableObject
         return Result<PreviewProvider>.Ok(provider);
     }
 
-    private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
+    private void OnEntityChangedMessage(object recipient, EntityChangedMessage message)
     {
-        var (resource, propertyPath) = message;
+        var (resource, paths) = message;
 
         if (resource != _fileResource)
         {
             return;
         }
 
-        if (propertyPath == TextEditorEntityConstants.ShowEditor ||
-            propertyPath == TextEditorEntityConstants.ShowPreview)
+        if (paths.Contains(TextEditorEntityConstants.ShowEditor) ||
+            paths.Contains(TextEditorEntityConstants.ShowPreview))
         {
             UpdatePanelVisibility();
         }

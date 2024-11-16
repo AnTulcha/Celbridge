@@ -143,15 +143,6 @@ public class EntityService : IEntityService, IDisposable
     private record SetPropertyOperation(string op, string path, object value);
     public void SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
     {
-        var acquireResult = AcquireEntity(resource);
-        if (acquireResult.IsFailure)
-        {
-            _logger.LogError(acquireResult.Error);
-            return;
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
         // Set the property by applying a JSON patch
         var operation = new SetPropertyOperation("add", propertyPath, newValue);
         var jsonPatch = JsonSerializer.Serialize(operation);
@@ -181,13 +172,14 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Failed to apply patch to entity for resource: {resource}")
                 .WithErrors(applyResult);
         }
-        var modified = applyResult.Value;
+        var patchSummary = applyResult.Value;
 
-        if (modified)
+        if (patchSummary.ModifiedPaths.Count > 0)
         {
             _modifiedEntities[resource] = true;
 
-            var message = new EntityPropertyChangedMessage(resource, patch);
+            var pathsCopy = patchSummary.ModifiedPaths.ToList();
+            var message = new EntityChangedMessage(resource, pathsCopy);
             _messengerService.Send(message);
         }
 
