@@ -66,15 +66,15 @@ public partial class TextEditorDocumentViewModel : ObservableObject
 
     private void OnEntityPropertyChangedMessage(object recipient, EntityPropertyChangedMessage message)
     {
-        var (resource, propertyPath, _) = message;
+        var (resource, propertyPath) = message;
 
         if (resource != _fileResource)
         {
             return;
         }
 
-        if (propertyPath == EntityConstants.TextEditor_ShowEditor ||
-            propertyPath == EntityConstants.TextEditor_ShowPreview)
+        if (propertyPath == TextEditorEntityConstants.ShowEditor ||
+            propertyPath == TextEditorEntityConstants.ShowPreview)
         {
             UpdatePanelVisibility();
         }
@@ -84,8 +84,8 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     {
         try
         {
-            ShowEditor = _entityService.GetProperty(_fileResource, EntityConstants.TextEditor_ShowEditor, true);
-            ShowPreview = _entityService.GetProperty(_fileResource, EntityConstants.TextEditor_ShowPreview, true);
+            ShowEditor = _entityService.GetProperty(_fileResource, TextEditorEntityConstants.ShowEditor, true);
+            ShowPreview = _entityService.GetProperty(_fileResource, TextEditorEntityConstants.ShowPreview, true);
         }
         catch (Exception ex)
         {

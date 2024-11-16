@@ -1,15 +1,5 @@
 namespace Celbridge.Entities;
 
-/// <summary>
-/// Enum representing the type of change made to an entity property.
-/// </summary>
-public enum EntityPropertyChangeType
-{
-    Add,
-    Update,
-    Remove
-}
-
 public interface IEntityService
 {
     Task<Result> InitializeAsync();

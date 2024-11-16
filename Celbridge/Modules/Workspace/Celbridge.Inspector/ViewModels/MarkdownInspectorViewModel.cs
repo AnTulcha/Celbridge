@@ -88,8 +88,8 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
 
         try
         {
-            _entityService.SetProperty(Resource, EntityConstants.TextEditor_ShowEditor, showEditor);
-            _entityService.SetProperty(Resource, EntityConstants.TextEditor_ShowPreview, showPreview);
+            _entityService.SetProperty(Resource, TextEditorEntityConstants.ShowEditor, showEditor);
+            _entityService.SetProperty(Resource, TextEditorEntityConstants.ShowPreview, showPreview);
 
             UpdateButtonState();
         }
@@ -103,8 +103,8 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
     {
         try
         {
-            bool showingEditor = _entityService.GetProperty(Resource, EntityConstants.TextEditor_ShowEditor, true);
-            bool showingPreview = _entityService.GetProperty(Resource, EntityConstants.TextEditor_ShowPreview, true);
+            bool showingEditor = _entityService.GetProperty(Resource, TextEditorEntityConstants.ShowEditor, true);
+            bool showingPreview = _entityService.GetProperty(Resource, TextEditorEntityConstants.ShowPreview, true);
             bool showingBoth = showingEditor && showingPreview;
 
             ShowEditorEnabled = !showingEditor || (showingBoth);

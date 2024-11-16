@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Patch;
 using CommunityToolkit.Diagnostics;
+using Json.Pointer;
 
 namespace Celbridge.Entities.Models;
 
@@ -56,30 +57,40 @@ public class EntityData
         return setResult.Value;
     }
 
-    private Result<T> GetPropertyChecked<T>(string propertyName)
+    private Result<T> GetPropertyChecked<T>(string propertyPath)
         where T : notnull
     {
         try
         {
-            if (JsonObject.ContainsKey(propertyName))
+            var jsonPointer = JsonPointer.Parse(propertyPath);
+            if (jsonPointer is null)
             {
-                var valueNode = JsonObject[propertyName];
-                if (valueNode != null)
-                {
-                    T? value = valueNode.Deserialize<T>();
-                    if (value is not null)
-                    {
-                        return Result<T>.Ok(value);
-                    }
-                }
+                return Result<T>.Fail($"Invalid JSON pointer '{propertyPath}'");
             }
 
-            // Property value not found
-            return Result<T>.Fail();
+            if (!jsonPointer.TryEvaluate(JsonObject, out var valueNode))
+            {
+                return Result<T>.Fail($"Property was not found at: '{propertyPath}'");
+            }
+
+            if (valueNode is null)
+            {
+                // The property was fgound but it is a JSON null value.
+                // We treat this as an error for Entity Data.
+                return Result<T>.Fail($"Property is a JSON null value: '{propertyPath}'");
+            }
+
+            var value = valueNode.Deserialize<T>();
+            if (value is null)
+            {
+                return Result<T>.Fail($"Failed to deserialize property at '{propertyPath}' to type '{nameof(T)}'");
+            }
+            
+            return Result<T>.Ok(value);
         }
         catch (Exception ex)
         {
-            return Result<T>.Fail($"An exception occurred when getting entity property '{propertyName}'")
+            return Result<T>.Fail($"An exception occurred when getting entity property '{propertyPath}'")
                 .WithException(ex);
         }
     }
@@ -117,34 +128,47 @@ public class EntityData
         }
     }
 
-    public Result ApplyPatch(string patchJson)
+    public Result<bool> ApplyPatch(string patchJson)
     {
         try
         {
             var patch = JsonSerializer.Deserialize<JsonPatch>(patchJson);
             if (patch is null)
             {
-                return Result.Fail("Failed to deserialize JSON patch");
+                return Result<bool>.Fail("Failed to deserialize JSON patch");
             }
 
             var patchResult = patch.Apply(JsonObject);
             if (!patchResult.IsSuccess)
             {
-                return Result.Fail($"Failed to apply JSON patch to entity data: {patchResult.Error}");
+                return Result<bool>.Fail($"Failed to apply JSON patch to entity data: {patchResult.Error}");
             }
 
-            // Todo: Check if the patch is valid for the entity schema before really applying it
-            // Todo: Check if the json object has actually changed (return a bool)
+            var newJsonObject = patchResult.Result as JsonObject;
+            Guard.IsNotNull(newJsonObject);
 
-            var jsonObject = patchResult.Result as JsonObject;
-            Guard.IsNotNull(jsonObject);
-            JsonObject = jsonObject;
+            // Check if the JSON object has actually changed as a result of applying the patch
+            if (JsonNode.DeepEquals(JsonObject, newJsonObject))
+            {
+                return Result<bool>.Ok(false);
+            }
 
-            return Result.Ok(); 
+            // Check if the patched JSON is still valid for the entity schema
+            var validationResult = EntitySchema.ValidateJsonObject(newJsonObject);
+            if (validationResult.IsFailure)
+            {
+                return Result<bool>.Fail($"Failed to apply JSON patch to entity data")
+                    .WithErrors(validationResult);
+            }
+
+            // Use the patched JSON object
+            JsonObject = newJsonObject;
+
+            return Result<bool>.Ok(true); 
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when applying JSON patch to entity data.")
+            return Result<bool>.Fail($"An exception occurred when applying JSON patch to entity data.")
                 .WithException(ex);
         }
     }
