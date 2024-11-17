@@ -87,9 +87,9 @@ public class EntityService : IEntityService, IDisposable
 
     public string GetEntityDataPath(ResourceKey resource)
     {
-        var resourcePath = Path.Combine(GetEntitiesFolderPath(), resource) + ".json";
-        resourcePath = Path.GetFullPath(resourcePath);
-        return resourcePath;
+        var entityDataPath = Path.Combine(GetEntitiesFolderPath(), resource) + ".json";
+        entityDataPath = Path.GetFullPath(entityDataPath);
+        return entityDataPath;
     }
 
     public string GetEntityDataRelativePath(ResourceKey resource)
@@ -300,6 +300,16 @@ public class EntityService : IEntityService, IDisposable
 
     private Result<Entity> AcquireEntity(ResourceKey resource)
     {
+        var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+        
+        var getResourceResult = resourceRegistry.GetResource(resource);
+        if (getResourceResult.IsFailure)
+        {
+            // Fail if the resource does not exist in the registry.
+            return Result<Entity>.Fail($"Resource does not exist: '{resource}'")
+                .WithErrors(getResourceResult);
+        }
+
         if (_entityCache.ContainsKey(resource))
         {
             var entity = _entityCache[resource];
