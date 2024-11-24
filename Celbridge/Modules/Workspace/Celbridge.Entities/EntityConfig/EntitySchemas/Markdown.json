@@ -10,7 +10,7 @@
       "const": 1
     },
     "_components": {
-      "type": "object"
+      "type": "array"
     },
     "editorMode": {
       "type": "string",
@@ -20,6 +20,7 @@
   "required": [
     "_entityType",
     "_entityVersion",
+    "_components",
     "editorMode"
   ],
   "additionalProperties": false

@@ -24,5 +24,6 @@ public static class ServiceConfiguration
         config.AddTransient<IUndoEntityCommand, UndoEntityCommand>();
         config.AddTransient<IRedoEntityCommand, RedoEntityCommand>();
         config.AddTransient<IPrintPropertyCommand, PrintPropertyCommand>();
+        config.AddTransient<IAddComponentCommand, AddComponentCommand>();
     }
 }

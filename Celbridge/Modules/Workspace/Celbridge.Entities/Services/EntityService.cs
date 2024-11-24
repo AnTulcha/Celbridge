@@ -397,6 +397,54 @@ public class EntityService : IEntityService, IDisposable
         }
     }
 
+    private record AddComponentOperation(string op, string path, JsonObject value);
+    public Result AddComponent(ResourceKey resource, string componentType, int componentIndex)
+    {
+        // Acquire the entity for the specified resource
+
+        var acquireResult = AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        // Acquire the schema for the specified componentType
+
+        var componentSchemaResult = _componentSchemaRegistry.GetSchemaForComponentType(componentType);
+        if (componentSchemaResult.IsFailure)
+        {
+            return Result.Fail($"Failed to get schema for component type: {componentType}")
+                .WithErrors(componentSchemaResult);
+        }
+        var componentSchema = componentSchemaResult.Value;
+
+        // Create an instance of the prototype in the Entity Data
+
+        var getPrototypeResult = _componentPrototypeRegistry.GetPrototype(componentType);
+        if (getPrototypeResult.IsFailure)
+        {
+            return Result.Fail($"Failed to acquire component prototype for component type: {componentType}")
+                .WithErrors(getPrototypeResult);
+        }
+        var prototype = getPrototypeResult.Value;
+
+        var operation = new AddComponentOperation("add", $"/_components/{componentIndex}", prototype.JsonObject);
+        var jsonPatch = JsonSerializer.Serialize(operation, SerializerOptions);
+        jsonPatch = $"[{jsonPatch}]";
+
+        var applyResult = ApplyPatch(resource, jsonPatch);
+        if (applyResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply patch to add component to entity: {resource}")
+                .WithErrors(applyResult);
+        }
+
+        return Result.Ok();
+    }
+
     private void OnResourceRegistryUpdatedMessage(object recipient, ResourceRegistryUpdatedMessage message)
     {
         CleanupEntities();

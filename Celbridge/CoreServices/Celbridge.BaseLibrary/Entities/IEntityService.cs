@@ -79,5 +79,10 @@ public interface IEntityService
     /// Copy the entity data file for a resource, if one exists, to a new resource location.
     /// </summary>
     Result CopyEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
+
+    /// <summary>
+    /// Add a component to the the entity for a resource.
+    /// </summary>
+    Result AddComponent(ResourceKey resource, string componentType, int componentIndex);
 }
 

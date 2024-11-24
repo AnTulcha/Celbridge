@@ -10,12 +10,13 @@
       "const": 1
     },
     "_components": {
-      "type": "object"
+      "type": "array"
     }
   },
   "required": [
     "_entityType",
-    "_entityVersion"
+    "_entityVersion",
+    "_components"
   ],
   "additionalProperties": false
 }
