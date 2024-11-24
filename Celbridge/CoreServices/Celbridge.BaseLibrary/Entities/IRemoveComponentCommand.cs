@@ -3,9 +3,9 @@ using Celbridge.Commands;
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Command to add a component to the entity associated with a resource.
+/// Command to remove an entity component associated with a resource.
 /// </summary>
-public interface IAddComponentCommand : IExecutableCommand
+public interface IRemoveComponentCommand : IExecutableCommand
 {
     /// <summary>
     /// The resource associated with the entity data to be modified.
@@ -13,12 +13,7 @@ public interface IAddComponentCommand : IExecutableCommand
     ResourceKey Resource { get; set; }
 
     /// <summary>
-    /// The type of component to add to the entity.
-    /// </summary>
-    string ComponentType { get; set; }
-
-    /// <summary>
-    /// The index to insert the component at.
+    /// The index of the component to remove.
     /// </summary>
     int ComponentIndex { get; set; }
 }

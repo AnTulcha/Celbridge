@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Celbridge.Commands;
 using Celbridge.Core;
 using Celbridge.Workspace;
@@ -11,7 +10,7 @@ public class AddComponentCommand : CommandBase, IAddComponentCommand
 
     public ResourceKey Resource { get; set; }
     public string ComponentType { get; set; } = string.Empty;
-    public int InsertAtIndex { get; set; }
+    public int ComponentIndex { get; set; }
 
     public AddComponentCommand(
         IWorkspaceWrapper workspaceWrapper)
@@ -23,10 +22,10 @@ public class AddComponentCommand : CommandBase, IAddComponentCommand
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        var addResult = entityService.AddComponent(Resource, ComponentType, InsertAtIndex);
+        var addResult = entityService.AddComponent(Resource, ComponentType, ComponentIndex);
         if (addResult.IsFailure)
         {
-            return Result.Fail($"Failed to add component of type '{ComponentType}' to entity for resource '{Resource}' at index '{InsertAtIndex}'.")
+            return Result.Fail($"Failed to add component of type '{ComponentType}' to entity for resource '{Resource}' at index '{ComponentIndex}'.")
                 .WithErrors(addResult);
         }
 
@@ -43,7 +42,7 @@ public class AddComponentCommand : CommandBase, IAddComponentCommand
         {
             command.Resource = resource;
             command.ComponentType = componentType;
-            command.InsertAtIndex = insertAtIndex;
+            command.ComponentIndex = insertAtIndex;
         });
     }
 }

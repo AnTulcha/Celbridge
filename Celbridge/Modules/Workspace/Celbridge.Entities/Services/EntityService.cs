@@ -445,6 +445,36 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
+    private record RemoveComponentOperation(string op, string path);
+    public Result RemoveComponent(ResourceKey resource, int componentIndex)
+    {
+        // Acquire the entity for the specified resource
+
+        var acquireResult = AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        // Apply a patch to remove the component at the specified index
+
+        var operation = new RemoveComponentOperation("remove", $"/_components/{componentIndex}");
+        var jsonPatch = JsonSerializer.Serialize(operation, SerializerOptions);
+        jsonPatch = $"[{jsonPatch}]";
+
+        var applyResult = ApplyPatch(resource, jsonPatch);
+        if (applyResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply patch to remove entity component at index '{componentIndex}' for resource: {resource}")
+                .WithErrors(applyResult);
+        }
+
+        return Result.Ok();
+    }
+
     private void OnResourceRegistryUpdatedMessage(object recipient, ResourceRegistryUpdatedMessage message)
     {
         CleanupEntities();

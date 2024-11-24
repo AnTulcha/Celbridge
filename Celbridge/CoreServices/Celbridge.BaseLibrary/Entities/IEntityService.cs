@@ -81,8 +81,13 @@ public interface IEntityService
     Result CopyEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
 
     /// <summary>
-    /// Add a component to the the entity for a resource.
+    /// Add a component to the the entity for a resource at the specified index.
     /// </summary>
     Result AddComponent(ResourceKey resource, string componentType, int componentIndex);
+
+    /// <summary>
+    /// Removes a component at the specified index from the entity for a resource.
+    /// </summary>
+    Result RemoveComponent(ResourceKey resource, int componentIndex);
 }
 
