@@ -48,12 +48,12 @@ public interface IEntityService
     /// Sets the value of an entity property for a resource.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
-    Result<EntityPatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
+    Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
 
     /// <summary>
     /// Apply a JSON Patch (RFC 6902) to the Entity Data for a resource.
     /// </summary>
-    Result<EntityPatchSummary> ApplyPatch(ResourceKey resource, string patch);
+    Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch);
 
     /// <summary>
     /// Undo the most recently applied Entity Data patch for a resource.

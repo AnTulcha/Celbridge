@@ -47,8 +47,10 @@ public class EntityService : IEntityService, IDisposable
     private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
     private readonly ConcurrentDictionary<ResourceKey, bool> _modifiedEntities = new(); // Track modified entities
 
-    private EntitySchemaRegistry _schemaRegistry;
-    private EntityPrototypeRegistry _prototypeRegistry;
+    private EntitySchemaRegistry _entitySchemaRegistry;
+    private EntityPrototypeRegistry _entityPrototypeRegistry;
+    private ComponentSchemaRegistry _componentSchemaRegistry;
+    private ComponentPrototypeRegistry _componentPrototypeRegistry;
 
     public static JsonSerializerOptions SerializerOptions { get; } = new()
     {
@@ -71,33 +73,50 @@ public class EntityService : IEntityService, IDisposable
         _projectService = projectService;
         _workspaceWrapper = workspaceWrapper;
 
-        _schemaRegistry = serviceProvider.GetRequiredService<EntitySchemaRegistry>();
-        _prototypeRegistry = serviceProvider.GetRequiredService<EntityPrototypeRegistry>();
+        _entitySchemaRegistry = serviceProvider.GetRequiredService<EntitySchemaRegistry>();
+        _entityPrototypeRegistry = serviceProvider.GetRequiredService<EntityPrototypeRegistry>();
+
+        _componentSchemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
+        _componentPrototypeRegistry = serviceProvider.GetRequiredService<ComponentPrototypeRegistry>();
 
         _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
     }
 
     public async Task<Result> InitializeAsync()
     {
-        var loadSchemasResult = await _schemaRegistry.LoadSchemasAsync();
-        if (loadSchemasResult.IsFailure)
+        var entitySchemasResult = await _entitySchemaRegistry.LoadEntitySchemasAsync();
+        if (entitySchemasResult.IsFailure)
         {
             return Result.Fail("Failed to load schemas")
-                .WithErrors(loadSchemasResult);
+                .WithErrors(entitySchemasResult);
         }
 
-        var loadPrototypesResult = await _prototypeRegistry.LoadPrototypesAsync(_schemaRegistry);
-        if (loadPrototypesResult.IsFailure)
+        var entityPrototypesResult = await _entityPrototypeRegistry.LoadEntityPrototypesAsync(_entitySchemaRegistry);
+        if (entityPrototypesResult.IsFailure)
         {
             return Result.Fail("Failed to load prototypes")
-                .WithErrors(loadPrototypesResult);
+                .WithErrors(entityPrototypesResult);
         }
 
-        var loadDefaultsResult = await _prototypeRegistry.LoadFileEntityTypesAsync();
-        if (loadDefaultsResult.IsFailure)
+        var entityTypesResult = await _entityPrototypeRegistry.LoadFileEntityTypesAsync();
+        if (entityTypesResult.IsFailure)
         {
             return Result.Fail("Failed to load file entity types")
-                .WithErrors(loadDefaultsResult);
+                .WithErrors(entityTypesResult);
+        }
+
+        var componentSchemasResult = await _componentSchemaRegistry.LoadComponentSchemasAsync();
+        if (componentSchemasResult.IsFailure)
+        {
+            return Result.Fail("Failed to load component schemas")
+                .WithErrors(componentSchemasResult);
+        }
+
+        var componentPrototypeResult = await _componentPrototypeRegistry.LoadComponentPrototypesAsync(_componentSchemaRegistry);
+        if (componentPrototypeResult.IsFailure)
+        {
+            return Result.Fail("Failed to load component prototypes")
+                .WithErrors(componentPrototypeResult);
         }
 
         return Result.Ok();
@@ -202,7 +221,7 @@ public class EntityService : IEntityService, IDisposable
     }
 
     private record SetPropertyOperation(string op, string path, object value);
-    public Result<EntityPatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
+    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
     {
         // Set the property by applying a JSON patch
         var operation = new SetPropertyOperation("add", propertyPath, newValue);
@@ -212,14 +231,14 @@ public class EntityService : IEntityService, IDisposable
         var applyResult = ApplyPatch(resource, jsonPatch);
         if (applyResult.IsFailure)
         {
-            return Result<EntityPatchSummary>.Fail($"Failed to apply entity patch for resource: {resource}");
+            return Result<PatchSummary>.Fail($"Failed to apply entity patch for resource: {resource}");
         }
         var patchSummary = applyResult.Value;
 
-        return Result<EntityPatchSummary>.Ok(patchSummary);
+        return Result<PatchSummary>.Ok(patchSummary);
     }
 
-    public Result<EntityPatchSummary> ApplyPatch(ResourceKey resource, string patch)
+    public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch)
     {
         return ApplyPatch(resource, patch, ApplyPatchContext.Modify);
     }
@@ -462,14 +481,14 @@ public class EntityService : IEntityService, IDisposable
         var fileExtension = Path.GetExtension(resource.ToString());
         if (!string.IsNullOrEmpty(fileExtension))
         {
-            var entityTypes = _prototypeRegistry.GetFileEntityTypes(fileExtension);
+            var entityTypes = _entityPrototypeRegistry.GetFileEntityTypes(fileExtension);
             if (entityTypes.Count > 0)
             {
                 // Default entity type is the first in the list
                 var entityTypeFromConfig = entityTypes[0];
 
                 // Get the prototype for the entity type
-                var getPrototypeResult = _prototypeRegistry.GetPrototype(entityTypeFromConfig);
+                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype(entityTypeFromConfig);
                 if (getPrototypeResult.IsFailure)
                 {
                     // No prototype was found for the entity type.
@@ -492,7 +511,7 @@ public class EntityService : IEntityService, IDisposable
             if (Directory.Exists(path))
             {
                 // Folder resource
-                var getPrototypeResult = _prototypeRegistry.GetPrototype("Folder");
+                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype("Folder");
                 if (getPrototypeResult.IsFailure)
                 {
                     // No Folder prototype was found.
@@ -505,7 +524,7 @@ public class EntityService : IEntityService, IDisposable
             else if (File.Exists(path))
             {
                 // File resource
-                var getPrototypeResult = _prototypeRegistry.GetPrototype("File");
+                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype("File");
                 if (getPrototypeResult.IsFailure)
                 {
                     // No File prototype was found.
@@ -553,7 +572,7 @@ public class EntityService : IEntityService, IDisposable
         }
 
         // Get the schema for the entity type
-        var getSchemaResult = _schemaRegistry.GetSchemaForEntityType(entityType);
+        var getSchemaResult = _entitySchemaRegistry.GetSchemaForEntityType(entityType);
         if (getSchemaResult.IsFailure)
         {
             return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
@@ -673,12 +692,12 @@ public class EntityService : IEntityService, IDisposable
         }
     }
 
-    private Result<EntityPatchSummary> ApplyPatch(ResourceKey resource, string patch, ApplyPatchContext context)
+    private Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch, ApplyPatchContext context)
     {
         var acquireResult = AcquireEntity(resource);
         if (acquireResult.IsFailure)
         {
-            return Result<EntityPatchSummary>.Fail($"Failed to acquire entity: {resource}")
+            return Result<PatchSummary>.Fail($"Failed to acquire entity: {resource}")
                 .WithErrors(acquireResult);
         }
         var entity = acquireResult.Value;
@@ -687,7 +706,7 @@ public class EntityService : IEntityService, IDisposable
         var applyResult = entity.EntityData.ApplyPatch(patch);
         if (applyResult.IsFailure)
         {
-            return Result<EntityPatchSummary>.Fail($"Failed to apply patch to entity for resource: {resource}")
+            return Result<PatchSummary>.Fail($"Failed to apply patch to entity for resource: {resource}")
                 .WithErrors(applyResult);
         }
         var patchSummary = applyResult.Value;
@@ -719,7 +738,7 @@ public class EntityService : IEntityService, IDisposable
             _messengerService.Send(message);
         }
 
-        return Result<EntityPatchSummary>.Ok(patchSummary);
+        return Result<PatchSummary>.Ok(patchSummary);
     }
 
     private bool _disposed;

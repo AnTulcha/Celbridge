@@ -8,6 +8,9 @@
     "_entityVersion": {
       "type": "integer",
       "const": 1
+    },
+    "_components": {
+      "type": "object"
     }
   },
   "required": [

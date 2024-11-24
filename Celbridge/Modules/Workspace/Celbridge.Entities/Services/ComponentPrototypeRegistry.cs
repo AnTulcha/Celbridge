@@ -4,49 +4,49 @@ using System.Text.Json.Nodes;
 
 namespace Celbridge.Entities.Services;
 
-public class EntityPrototypeRegistry
+public class ComponentPrototypeRegistry
 {
     private const string EntityConfigFolder = "EntityConfig";
-    private const string EntityPrototypesFolder = "EntityPrototypes";
-    private const string FileEntityTypesFile = "FileEntityTypes.json";
+    private const string ComponentPrototypesFolder = "ComponentPrototypes";
+    private const string EntityComponentTypesFile = "EntityComponentTypes.json";
 
-    private readonly Dictionary<string, EntityData> _prototypes = new();
-    private readonly Dictionary<string, List<string>> _fileEntityTypes = new();
+    private readonly Dictionary<string, ComponentData> _componentPrototypes = new();
+    private readonly Dictionary<string, List<string>> _entityComponentTypes = new();
 
-    public async Task<Result> LoadEntityPrototypesAsync(EntitySchemaRegistry schemaRegistry)
+    public async Task<Result> LoadComponentPrototypesAsync(ComponentSchemaRegistry componentSchemaRegistry)
     {
         try
         {
             List<string> jsonContents = new List<string>();
 
             var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
-            var prototypesFolder = await configFolder.GetFolderAsync(EntityPrototypesFolder);
+            var prototypesFolder = await configFolder.GetFolderAsync(ComponentPrototypesFolder);
 
             var jsonFiles = await prototypesFolder.GetFilesAsync();
             foreach (var jsonFile in jsonFiles)
             {
                 var json = await FileIO.ReadTextAsync(jsonFile);
 
-                var getResult = schemaRegistry.GetSchemaFromJson(json);
+                var getResult = componentSchemaRegistry.GetComponentSchemaFromJson(json);
                 if (getResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to get schema for prototype: {jsonFile.DisplayName}")
+                    return Result.Fail($"Failed to get component schema for component prototype: {jsonFile.DisplayName}")
                         .WithErrors(getResult);
                 }
 
-                var schema = getResult.Value;
+                var componentSchema = getResult.Value;
 
-                var validateResult = schema.ValidateJson(json);
+                var validateResult = componentSchema.ValidateJson(json);
                 if (validateResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to validate prototype")
+                    return Result.Fail($"Failed to validate component prototype: {jsonFile.DisplayName}")
                         .WithErrors(validateResult);
                 }
 
-                var addResult = AddPrototype(json, schema);
+                var addResult = AddComponentPrototype(json, componentSchema);
                 if (addResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to add prototype: {jsonFile.DisplayName}")
+                    return Result.Fail($"Failed to add component prototype: {jsonFile.DisplayName}")
                         .WithErrors(addResult);
                 }
             }
@@ -55,17 +55,17 @@ public class EntityPrototypeRegistry
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when loading prototypes")
+            return Result.Fail($"An exception occurred when loading component prototypes")
                 .WithException(ex);
         }
     }
 
-    public async Task<Result> LoadFileEntityTypesAsync()
+    public async Task<Result> LoadEntityComponentTypesAsync()
     {
         try
         {
             var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
-            var jsonFile = await configFolder.GetFileAsync(FileEntityTypesFile);
+            var jsonFile = await configFolder.GetFileAsync(EntityComponentTypesFile);
 
             var content = await FileIO.ReadTextAsync(jsonFile);
 
@@ -89,41 +89,41 @@ public class EntityPrototypeRegistry
                     list.Add(item.GetString()!);
                 }
 
-                _fileEntityTypes[property.Name] = list;
+                _entityComponentTypes[property.Name] = list;
             }
 
             return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when loading file entity types")
+            return Result.Fail($"An exception occurred when loading entity component types")
                 .WithException(ex);
         }
     }
 
-    public Result AddPrototype(string prototypeJson, EntitySchema entitySchema)
+    public Result AddComponentPrototype(string componentPrototypeJson, ComponentSchema componentSchema)
     {
         try
         {
-            var jsonNode = JsonNode.Parse(prototypeJson);
+            var jsonNode = JsonNode.Parse(componentPrototypeJson);
             if (jsonNode is not JsonObject jsonObject)
             {
-                return Result.Fail("Failed to parse prototype JSON as an object");
+                return Result.Fail("Failed to parse component prototype JSON as an object");
             }
 
-            var entityTypeValue = jsonNode["_entityType"] as JsonValue;
-            if (entityTypeValue?.TryGetValue(out string? entityType) != true || 
-                string.IsNullOrEmpty(entityType))
+            var componentTypeValue = jsonNode["_componentType"] as JsonValue;
+            if (componentTypeValue?.TryGetValue(out string? componentType) != true || 
+                string.IsNullOrEmpty(componentType))
             {
-                return Result.Fail("Entity type is missing or empty");
+                return Result.Fail("Component type is missing or empty");
             }
 
-            // The prototype JSON has already been validated against the schema, so there's no
+            // The component JSON has already been validated against the schema, so there's no
             // need to do it again here.
 
-            var prototype = EntityData.Create(jsonObject, entitySchema);
+            var componentPrototype = ComponentData.Create(jsonObject, componentSchema);
 
-            _prototypes[entityType] = prototype;
+            _componentPrototypes[componentType] = componentPrototype;
 
             return Result.Ok();
         }
@@ -136,7 +136,7 @@ public class EntityPrototypeRegistry
 
     public List<string> GetFileEntityTypes(string fileExtension)
     {
-        if (_fileEntityTypes.TryGetValue(fileExtension, out var entityTypes))
+        if (_entityComponentTypes.TryGetValue(fileExtension, out var entityTypes))
         {
             return entityTypes;
         }
@@ -144,13 +144,13 @@ public class EntityPrototypeRegistry
         return new List<string>();
     }
 
-    public Result<EntityData> GetPrototype(string entityType)
+    public Result<ComponentData> GetPrototype(string componentType)
     {
-        if (!_prototypes.TryGetValue(entityType, out var prototype))
+        if (!_componentPrototypes.TryGetValue(componentType, out var componentPrototype))
         {
-            return Result<EntityData>.Fail($"Prototype for entity type '{entityType}' not found");
+            return Result<ComponentData>.Fail($"Component prototype for entity type '{componentType}' not found");
         }
 
-        return Result<EntityData>.Ok(prototype);
+        return Result<ComponentData>.Ok(componentPrototype);
     }
 }

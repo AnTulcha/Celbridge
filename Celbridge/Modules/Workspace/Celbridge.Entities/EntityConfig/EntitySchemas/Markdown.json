@@ -3,16 +3,24 @@
   "properties": {
     "_entityType": {
       "type": "string",
-      "const": "Folder"
+      "const": "Markdown"
     },
     "_entityVersion": {
       "type": "integer",
       "const": 1
+    },
+    "_components": {
+      "type": "object"
+    },
+    "editorMode": {
+      "type": "string",
+      "enum": [ "Editor", "Preview", "EditorAndPreview" ]
     }
   },
   "required": [
     "_entityType",
-    "_entityVersion"
+    "_entityVersion",
+    "editorMode"
   ],
   "additionalProperties": false
 }

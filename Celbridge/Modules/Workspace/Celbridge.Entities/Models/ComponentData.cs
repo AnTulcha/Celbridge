@@ -2,34 +2,33 @@ using CommunityToolkit.Diagnostics;
 using Json.Patch;
 using Json.Pointer;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Text.Json;
 using Celbridge.Entities.Services;
 
 namespace Celbridge.Entities.Models;
 
-public class EntityData
+public class ComponentData
 {
     public JsonObject JsonObject { get; private set; }
-    public EntitySchema EntitySchema { get; }
+    public ComponentSchema ComponentSchema { get; }
 
-    private EntityData(JsonObject jsonObject, EntitySchema entitySchema)
+    private ComponentData(JsonObject jsonObject, ComponentSchema componentSchema)
     {
         JsonObject = jsonObject;
-        EntitySchema = entitySchema;
+        ComponentSchema = componentSchema;
     }
 
-    public static EntityData Create(JsonObject jsonObject, EntitySchema entitySchema)
+    public static ComponentData Create(JsonObject jsonObject, ComponentSchema componentSchema)
     {
-        return new EntityData(jsonObject, entitySchema);
+        return new ComponentData(jsonObject, componentSchema);
     }
 
-    public EntityData DeepClone()
+    public ComponentData DeepClone()
     {
         var jsonClone = JsonObject.DeepClone() as JsonObject;
         Guard.IsNotNull(jsonClone);
 
-        return new EntityData(jsonClone, EntitySchema);
+        return new ComponentData(jsonClone, ComponentSchema);
     }
 
     public Result<T> GetProperty<T>(string propertyPath)
@@ -58,14 +57,14 @@ public class EntityData
             var value = valueNode.Deserialize<T>(EntityService.SerializerOptions);
             if (value is null)
             {
-                return Result<T>.Fail($"Failed to deserialize property at '{propertyPath}' to type '{nameof(T)}'");
+                return Result<T>.Fail($"Failed to deserialize component property at '{propertyPath}' to type '{nameof(T)}'");
             }
             
             return Result<T>.Ok(value);
         }
         catch (Exception ex)
         {
-            return Result<T>.Fail($"An exception occurred when getting entity property '{propertyPath}'")
+            return Result<T>.Fail($"An exception occurred when getting component property '{propertyPath}'")
                 .WithException(ex);
         }
     }
@@ -82,14 +81,14 @@ public class EntityData
 
             if (!jsonPointer.TryEvaluate(JsonObject, out var valueNode))
             {
-                return Result<string>.Fail($"Property was not found at: '{propertyPath}'");
+                return Result<string>.Fail($"Component property was not found at: '{propertyPath}'");
             }
 
             if (valueNode is null)
             {
                 // The property was found but it is a JSON null value.
-                // We treat this as an error for Entity Data.
-                return Result<string>.Fail($"Property is a JSON null value: '{propertyPath}'");
+                // We treat this as an error for Component Data.
+                return Result<string>.Fail($"Component property is a JSON null value: '{propertyPath}'");
             }
 
             var valueJSON = valueNode.ToJsonString();
@@ -98,7 +97,7 @@ public class EntityData
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail($"An exception occurred when getting entity property '{propertyPath}'")
+            return Result<string>.Fail($"An exception occurred when getting component property '{propertyPath}'")
                 .WithException(ex);
         }
     }
@@ -132,7 +131,7 @@ public class EntityData
             }
 
             // Check if the patched JSON is still valid for the entity schema
-            var validationResult = EntitySchema.ValidateJsonObject(newJsonObject);
+            var validationResult = ComponentSchema.ValidateJsonObject(newJsonObject);
             if (validationResult.IsFailure)
             {
                 return Result<PatchSummary>.Fail($"Failed to apply JSON patch to entity data")
@@ -161,7 +160,7 @@ public class EntityData
         }
         catch (Exception ex)
         {
-            return Result<PatchSummary>.Fail($"An exception occurred when applying JSON patch to entity data.")
+            return Result<PatchSummary>.Fail($"An exception occurred when applying JSON patch to component data.")
                 .WithException(ex);
         }
     }

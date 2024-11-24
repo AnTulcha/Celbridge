@@ -3,14 +3,14 @@ using System.Text.Json;
 
 namespace Celbridge.Entities.Services;
 
-public class EntitySchemaRegistry
+public class ComponentSchemaRegistry
 {
     private const string EntityConfigFolder = "EntityConfig";
-    private const string EntitySchemasFolder = "EntitySchemas";
+    private const string EntitySchemasFolder = "ComponentSchemas";
 
-    private readonly Dictionary<string, EntitySchema> _schemas = new();
+    private readonly Dictionary<string, ComponentSchema> _componentSchemas = new();
 
-    public async Task<Result> LoadEntitySchemasAsync()
+    public async Task<Result> LoadComponentSchemasAsync()
     {
         try
         {
@@ -28,7 +28,7 @@ public class EntitySchemaRegistry
             {
                 var content = await FileIO.ReadTextAsync(jsonFile);
 
-                AddEntitySchema(content);
+                AddComponentSchema(content);
             }
 
             return Result.Ok();
@@ -40,17 +40,17 @@ public class EntitySchemaRegistry
         }
     }
 
-    public Result<EntitySchema> GetSchemaForEntityType(string entityType)
+    public Result<ComponentSchema> GetSchemaForComponentType(string componentType)
     {
-        if (!_schemas.TryGetValue(entityType, out var entitySchema))
+        if (!_componentSchemas.TryGetValue(componentType, out var entitySchema))
         {
-            return Result<EntitySchema>.Fail($"Schema '{entityType}' not found");
+            return Result<ComponentSchema>.Fail($"Component schema '{componentType}' not found");
         }
 
-        return Result<EntitySchema>.Ok(entitySchema);
+        return Result<ComponentSchema>.Ok(entitySchema);
     }
 
-    public Result<EntitySchema> GetSchemaFromJson(string json)
+    public Result<ComponentSchema> GetComponentSchemaFromJson(string json)
     {
         try
         {
@@ -59,56 +59,56 @@ public class EntitySchemaRegistry
 
             if (root.ValueKind != JsonValueKind.Object)
             {
-                return Result<EntitySchema>.Fail("Failed to parse JSON as an object");
+                return Result<ComponentSchema>.Fail("Failed to parse JSON as an object");
             }
 
-            if (!root.TryGetProperty("_entityType", out var entityTypeElement) 
-                || entityTypeElement.ValueKind != JsonValueKind.String)
+            if (!root.TryGetProperty("_componentType", out var componentTypeElement) 
+                || componentTypeElement.ValueKind != JsonValueKind.String)
             {
-                return Result<EntitySchema>.Fail("Entity type not found");
+                return Result<ComponentSchema>.Fail("Component type not found");
             }
 
-            var entityType = entityTypeElement.GetString();
-            if (string.IsNullOrEmpty(entityType))
+            var componentType = componentTypeElement.GetString();
+            if (string.IsNullOrEmpty(componentType))
             {
-                return Result<EntitySchema>.Fail("Entity type is empty");
+                return Result<ComponentSchema>.Fail("Component type is empty");
             }
 
-            return GetSchemaForEntityType(entityType);
+            return GetSchemaForComponentType(componentType);
         }
         catch (Exception ex)
         {
-            return Result<EntitySchema>.Fail("An exception occurred when getting schema from JSON.")
+            return Result<ComponentSchema>.Fail("An exception occurred when getting schema from JSON.")
                 .WithException(ex);
         }
     }
 
-    public Result AddEntitySchema(string schemaJson)
+    public Result AddComponentSchema(string schemaJson)
     {
         try
         {
-            var createResult = EntitySchema.FromJson(schemaJson);
+            var createResult = ComponentSchema.FromJson(schemaJson);
             if (!createResult.IsSuccess)
             {
                 return Result.Fail("Failed to create entity schema from JSON")
                     .WithErrors(createResult);
             }
 
-            var entitySchema = createResult.Value;
+            var componentSchema = createResult.Value;
 
-            var entityType = entitySchema.EntityType;
-            if (_schemas.ContainsKey(entityType))
+            var componentType = componentSchema.ComponentType;
+            if (_componentSchemas.ContainsKey(componentType))
             {
-                return Result.Fail($"Entity schema '{entityType}' already exists");
+                return Result.Fail($"Component schema '{componentType}' already exists");
             }
 
-            _schemas[entityType] = entitySchema;
+            _componentSchemas[componentType] = componentSchema;
 
             return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail("An exception occurred when adding the schema.")
+            return Result.Fail("An exception occurred when adding the component schema.")
                 .WithException(ex);
         }
     }
