@@ -42,6 +42,12 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
         ApplyPatch(resource, patch);
     }
 
+    public static void AddProperty(ResourceKey resource, int componentIndex, string path, object value)
+    {
+        var componentPath = $"/_components/{componentIndex}/{path}";
+        AddProperty(resource, componentPath, value);
+    }
+
     private record RemoveOperation(string op, string path);
     public static void RemoveProperty(ResourceKey resource, string path)
     {
@@ -49,6 +55,12 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
         string patch = JsonSerializer.Serialize(operation);
         patch = $"[{patch}]";
         ApplyPatch(resource, patch);
+    }
+
+    public static void RemoveProperty(ResourceKey resource, int componentIndex, string path)
+    {
+        var componentPath = $"/_components/{componentIndex}/{path}";
+        RemoveProperty(resource, componentPath);
     }
 
     private record ReplaceOperation(string op, string path, object value);
@@ -60,6 +72,12 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
         ApplyPatch(resource, patch);
     }
 
+    public static void ReplaceProperty(ResourceKey resource, int componentIndex, string path, object value)
+    {
+        var componentPath = $"/_components/{componentIndex}/{path}";
+        RemoveProperty(resource, componentPath);
+    }
+
     private record MoveOperation(string op, string from, string path);
     public static void MoveProperty(ResourceKey resource, string sourcePath, string destPath)
     {
@@ -69,6 +87,13 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
         ApplyPatch(resource, patch);
     }
 
+    public static void MoveComponent(ResourceKey resource, int sourceComponentIndex, int destComponentIndex)
+    {
+        var sourceComponentPath = $"/_components/{sourceComponentIndex}";
+        var destComponentPath = $"/_components/{destComponentIndex}";
+        MoveProperty(resource, sourceComponentPath, destComponentPath);
+    }
+
     private record CopyOperation(string op, string from, string path);
     public static void CopyProperty(ResourceKey resource, string sourcePath, string destPath)
     {
@@ -76,6 +101,13 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
         string patch = JsonSerializer.Serialize(operation);
         patch = $"[{patch}]";
         ApplyPatch(resource, patch);
+    }
+
+    public static void CopyComponent(ResourceKey resource, int sourceComponentIndex, int destComponentIndex)
+    {
+        var sourceComponentPath = $"/_components/{sourceComponentIndex}";
+        var destComponentPath = $"/_components/{destComponentIndex}";
+        CopyProperty(resource, sourceComponentPath, destComponentPath);
     }
 
     public static void ApplyPatch(ResourceKey resource, string patch)
