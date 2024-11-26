@@ -24,33 +24,6 @@ public interface IEntityService
     string GetEntityDataRelativePath(ResourceKey resource);
 
     /// <summary>
-    /// Gets the value of a property from a resource.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Returns a default value if the property cannot be found.
-    /// </summary>
-    T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;
-
-    /// <summary>
-    /// Gets the value of a property from a resource.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Fails if the property cannot be found, or is of the wrong type.
-    /// </summary>
-    Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull;
-
-    /// <summary>
-    /// Gets the value of a property from a resource. The value is returned as a JSON encoded string.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Fails if the property cannot be found.
-    /// </summary>
-    Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath);
-
-    /// <summary>
-    /// Sets the value of an entity property for a resource.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// </summary>
-    Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
-
-    /// <summary>
     /// Apply a JSON Patch (RFC 6902) to the Entity Data for a resource.
     /// </summary>
     Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch);
@@ -89,5 +62,32 @@ public interface IEntityService
     /// Removes a component at the specified index from the entity for a resource.
     /// </summary>
     Result RemoveComponent(ResourceKey resource, int componentIndex);
+
+    /// <summary>
+    /// Gets the value of a property from a resource.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// Returns a default value if the property cannot be found.
+    /// </summary>
+    T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;
+
+    /// <summary>
+    /// Gets the value of a property from a resource.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// Fails if the property cannot be found, or is of the wrong type.
+    /// </summary>
+    Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull;
+
+    /// <summary>
+    /// Gets the value of a property from a resource. The value is returned as a JSON encoded string.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// Fails if the property cannot be found.
+    /// </summary>
+    Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath);
+
+    /// <summary>
+    /// Sets the value of an entity property for a resource.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// </summary>
+    Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
 }
 

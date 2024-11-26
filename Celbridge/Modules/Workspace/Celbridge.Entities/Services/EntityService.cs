@@ -142,102 +142,6 @@ public class EntityService : IEntityService, IDisposable
         return relativePath;
     }
 
-    public async Task<Result> SaveModifiedEntities()
-    {
-        foreach (var resourceKey in _modifiedEntities.Keys)
-        {
-            if (_entityCache.ContainsKey(resourceKey))
-            {
-                var entity = _entityCache[resourceKey];
-
-                var saveResult = await SaveEntityDataFileAsync(entity);
-                if (saveResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to save entity data for resource: '{resourceKey}'")
-                        .WithErrors(saveResult);
-                }
-            }
-        }
-
-        // Clear the modified entities list
-        _modifiedEntities.Clear();
-
-        return Result.Ok();
-    }
-
-    public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
-    {
-        var getResult = GetProperty<T>(resource, propertyPath);
-        if (getResult.IsFailure)
-        {
-            return default;
-        }
-
-        return getResult.Value;
-    }
-
-    public Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
-    {
-        var acquireResult = AcquireEntity(resource);
-        if (acquireResult.IsFailure)
-        {
-            _logger.LogError(acquireResult.Error);
-            return Result<T>.Fail($"Failed to acquire entity for resource '{resource}'")
-                .WithErrors(acquireResult);
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
-        var getResult = entity.EntityData.GetProperty<T>(propertyPath);
-        if (getResult.IsFailure)
-        {
-            return Result<T>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
-                .WithErrors(getResult);
-        }
-
-        return getResult;
-    }
-
-    public Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath)
-    {
-        var acquireResult = AcquireEntity(resource);
-        if (acquireResult.IsFailure)
-        {
-            _logger.LogError(acquireResult.Error);
-            return Result<string>.Fail($"Failed to acquire entity for resource '{resource}'")
-                .WithErrors(acquireResult);
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
-        var getResult = entity.EntityData.GetPropertyAsJSON(propertyPath);
-        if (getResult.IsFailure)
-        {
-            return Result<string>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
-                .WithErrors(getResult);
-        }
-
-        return getResult;
-    }
-
-    private record SetPropertyOperation(string op, string path, object value);
-    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
-    {
-        // Set the property by applying a JSON patch
-        var operation = new SetPropertyOperation("add", propertyPath, newValue);
-        var jsonPatch = JsonSerializer.Serialize(operation, SerializerOptions);
-        jsonPatch = $"[{jsonPatch}]";
-
-        var applyResult = ApplyPatch(resource, jsonPatch);
-        if (applyResult.IsFailure)
-        {
-            return Result<PatchSummary>.Fail($"Failed to apply entity patch for resource: {resource}");
-        }
-        var patchSummary = applyResult.Value;
-
-        return Result<PatchSummary>.Ok(patchSummary);
-    }
-
     public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch)
     {
         return ApplyPatch(resource, patch, ApplyPatchContext.Modify);
@@ -305,6 +209,29 @@ public class EntityService : IEntityService, IDisposable
 
         // Succeed and return true to indicate that a patch was undone.
         return Result<bool>.Ok(true);
+    }
+
+    public async Task<Result> SaveModifiedEntities()
+    {
+        foreach (var resourceKey in _modifiedEntities.Keys)
+        {
+            if (_entityCache.ContainsKey(resourceKey))
+            {
+                var entity = _entityCache[resourceKey];
+
+                var saveResult = await SaveEntityDataFileAsync(entity);
+                if (saveResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to save entity data for resource: '{resourceKey}'")
+                        .WithErrors(saveResult);
+                }
+            }
+        }
+
+        // Clear the modified entities list
+        _modifiedEntities.Clear();
+
+        return Result.Ok();
     }
 
     public Result MoveEntityDataFile(ResourceKey oldResource, ResourceKey newResource)
@@ -473,6 +400,79 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return Result.Ok();
+    }
+
+    public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
+    {
+        var getResult = GetProperty<T>(resource, propertyPath);
+        if (getResult.IsFailure)
+        {
+            return default;
+        }
+
+        return getResult.Value;
+    }
+
+    public Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
+    {
+        var acquireResult = AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return Result<T>.Fail($"Failed to acquire entity for resource '{resource}'")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        var getResult = entity.EntityData.GetProperty<T>(propertyPath);
+        if (getResult.IsFailure)
+        {
+            return Result<T>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
+                .WithErrors(getResult);
+        }
+
+        return getResult;
+    }
+
+    public Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath)
+    {
+        var acquireResult = AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return Result<string>.Fail($"Failed to acquire entity for resource '{resource}'")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        var getResult = entity.EntityData.GetPropertyAsJSON(propertyPath);
+        if (getResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
+                .WithErrors(getResult);
+        }
+
+        return getResult;
+    }
+
+    private record SetPropertyOperation(string op, string path, object value);
+    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
+    {
+        // Set the property by applying a JSON patch
+        var operation = new SetPropertyOperation("add", propertyPath, newValue);
+        var jsonPatch = JsonSerializer.Serialize(operation, SerializerOptions);
+        jsonPatch = $"[{jsonPatch}]";
+
+        var applyResult = ApplyPatch(resource, jsonPatch);
+        if (applyResult.IsFailure)
+        {
+            return Result<PatchSummary>.Fail($"Failed to apply entity patch for resource: {resource}");
+        }
+        var patchSummary = applyResult.Value;
+
+        return Result<PatchSummary>.Ok(patchSummary);
     }
 
     private void OnResourceRegistryUpdatedMessage(object recipient, ResourceRegistryUpdatedMessage message)
