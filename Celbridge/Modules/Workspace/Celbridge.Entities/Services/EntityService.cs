@@ -615,7 +615,16 @@ public class EntityService : IEntityService, IDisposable
     {
         Guard.IsNotNull(_entitySchema);
 
-        // Attempt to find an entity type for the resource's file extension
+        var entityJsonObject = new JsonObject
+        {
+            ["_entityVersion"] = 1,
+            ["_components"] = new JsonArray()
+        };
+
+        Guard.IsNotNull(entityJsonObject);
+
+        // Add default components based on the resource's file extension
+
         var fileExtension = Path.GetExtension(resource.ToString());
         if (string.IsNullOrEmpty(fileExtension))
         {
@@ -623,21 +632,36 @@ public class EntityService : IEntityService, IDisposable
             return Result<EntityData>.Fail($"Resource does not have a file extension: '{resource}'");
         }
 
-        var jsonObject = new JsonObject
+        if (_defaultComponents.TryGetValue(fileExtension, out var defaultComponents))
         {
-            ["_entityVersion"] = 1,
-            ["_components"] = new JsonArray()
-        };
+            foreach (var componentType in defaultComponents)
+            {
+                var getPrototypeResult = _componentPrototypeRegistry.GetPrototype(componentType);
+                if (getPrototypeResult.IsFailure)
+                {
+                    return Result<EntityData>.Fail($"Failed to get prototype for default component type: '{componentType}'");
+                }
+                var prototype = getPrototypeResult.Value;
 
-        // Todo: Add any default components for the file extension
+                var componentObject = prototype.JsonObject.DeepClone() as JsonObject;
+                Guard.IsNotNull(componentObject);
 
-        var evaluateResult = _entitySchema.Evaluate(jsonObject);
+                var componentsArray = entityJsonObject["_components"] as JsonArray;
+                Guard.IsNotNull(componentsArray);
+
+                componentsArray.Add(componentObject);
+            }
+        }
+
+        // Todo: Validate the components
+
+        var evaluateResult = _entitySchema.Evaluate(entityJsonObject);
         if (!evaluateResult.IsValid)
         {
             return Result<EntityData>.Fail($"Failed to create entity data. Schema validation error: {resource}");
         }
 
-        var entityData = EntityData.Create(jsonObject, _entitySchema);
+        var entityData = EntityData.Create(entityJsonObject, _entitySchema);
 
         return Result<EntityData>.Ok(entityData);
     }
