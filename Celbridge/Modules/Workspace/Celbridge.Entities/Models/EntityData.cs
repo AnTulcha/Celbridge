@@ -192,7 +192,6 @@ public class EntityData
                 // Todo: Log an error
                 return;
             }
-            var operation = op.Op.ToString().ToLower();
 
             var components = JsonObject["_components"] as JsonArray;
             if (components is null ||
@@ -221,7 +220,7 @@ public class EntityData
             // Construct the component relative property path 
             string propertyPath = "/" + string.Join("/", segments.Skip(2));
 
-            var componentChange = new ComponentChangedMessage(resource, componentType, componentIndex, propertyPath, operation);
+            var componentChange = new ComponentChangedMessage(resource, componentType, componentIndex, propertyPath);
             componentChanges.Add(componentChange);
         });
 
