@@ -6,6 +6,7 @@ using Celbridge.Messaging;
 using Celbridge.Projects;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
+using Json.Schema;
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -38,6 +39,9 @@ public enum ApplyPatchContext
 
 public class EntityService : IEntityService, IDisposable
 {
+    private const string EntityConfigFolder = "EntityConfig";
+    private const string DefaultComponentsFile = "DefaultComponents.json";
+
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EntityService> _logger;
     private readonly IMessengerService _messengerService;
@@ -47,10 +51,12 @@ public class EntityService : IEntityService, IDisposable
     private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
     private readonly ConcurrentDictionary<ResourceKey, bool> _modifiedEntities = new(); // Track modified entities
 
-    private EntitySchemaRegistry _entitySchemaRegistry;
-    private EntityPrototypeRegistry _entityPrototypeRegistry;
     private ComponentSchemaRegistry _componentSchemaRegistry;
     private ComponentPrototypeRegistry _componentPrototypeRegistry;
+
+    private readonly Dictionary<string, List<string>> _defaultComponents = new();
+
+    private JsonSchema? _entitySchema;
 
     public static JsonSerializerOptions SerializerOptions { get; } = new()
     {
@@ -73,9 +79,6 @@ public class EntityService : IEntityService, IDisposable
         _projectService = projectService;
         _workspaceWrapper = workspaceWrapper;
 
-        _entitySchemaRegistry = serviceProvider.GetRequiredService<EntitySchemaRegistry>();
-        _entityPrototypeRegistry = serviceProvider.GetRequiredService<EntityPrototypeRegistry>();
-
         _componentSchemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
         _componentPrototypeRegistry = serviceProvider.GetRequiredService<ComponentPrototypeRegistry>();
 
@@ -84,40 +87,45 @@ public class EntityService : IEntityService, IDisposable
 
     public async Task<Result> InitializeAsync()
     {
-        var entitySchemasResult = await _entitySchemaRegistry.LoadEntitySchemasAsync();
-        if (entitySchemasResult.IsFailure)
+        var loadDefaultsResult = await LoadDefaultComponentsAsync();
+        if (loadDefaultsResult.IsFailure)
         {
-            return Result.Fail("Failed to load schemas")
-                .WithErrors(entitySchemasResult);
+            return Result.Fail("Failed to load file default components")
+                .WithErrors(loadDefaultsResult);
         }
 
-        var entityPrototypesResult = await _entityPrototypeRegistry.LoadEntityPrototypesAsync(_entitySchemaRegistry);
-        if (entityPrototypesResult.IsFailure)
-        {
-            return Result.Fail("Failed to load prototypes")
-                .WithErrors(entityPrototypesResult);
-        }
-
-        var entityTypesResult = await _entityPrototypeRegistry.LoadFileEntityTypesAsync();
-        if (entityTypesResult.IsFailure)
-        {
-            return Result.Fail("Failed to load file entity types")
-                .WithErrors(entityTypesResult);
-        }
-
-        var componentSchemasResult = await _componentSchemaRegistry.LoadComponentSchemasAsync();
-        if (componentSchemasResult.IsFailure)
+        var loadSchemasResult = await _componentSchemaRegistry.LoadComponentSchemasAsync();
+        if (loadSchemasResult.IsFailure)
         {
             return Result.Fail("Failed to load component schemas")
-                .WithErrors(componentSchemasResult);
+                .WithErrors(loadSchemasResult);
         }
 
-        var componentPrototypeResult = await _componentPrototypeRegistry.LoadComponentPrototypesAsync(_componentSchemaRegistry);
-        if (componentPrototypeResult.IsFailure)
+        var loadPrototypesResult = await _componentPrototypeRegistry.LoadComponentPrototypesAsync(_componentSchemaRegistry);
+        if (loadPrototypesResult.IsFailure)
         {
             return Result.Fail("Failed to load component prototypes")
-                .WithErrors(componentPrototypeResult);
+                .WithErrors(loadPrototypesResult);
         }
+
+        // Todo: Add schema refs to validate all supported component types
+
+        // Build and cache the entity schema at startup and cache it
+        var builder = new JsonSchemaBuilder()
+            .Type(SchemaValueType.Object)
+            .Properties(
+                ("_entityVersion", new JsonSchemaBuilder()
+                    .Type(SchemaValueType.Integer)
+                    .Const(1)
+                ),
+                ("_components", new JsonSchemaBuilder()
+                    .Type(SchemaValueType.Array)
+                )
+            )
+            .Required("_entityVersion", "_components");
+
+        // Todo: Check for build errors
+        _entitySchema = builder.Build();
 
         return Result.Ok();
     }
@@ -481,6 +489,47 @@ public class EntityService : IEntityService, IDisposable
         return Result<PatchSummary>.Ok(patchSummary);
     }
 
+    private async Task<Result> LoadDefaultComponentsAsync()
+    {
+        try
+        {
+            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
+            var jsonFile = await configFolder.GetFileAsync(DefaultComponentsFile);
+
+            var content = await FileIO.ReadTextAsync(jsonFile);
+
+            using var jsonDoc = JsonDocument.Parse(content);
+
+            foreach (var property in jsonDoc.RootElement.EnumerateObject())
+            {
+                if (property.Value.ValueKind != JsonValueKind.Array)
+                {
+                    return Result.Fail($"Expected object value for property: {property.Name}");
+                }
+
+                var list = new List<string>();
+                foreach (var item in property.Value.EnumerateArray())
+                {
+                    if (item.ValueKind != JsonValueKind.String)
+                    {
+                        return Result.Fail($"Expected string value for property: {property.Name}");
+                    }
+
+                    list.Add(item.GetString()!);
+                }
+
+                _defaultComponents[property.Name] = list;
+            }
+
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An exception occurred when loading default components file")
+                .WithException(ex);
+        }
+    }
+
     private static string GetComponentPropertyPath(int componentIndex, string propertyPath)
     {
         return $"/_components/{componentIndex}{propertyPath}";
@@ -531,7 +580,7 @@ public class EntityService : IEntityService, IDisposable
             if (entityData is null)
             {
                 // We were unable to load an existing entity data, so we need to create a new one
-                var acquireResult = AcquireEntityData(resource);
+                var acquireResult = CreateEntityData(resource);
                 if (acquireResult.IsSuccess)
                 {
                     entityData = acquireResult.Value;
@@ -562,82 +611,41 @@ public class EntityService : IEntityService, IDisposable
         }
     }
 
-    private Result<EntityData> AcquireEntityData(ResourceKey resource)
+    private Result<EntityData> CreateEntityData(ResourceKey resource)
     {
-        EntityData? entityPrototype = null;
+        Guard.IsNotNull(_entitySchema);
 
         // Attempt to find an entity type for the resource's file extension
         var fileExtension = Path.GetExtension(resource.ToString());
-        if (!string.IsNullOrEmpty(fileExtension))
+        if (string.IsNullOrEmpty(fileExtension))
         {
-            var entityTypes = _entityPrototypeRegistry.GetFileEntityTypes(fileExtension);
-            if (entityTypes.Count > 0)
-            {
-                // Default entity type is the first in the list
-                var entityTypeFromConfig = entityTypes[0];
-
-                // Get the prototype for the entity type
-                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype(entityTypeFromConfig);
-                if (getPrototypeResult.IsFailure)
-                {
-                    // No prototype was found for the entity type.
-                    // This means the prototype is missing from the configuration.
-                    return Result<EntityData>.Fail($"Failed to get prototype for entity type: {entityTypeFromConfig}");
-                }
-
-                entityPrototype = getPrototypeResult.Value;
-            }
+            // Todo: Handle resources without file extensions and folder resources
+            return Result<EntityData>.Fail($"Resource does not have a file extension: '{resource}'");
         }
 
-        if (entityPrototype == null)
+        var jsonObject = new JsonObject
         {
-            // This resource does not have a registered entity type, so we need to assign a default entity
-            // type based on the resource type (file or folder).
+            ["_entityVersion"] = 1,
+            ["_components"] = new JsonArray()
+        };
 
-            var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
-            var path = resourceRegistry.GetResourcePath(resource);
+        // Todo: Add any default components for the file extension
 
-            if (Directory.Exists(path))
-            {
-                // Folder resource
-                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype("Folder");
-                if (getPrototypeResult.IsFailure)
-                {
-                    // No Folder prototype was found.
-                    // This means the prototype is missing from the configuration.
-                    return Result<EntityData>.Fail($"Failed to get prototype for Folder entity type");
-                }
-
-                entityPrototype = getPrototypeResult.Value;
-            }
-            else if (File.Exists(path))
-            {
-                // File resource
-                var getPrototypeResult = _entityPrototypeRegistry.GetPrototype("File");
-                if (getPrototypeResult.IsFailure)
-                {
-                    // No File prototype was found.
-                    // This means the prototype is missing from the configuration.
-                    return Result<EntityData>.Fail($"Failed to get prototype for File entity type");
-                }
-
-                entityPrototype = getPrototypeResult.Value;
-            }
+        var evaluateResult = _entitySchema.Evaluate(jsonObject);
+        if (!evaluateResult.IsValid)
+        {
+            return Result<EntityData>.Fail($"Failed to create entity data. Schema validation error: {resource}");
         }
 
-        if (entityPrototype is null)
-        {
-            // We should always have a prototype at this point
-            return Result<EntityData>.Fail($"Failed to get entity prototype for resource: {resource}");
-        }
-
-        var entityData = entityPrototype.DeepClone();
+        var entityData = EntityData.Create(jsonObject, _entitySchema);
 
         return Result<EntityData>.Ok(entityData);
     }
 
     private Result<EntityData> LoadEntityDataFile(string entityDataPath)
     {
+        Guard.IsNotNull(_entitySchema);
+
         // Load the EntityData json
         var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
         if (jsonObject is null)
@@ -645,39 +653,16 @@ public class EntityService : IEntityService, IDisposable
             return Result<EntityData>.Fail($"Failed to parse entity data from file: '{entityDataPath}'");
         }
 
-        // Get the entity type from the JSON object
-        if (!jsonObject.TryGetPropertyValue("_entityType", out var entityTypeValue) ||
-            entityTypeValue is null ||
-            entityTypeValue?.GetValueKind() != System.Text.Json.JsonValueKind.String)
+        // Validate the loaded data against the schema
+        var evaluateResult = _entitySchema.Evaluate(jsonObject);
+        if (!evaluateResult.IsValid)
         {
-            return Result<EntityData>.Fail($"Entity data does not contain an '_entityType' property: '{entityDataPath}'");
-        }
-
-        // Check if this is a valid entity type
-        var entityType = entityTypeValue!.ToString();
-        if (string.IsNullOrEmpty(entityType))
-        {
-            return Result<EntityData>.Fail($"'_entityType' property is empty: '{entityDataPath}'");
-        }
-
-        // Get the schema for the entity type
-        var getSchemaResult = _entitySchemaRegistry.GetSchemaForEntityType(entityType);
-        if (getSchemaResult.IsFailure)
-        {
-            return Result<EntityData>.Fail($"No schema found for entity type: '{entityType}'");
-        }
-
-        var entitySchema = getSchemaResult.Value;
-
-        // Validate the data against the schema
-        var validateResult = entitySchema.ValidateJsonObject(jsonObject);
-        if (validateResult.IsFailure)
-        {
+            // Todo: Attempt to repair/migrate the data instead of just failing
             return Result<EntityData>.Fail($"Entity data failed schema validation: '{entityDataPath}'");
         }
 
         // We've passed validation so now we can create the EntityData object
-        var entityData = EntityData.Create(jsonObject, entitySchema);
+        var entityData = EntityData.Create(jsonObject, _entitySchema);
 
         return Result<EntityData>.Ok(entityData);
     }

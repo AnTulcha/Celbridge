@@ -4,23 +4,24 @@ using Json.Pointer;
 using System.Text.Json.Nodes;
 using System.Text.Json;
 using Celbridge.Entities.Services;
+using Json.Schema;
 
 namespace Celbridge.Entities.Models;
 
 public class EntityData
 {
     public JsonObject JsonObject { get; private set; }
-    public EntitySchema EntitySchema { get; }
+    public JsonSchema Schema { get; }
 
-    private EntityData(JsonObject jsonObject, EntitySchema entitySchema)
+    private EntityData(JsonObject jsonObject, JsonSchema schema)
     {
         JsonObject = jsonObject;
-        EntitySchema = entitySchema;
+        Schema = schema;
     }
 
-    public static EntityData Create(JsonObject jsonObject, EntitySchema entitySchema)
+    public static EntityData Create(JsonObject jsonObject, JsonSchema schema)
     {
-        return new EntityData(jsonObject, entitySchema);
+        return new EntityData(jsonObject, schema);
     }
 
     public EntityData DeepClone()
@@ -28,7 +29,7 @@ public class EntityData
         var jsonClone = JsonObject.DeepClone() as JsonObject;
         Guard.IsNotNull(jsonClone);
 
-        return new EntityData(jsonClone, EntitySchema);
+        return new EntityData(jsonClone, Schema);
     }
 
     public Result<T> GetProperty<T>(string propertyPath)
@@ -134,11 +135,11 @@ public class EntityData
             }
 
             // Check if the patched JSON is still valid for the entity schema
-            var validationResult = EntitySchema.ValidateJsonObject(newJsonObject);
-            if (validationResult.IsFailure)
+
+            var evaluateResult = Schema.Evaluate(newJsonObject);
+            if (!evaluateResult.IsValid)
             {
-                return Result<PatchSummary>.Fail($"Failed to apply JSON patch to entity data")
-                    .WithErrors(validationResult);
+                return Result<PatchSummary>.Fail($"Failed to apply JSON patch to entity data. Schema validation error.");
             }
 
             // Generate the reverse patch so we can undo the change if needed.
