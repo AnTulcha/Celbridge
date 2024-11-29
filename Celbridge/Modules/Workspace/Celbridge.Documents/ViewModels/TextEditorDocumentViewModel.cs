@@ -67,6 +67,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
         if (message.Resource == _fileResource &&
+            message.ComponentType == "Markdown" &&
             message.PropertyPath == TextEditorEntityConstants.EditorMode)
         {
             UpdateEditorMode();

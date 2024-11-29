@@ -47,6 +47,7 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
         if (message.Resource == Resource &&
+            message.ComponentType == "Markdown" &&
             message.PropertyPath == TextEditorEntityConstants.EditorMode)
         {
             UpdateButtonState();
