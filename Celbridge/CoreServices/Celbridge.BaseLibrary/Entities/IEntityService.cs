@@ -64,30 +64,30 @@ public interface IEntityService
     Result RemoveComponent(ResourceKey resource, int componentIndex);
 
     /// <summary>
-    /// Gets the value of a property from a resource.
+    /// Gets the value of a property from a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Returns a default value if the property cannot be found.
     /// </summary>
-    T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull;
+    T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull;
 
     /// <summary>
-    /// Gets the value of a property from a resource.
+    /// Gets the value of a property from a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Fails if the property cannot be found, or is of the wrong type.
     /// </summary>
-    Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull;
+    Result<T> GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath) where T : notnull;
 
     /// <summary>
-    /// Gets the value of a property from a resource. The value is returned as a JSON encoded string.
+    /// Gets the value of a property from a component. The value is returned as a JSON encoded string.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Fails if the property cannot be found.
     /// </summary>
-    Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath);
+    Result<string> GetPropertyAsJSON(ResourceKey resource, int componentIndex, string propertyPath);
 
     /// <summary>
-    /// Sets the value of an entity property for a resource.
+    /// Sets the value of an entity property for a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
-    Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull;
+    Result<PatchSummary> SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull;
 }
 

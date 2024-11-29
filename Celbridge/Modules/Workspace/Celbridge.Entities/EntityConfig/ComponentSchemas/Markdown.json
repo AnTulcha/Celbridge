@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "properties": {
+    "_componentType": {
+      "type": "string",
+      "const": "Markdown"
+    },
+    "_componentVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "editorMode": {
+      "type": "string",
+      "enum": [ "Editor", "Preview", "EditorAndPreview" ]
+    }
+  },
+  "required": [
+    "_componentType",
+    "_componentVersion",
+    "editorMode"
+  ],
+  "additionalProperties": false
+}

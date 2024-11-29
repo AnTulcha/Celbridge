@@ -4,4 +4,4 @@ namespace Celbridge.Entities;
 /// Describes the changes applied by a patch to an entity data object.
 /// Includes a JSON Patch that can be used to reverse the changes.
 /// </summary>
-public record PatchSummary(List<string> ModifiedPaths, string Patch, string ReversePatch);
+public record PatchSummary(string Patch, string ReversePatch, List<ComponentChangedMessage> ComponentChangeMessages);

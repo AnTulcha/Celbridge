@@ -402,9 +402,9 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
-    public T? GetProperty<T>(ResourceKey resource, string propertyPath, T? defaultValue) where T : notnull
+    public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
     {
-        var getResult = GetProperty<T>(resource, propertyPath);
+        var getResult = GetProperty<T>(resource, componentIndex, propertyPath);
         if (getResult.IsFailure)
         {
             return default;
@@ -413,7 +413,7 @@ public class EntityService : IEntityService, IDisposable
         return getResult.Value;
     }
 
-    public Result<T> GetProperty<T>(ResourceKey resource, string propertyPath) where T : notnull
+    public Result<T> GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath) where T : notnull
     {
         var acquireResult = AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -425,7 +425,9 @@ public class EntityService : IEntityService, IDisposable
         var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
-        var getResult = entity.EntityData.GetProperty<T>(propertyPath);
+        var componentPropertyPath = GetComponentPropertyPath(componentIndex, propertyPath);
+
+        var getResult = entity.EntityData.GetProperty<T>(componentPropertyPath);
         if (getResult.IsFailure)
         {
             return Result<T>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
@@ -435,7 +437,7 @@ public class EntityService : IEntityService, IDisposable
         return getResult;
     }
 
-    public Result<string> GetPropertyAsJSON(ResourceKey resource, string propertyPath)
+    public Result<string> GetPropertyAsJSON(ResourceKey resource, int componentIndex, string propertyPath)
     {
         var acquireResult = AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -447,7 +449,9 @@ public class EntityService : IEntityService, IDisposable
         var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
-        var getResult = entity.EntityData.GetPropertyAsJSON(propertyPath);
+        var componentPropertyPath = GetComponentPropertyPath(componentIndex, propertyPath);
+
+        var getResult = entity.EntityData.GetPropertyAsJSON(componentPropertyPath);
         if (getResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get entity property '{propertyPath}' for resource '{resource}'")
@@ -458,10 +462,12 @@ public class EntityService : IEntityService, IDisposable
     }
 
     private record SetPropertyOperation(string op, string path, object value);
-    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, string propertyPath, T newValue) where T : notnull
+    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull
     {
+        string componentPropertyPath = GetComponentPropertyPath(componentIndex, propertyPath);
+
         // Set the property by applying a JSON patch
-        var operation = new SetPropertyOperation("add", propertyPath, newValue);
+        var operation = new SetPropertyOperation("add", componentPropertyPath, newValue);
         var jsonPatch = JsonSerializer.Serialize(operation, SerializerOptions);
         jsonPatch = $"[{jsonPatch}]";
 
@@ -473,6 +479,11 @@ public class EntityService : IEntityService, IDisposable
         var patchSummary = applyResult.Value;
 
         return Result<PatchSummary>.Ok(patchSummary);
+    }
+
+    private static string GetComponentPropertyPath(int componentIndex, string propertyPath)
+    {
+        return $"/_components/{componentIndex}{propertyPath}";
     }
 
     private void OnResourceRegistryUpdatedMessage(object recipient, ResourceRegistryUpdatedMessage message)
@@ -781,7 +792,7 @@ public class EntityService : IEntityService, IDisposable
         var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
-        var applyResult = entity.EntityData.ApplyPatch(patch);
+        var applyResult = entity.EntityData.ApplyPatch(resource, patch);
         if (applyResult.IsFailure)
         {
             return Result<PatchSummary>.Fail($"Failed to apply patch to entity for resource: {resource}")
@@ -789,7 +800,7 @@ public class EntityService : IEntityService, IDisposable
         }
         var patchSummary = applyResult.Value;
 
-        if (patchSummary.ModifiedPaths.Count > 0)
+        if (patchSummary.ComponentChangeMessages.Count > 0)
         {
             _modifiedEntities[resource] = true;
 
@@ -811,9 +822,11 @@ public class EntityService : IEntityService, IDisposable
                     break;
             }
 
-            var pathsCopy = patchSummary.ModifiedPaths.ToList();
-            var message = new EntityChangedMessage(resource, pathsCopy);
-            _messengerService.Send(message);
+            // Notify listeners of the component changes resulting from applying the patch
+            foreach (var message in patchSummary.ComponentChangeMessages)
+            {
+                _messengerService.Send(message);
+            }
         }
 
         return Result<PatchSummary>.Ok(patchSummary);

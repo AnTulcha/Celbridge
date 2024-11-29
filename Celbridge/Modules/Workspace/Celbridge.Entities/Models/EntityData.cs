@@ -2,7 +2,6 @@ using CommunityToolkit.Diagnostics;
 using Json.Patch;
 using Json.Pointer;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Text.Json;
 using Celbridge.Entities.Services;
 
@@ -103,7 +102,7 @@ public class EntityData
         }
     }
 
-    public Result<PatchSummary> ApplyPatch(string patchJson)
+    public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patchJson)
     {
         try
         {
@@ -127,7 +126,10 @@ public class EntityData
             {
                 // The patch was valid, but did not result in any changes.
                 // This is indicated by returning an empty path list and reverse patch.
-                var emptyAppliedPatch = new PatchSummary(new List<string>(), patchJson, string.Empty);
+                var emptyAppliedPatch = new PatchSummary(
+                    patchJson,
+                    string.Empty,
+                    new List<ComponentChangedMessage>());
                 return Result<PatchSummary>.Ok(emptyAppliedPatch);
             }
 
@@ -143,26 +145,86 @@ public class EntityData
             var reversePatch = newJsonObject.CreatePatch(JsonObject);
             var reversePatchJson = JsonSerializer.Serialize(reversePatch);
 
-            // Note each path that was actually changed by the patch.
-            // It is possible that not all operations in the original resulted in a change.
-            List<string> paths = new();
-            reversePatch.Operations.ForEach(op =>
+            // Note each component that was actually changed by the patch, filtering out any
+            // operations in the original patch that did not result in a change.
+
+            var getResult = GetComponentChangesForPatch(resource, reversePatch);
+            if (getResult.IsFailure)
             {
-                var jsonPointer = op.Path;
-                var path = jsonPointer.ToString();
-                paths.Add(path);
-            });
-            var patchSummary = new PatchSummary(paths, patchJson, reversePatchJson);
+                return Result<PatchSummary>.Fail($"Failed to extract component changes from entity patch")
+                    .WithErrors(getResult);
+            }
+            var componentChanges = getResult.Value;
+
+            var patchSummary = new PatchSummary(patchJson, reversePatchJson, componentChanges);
 
             // Use the patched JSON object
             JsonObject = newJsonObject;
 
-            return Result<PatchSummary>.Ok(patchSummary); 
+            return Result<PatchSummary>.Ok(patchSummary);
         }
         catch (Exception ex)
         {
             return Result<PatchSummary>.Fail($"An exception occurred when applying JSON patch to entity data.")
                 .WithException(ex);
         }
+    }
+
+    private Result<List<ComponentChangedMessage>> GetComponentChangesForPatch(ResourceKey resource, JsonPatch reversePatch)
+    {
+        List<ComponentChangedMessage> componentChanges = new();
+        reversePatch.Operations.ForEach(op =>
+        {
+            var jsonPointer = op.Path;
+            var path = jsonPointer.ToString();
+
+            var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (segments is null ||
+                segments.Length <= 2 ||
+                segments[0] != "_components")
+            {
+                // Todo: Log an error
+                return;
+            }
+            var indexSegment = segments[1];
+            if (!int.TryParse(indexSegment, out var componentIndex))
+            {
+                // Todo: Log an error
+                return;
+            }
+            var operation = op.Op.ToString().ToLower();
+
+            var components = JsonObject["_components"] as JsonArray;
+            if (components is null ||
+                componentIndex >= components.Count)
+            {
+                // Todo: Log an error
+                return;
+            }
+
+            var componentObject = components[componentIndex] as JsonObject;
+            if (componentObject is null)
+            {
+                // Todo: Log an error
+                return;
+            }
+
+            var componentTypeNode = componentObject["_componentType"];
+            if (componentTypeNode is null)
+            {
+                // Todo: Log an error
+                return;
+            }
+
+            var componentType = componentTypeNode.ToString();
+
+            // Construct the component relative property path 
+            string propertyPath = "/" + string.Join("/", segments.Skip(2));
+
+            var componentChange = new ComponentChangedMessage(resource, componentType, componentIndex, propertyPath, operation);
+            componentChanges.Add(componentChange);
+        });
+
+        return Result<List<ComponentChangedMessage>>.Ok(componentChanges);
     }
 }

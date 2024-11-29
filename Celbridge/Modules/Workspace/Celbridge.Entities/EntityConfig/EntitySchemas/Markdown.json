@@ -11,17 +11,12 @@
     },
     "_components": {
       "type": "array"
-    },
-    "editorMode": {
-      "type": "string",
-      "enum": [ "Editor", "Preview", "EditorAndPreview" ]
     }
   },
   "required": [
     "_entityType",
     "_entityVersion",
-    "_components",
-    "editorMode"
+    "_components"
   ],
   "additionalProperties": false
 }
