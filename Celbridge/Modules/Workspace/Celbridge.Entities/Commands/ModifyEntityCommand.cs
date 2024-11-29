@@ -75,7 +75,7 @@ public class ModifyEntityCommand : CommandBase, IModifyEntityCommand
     public static void ReplaceProperty(ResourceKey resource, int componentIndex, string path, object value)
     {
         var componentPath = $"/_components/{componentIndex}/{path}";
-        RemoveProperty(resource, componentPath);
+        ReplaceProperty(resource, componentPath, value);
     }
 
     private record MoveOperation(string op, string from, string path);
