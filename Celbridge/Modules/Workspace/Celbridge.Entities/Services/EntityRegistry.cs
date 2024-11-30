@@ -27,6 +27,7 @@ public class EntityRegistry
 
     private JsonSchema? _entitySchema;
     private ComponentPrototypeRegistry? _prototypeRegistry;
+    private ComponentSchemaRegistry? _schemaRegistry;
 
     public EntityRegistry(
         ILogger<EntityRegistry> logger,
@@ -38,10 +39,11 @@ public class EntityRegistry
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public async Task<Result> Initialize(JsonSchema entitySchema, ComponentPrototypeRegistry prototypeRegistry)
+    public async Task<Result> Initialize(JsonSchema entitySchema, ComponentPrototypeRegistry prototypeRegistry, ComponentSchemaRegistry schemaRegistry)
     {
         _entitySchema = entitySchema;
         _prototypeRegistry = prototypeRegistry;
+        _schemaRegistry = schemaRegistry;
 
         return await LoadDefaultComponentsAsync();
     }
@@ -448,6 +450,7 @@ public class EntityRegistry
     private Result<EntityData> LoadEntityDataFile(string entityDataPath)
     {
         Guard.IsNotNull(_entitySchema);
+        Guard.IsNotNull(_schemaRegistry);
 
         // Load the EntityData json
         var jsonObject = JsonNode.Parse(File.ReadAllText(entityDataPath)) as JsonObject;
@@ -456,7 +459,7 @@ public class EntityRegistry
             return Result<EntityData>.Fail($"Failed to parse entity data from file: '{entityDataPath}'");
         }
 
-        // Validate the loaded data against the schema
+        // Validate the loaded data against the entity schema
         var evaluateResult = _entitySchema.Evaluate(jsonObject);
         if (!evaluateResult.IsValid)
         {
@@ -464,9 +467,45 @@ public class EntityRegistry
             return Result<EntityData>.Fail($"Entity data failed schema validation: '{entityDataPath}'");
         }
 
-        // Todo: Validate the compenent data against the component schema
+        var componentsArray = jsonObject["_components"] as JsonArray;
+        Guard.IsNotNull(componentsArray);
 
-        // We've passed validation so now we can create the EntityData object
+        // Validate each component in the entity against its corresponding schema
+
+        foreach (var componentNode in componentsArray)
+        {
+            // Check that the component is a JSON object
+            // Todo: Use the entity schema to enforce this constraint 
+            if (componentNode is not JsonObject componentObject)
+            {
+                return Result<EntityData>.Fail("Component is not a JSON object");
+            }
+
+            var componentTypeValue = componentObject["_componentType"] as JsonValue;
+            if (componentTypeValue is null ||
+                !componentTypeValue.TryGetValue(out string? componentType) ||
+                string.IsNullOrEmpty(componentType))
+            {
+                return Result<EntityData>.Fail("Component type is missing or empty");
+            }
+
+            var getSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
+            if (getSchemaResult.IsFailure)
+            {
+                return Result<EntityData>.Fail($"Failed to get schema for component type: '{componentType}'")
+                    .WithErrors(getSchemaResult);
+            }
+            var componentSchema = getSchemaResult.Value;
+
+            var validateResult = componentSchema.ValidateJsonObject(componentObject);
+            if (validateResult.IsFailure)
+            {
+                return Result<EntityData>.Fail($"Component failed schema validation: '{componentType}'")
+                    .WithErrors(validateResult);
+            }
+        }
+
+        // We've passed validation so now we can create and return the EntityData object
         var entityData = EntityData.Create(jsonObject, _entitySchema);
 
         return Result<EntityData>.Ok(entityData);

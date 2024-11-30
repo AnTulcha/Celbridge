@@ -11,17 +11,17 @@ namespace Celbridge.Entities.Models;
 public class EntityData
 {
     public JsonObject JsonObject { get; private set; }
-    public JsonSchema Schema { get; }
+    public JsonSchema EntitySchema { get; }
 
-    private EntityData(JsonObject jsonObject, JsonSchema schema)
+    private EntityData(JsonObject jsonObject, JsonSchema entitySchema)
     {
         JsonObject = jsonObject;
-        Schema = schema;
+        EntitySchema = entitySchema;
     }
 
-    public static EntityData Create(JsonObject jsonObject, JsonSchema schema)
+    public static EntityData Create(JsonObject jsonObject, JsonSchema entitySchema)
     {
-        return new EntityData(jsonObject, schema);
+        return new EntityData(jsonObject, entitySchema);
     }
 
     public EntityData DeepClone()
@@ -29,7 +29,7 @@ public class EntityData
         var jsonClone = JsonObject.DeepClone() as JsonObject;
         Guard.IsNotNull(jsonClone);
 
-        return new EntityData(jsonClone, Schema);
+        return new EntityData(jsonClone, EntitySchema);
     }
 
     public Result<T> GetProperty<T>(string propertyPath)
@@ -103,7 +103,7 @@ public class EntityData
         }
     }
 
-    public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patchJson)
+    public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patchJson, ComponentSchemaRegistry schemaRegistry)
     {
         try
         {
@@ -136,7 +136,7 @@ public class EntityData
 
             // Check if the patched JSON is still valid for the entity schema
 
-            var evaluateResult = Schema.Evaluate(newJsonObject);
+            var evaluateResult = EntitySchema.Evaluate(newJsonObject);
             if (!evaluateResult.IsValid)
             {
                 return Result<PatchSummary>.Fail($"Failed to apply JSON patch to entity data. Schema validation error.");
@@ -157,11 +157,52 @@ public class EntityData
             }
             var componentChanges = getResult.Value;
 
-            var patchSummary = new PatchSummary(patchJson, reversePatchJson, componentChanges);
+            // Check that each modified component is still valid against its schema
+            var validatedComponents = new HashSet<int>();
+            foreach (var componentChange in componentChanges)
+            {
+                var componentIndex = componentChange.ComponentIndex;
+                var componentType = componentChange.ComponentType;
+
+                if (validatedComponents.Contains(componentIndex))
+                {
+                    // We've already validated this component
+                    continue;
+                }
+
+                var getSchemaResult = schemaRegistry.GetSchemaForComponentType(componentType);
+                if (getSchemaResult.IsFailure)
+                {
+                    return Result<PatchSummary>.Fail($"Failed to get schema for component type '{componentType}'")
+                        .WithErrors(getSchemaResult);
+                }
+                var componentSchema = getSchemaResult.Value;
+
+                var jsonPointer = JsonPointer.Parse($"/_components/{componentIndex}");
+                if (!jsonPointer.TryEvaluate(newJsonObject, out var componentNode))
+                {
+                    return Result<PatchSummary>.Fail($"Failed to get component at index: {componentIndex}");
+                }
+
+                if (componentNode is not JsonObject componentObject)
+                {
+                    return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not a JSON object");
+                }
+
+                var validateResult = componentSchema.ValidateJsonObject(componentObject);
+                if (validateResult.IsFailure)
+                {
+                    return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not valid against its schema")
+                        .WithErrors(validateResult);
+                }
+
+                validatedComponents.Add(componentIndex);
+            }
 
             // Use the patched JSON object
             JsonObject = newJsonObject;
 
+            var patchSummary = new PatchSummary(patchJson, reversePatchJson, componentChanges);
             return Result<PatchSummary>.Ok(patchSummary);
         }
         catch (Exception ex)

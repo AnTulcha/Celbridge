@@ -42,8 +42,8 @@ public class EntityService : IEntityService, IDisposable
     private readonly IMessengerService _messengerService;
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
-    private ComponentSchemaRegistry _componentSchemaRegistry;
-    private ComponentPrototypeRegistry _componentPrototypeRegistry;
+    private ComponentSchemaRegistry _schemaRegistry;
+    private ComponentPrototypeRegistry _prototypeRegistry;
     private EntityRegistry _entityRegistry;
 
     private readonly Dictionary<string, List<string>> _defaultComponents = new();
@@ -69,8 +69,8 @@ public class EntityService : IEntityService, IDisposable
         _messengerService = messengerService;
         _workspaceWrapper = workspaceWrapper;
 
-        _componentSchemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
-        _componentPrototypeRegistry = serviceProvider.GetRequiredService<ComponentPrototypeRegistry>();
+        _schemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
+        _prototypeRegistry = serviceProvider.GetRequiredService<ComponentPrototypeRegistry>();
         _entityRegistry = serviceProvider.GetRequiredService<EntityRegistry>();
 
         _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
@@ -97,21 +97,21 @@ public class EntityService : IEntityService, IDisposable
             _entitySchema = builder.Build();
             Guard.IsNotNull(_entitySchema);
 
-            var loadSchemasResult = await _componentSchemaRegistry.LoadComponentSchemasAsync();
+            var loadSchemasResult = await _schemaRegistry.LoadComponentSchemasAsync();
             if (loadSchemasResult.IsFailure)
             {
                 return Result.Fail("Failed to load component schemas")
                     .WithErrors(loadSchemasResult);
             }
 
-            var loadPrototypesResult = await _componentPrototypeRegistry.LoadComponentPrototypesAsync(_componentSchemaRegistry);
+            var loadPrototypesResult = await _prototypeRegistry.LoadComponentPrototypesAsync(_schemaRegistry);
             if (loadPrototypesResult.IsFailure)
             {
                 return Result.Fail("Failed to load component prototypes")
                     .WithErrors(loadPrototypesResult);
             }
 
-            var loadDefaultsResult = await _entityRegistry.Initialize(_entitySchema, _componentPrototypeRegistry);
+            var loadDefaultsResult = await _entityRegistry.Initialize(_entitySchema, _prototypeRegistry, _schemaRegistry);
             if (loadDefaultsResult.IsFailure)
             {
                 return Result.Fail("Failed to load file default components")
@@ -238,7 +238,7 @@ public class EntityService : IEntityService, IDisposable
 
         // Acquire the schema for the specified componentType
 
-        var componentSchemaResult = _componentSchemaRegistry.GetSchemaForComponentType(componentType);
+        var componentSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
         if (componentSchemaResult.IsFailure)
         {
             return Result.Fail($"Failed to get schema for component type: {componentType}")
@@ -248,7 +248,7 @@ public class EntityService : IEntityService, IDisposable
 
         // Create an instance of the prototype in the Entity Data
 
-        var getPrototypeResult = _componentPrototypeRegistry.GetPrototype(componentType);
+        var getPrototypeResult = _prototypeRegistry.GetPrototype(componentType);
         if (getPrototypeResult.IsFailure)
         {
             return Result.Fail($"Failed to acquire component prototype for component type: {componentType}")
@@ -400,7 +400,7 @@ public class EntityService : IEntityService, IDisposable
         var entity = acquireResult.Value;
         Guard.IsNotNull(entity);
 
-        var applyResult = entity.EntityData.ApplyPatch(resource, patch);
+        var applyResult = entity.EntityData.ApplyPatch(resource, patch, _schemaRegistry);
         if (applyResult.IsFailure)
         {
             return Result<PatchSummary>.Fail($"Failed to apply patch to entity for resource: {resource}")
