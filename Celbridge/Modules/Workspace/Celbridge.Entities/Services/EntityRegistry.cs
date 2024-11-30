@@ -421,8 +421,8 @@ public class EntityRegistry
                 }
                 var prototype = getPrototypeResult.Value;
 
-                // The component prototype has already been validated against the component schema, so
-                // there's no need to do it again here.
+                // The component prototype was validated against the component schemas at startup, so we can assume
+                // it's valid and add a clone of the prototype to the entity data.
 
                 var componentObject = prototype.JsonObject.DeepClone() as JsonObject;
                 Guard.IsNotNull(componentObject);
