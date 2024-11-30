@@ -10,7 +10,7 @@ public class ComponentPrototypeRegistry
     private const string ComponentPrototypesFolder = "ComponentPrototypes";
     private const string EntityComponentTypesFile = "EntityComponentTypes.json";
 
-    private readonly Dictionary<string, ComponentData> _componentPrototypes = new();
+    private readonly Dictionary<string, ComponentPrototype> _componentPrototypes = new();
     private readonly Dictionary<string, List<string>> _entityComponentTypes = new();
 
     public async Task<Result> LoadComponentPrototypesAsync(ComponentSchemaRegistry componentSchemaRegistry)
@@ -121,7 +121,7 @@ public class ComponentPrototypeRegistry
             // The component JSON has already been validated against the schema, so there's no
             // need to do it again here.
 
-            var componentPrototype = ComponentData.Create(jsonObject, componentSchema);
+            var componentPrototype = ComponentPrototype.Create(jsonObject, componentSchema);
 
             _componentPrototypes[componentType] = componentPrototype;
 
@@ -134,23 +134,13 @@ public class ComponentPrototypeRegistry
         }
     }
 
-    public List<string> GetFileEntityTypes(string fileExtension)
-    {
-        if (_entityComponentTypes.TryGetValue(fileExtension, out var entityTypes))
-        {
-            return entityTypes;
-        }
-
-        return new List<string>();
-    }
-
-    public Result<ComponentData> GetPrototype(string componentType)
+    public Result<ComponentPrototype> GetPrototype(string componentType)
     {
         if (!_componentPrototypes.TryGetValue(componentType, out var componentPrototype))
         {
-            return Result<ComponentData>.Fail($"Component prototype for entity type '{componentType}' not found");
+            return Result<ComponentPrototype>.Fail($"Component prototype for entity type '{componentType}' not found");
         }
 
-        return Result<ComponentData>.Ok(componentPrototype);
+        return Result<ComponentPrototype>.Ok(componentPrototype);
     }
 }

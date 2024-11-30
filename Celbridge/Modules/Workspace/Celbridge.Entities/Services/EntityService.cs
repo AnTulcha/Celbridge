@@ -122,7 +122,7 @@ public class EntityService : IEntityService, IDisposable
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An excepption occurred when initializing the entity service")
+            return Result.Fail($"An exception occurred when initializing the entity service")
                 .WithException(ex);
         }
     }
