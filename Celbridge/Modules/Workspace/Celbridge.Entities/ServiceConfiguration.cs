@@ -14,6 +14,7 @@ public static class ServiceConfiguration
         config.AddTransient<IEntityService, EntityService>();
         config.AddTransient<ComponentSchemaRegistry>();
         config.AddTransient<ComponentPrototypeRegistry>();
+        config.AddTransient<EntityRegistry>();
 
         //
         // Register commands

@@ -5,12 +5,10 @@ namespace Celbridge.Entities;
 /// </summary>
 public interface IEntityService
 {
-    Task<Result> InitializeAsync();
-
     /// <summary>
-    /// Gets the folder path where entities are stored.
+    /// Initializes the Entity Service.
     /// </summary>
-    public string GetEntitiesFolderPath();
+    Task<Result> InitializeAsync();
 
     /// <summary>
     /// Returns the absolute path of the Entity Data file for a resource.
