@@ -22,33 +22,50 @@ public class ComponentPrototypeRegistry
             var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
             var prototypesFolder = await configFolder.GetFolderAsync(ComponentPrototypesFolder);
 
-            var jsonFiles = await prototypesFolder.GetFilesAsync();
-            foreach (var jsonFile in jsonFiles)
+            var prototypeFiles = await prototypesFolder.GetFilesAsync();
+            foreach (var prototypeFile in prototypeFiles)
             {
-                var json = await FileIO.ReadTextAsync(jsonFile);
+                var prototypeJson = await FileIO.ReadTextAsync(prototypeFile);
 
-                var getResult = componentSchemaRegistry.GetComponentSchemaFromJson(json);
+                // Get the component schema specified in the protype JSON
+
+                var getResult = componentSchemaRegistry.GetComponentSchemaFromJson(prototypeJson);
                 if (getResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to get component schema for component prototype: {jsonFile.DisplayName}")
+                    return Result.Fail($"Failed to get component schema for component prototype: {prototypeFile.DisplayName}")
                         .WithErrors(getResult);
                 }
-
                 var componentSchema = getResult.Value;
 
-                var validateResult = componentSchema.ValidateJson(json);
+                // Validate the prototype JSON against the schema
+
+                var validateResult = componentSchema.ValidateJson(prototypeJson);
                 if (validateResult.IsFailure)
                 {
-                    return Result.Fail($"Failed to validate component prototype: {jsonFile.DisplayName}")
+                    return Result.Fail($"Failed to validate component prototype: {prototypeFile.DisplayName}")
                         .WithErrors(validateResult);
                 }
 
-                var addResult = AddComponentPrototype(json, componentSchema);
-                if (addResult.IsFailure)
+                var prototypeJsonNode = JsonNode.Parse(prototypeJson);
+                if (prototypeJsonNode is not JsonObject prototypeJsonObject)
                 {
-                    return Result.Fail($"Failed to add component prototype: {jsonFile.DisplayName}")
-                        .WithErrors(addResult);
+                    return Result.Fail("Failed to parse component prototype as a JSON object");
                 }
+
+                // Get the component type
+
+                var componentTypeValue = prototypeJsonNode["_componentType"] as JsonValue;
+                if (componentTypeValue is null ||
+                    !componentTypeValue.TryGetValue(out string? componentType) ||
+                    string.IsNullOrEmpty(componentType))
+                {
+                    return Result.Fail("Component type is missing or empty");
+                }
+
+                // Create and register the prototype
+
+                var componentPrototype = ComponentPrototype.Create(prototypeJsonObject, componentSchema);
+                _componentPrototypes[componentType] = componentPrototype;
             }
 
             return Result.Ok();
@@ -97,39 +114,6 @@ public class ComponentPrototypeRegistry
         catch (Exception ex)
         {
             return Result.Fail($"An exception occurred when loading entity component types")
-                .WithException(ex);
-        }
-    }
-
-    public Result AddComponentPrototype(string componentPrototypeJson, ComponentSchema componentSchema)
-    {
-        try
-        {
-            var jsonNode = JsonNode.Parse(componentPrototypeJson);
-            if (jsonNode is not JsonObject jsonObject)
-            {
-                return Result.Fail("Failed to parse component prototype JSON as an object");
-            }
-
-            var componentTypeValue = jsonNode["_componentType"] as JsonValue;
-            if (componentTypeValue?.TryGetValue(out string? componentType) != true || 
-                string.IsNullOrEmpty(componentType))
-            {
-                return Result.Fail("Component type is missing or empty");
-            }
-
-            // The component JSON has already been validated against the schema, so there's no
-            // need to do it again here.
-
-            var componentPrototype = ComponentPrototype.Create(jsonObject, componentSchema);
-
-            _componentPrototypes[componentType] = componentPrototype;
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail("An exception occurred when adding prototype.")
                 .WithException(ex);
         }
     }
