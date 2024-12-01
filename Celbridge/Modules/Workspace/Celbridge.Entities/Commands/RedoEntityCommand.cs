@@ -20,7 +20,7 @@ public class RedoEntityCommand : CommandBase, IRedoEntityCommand
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        var applyResult = entityService.Redo(Resource);
+        var applyResult = entityService.RedoProperty(Resource);
 
         await Task.CompletedTask;
 

@@ -22,16 +22,6 @@ public interface IEntityService
     string GetEntityDataRelativePath(ResourceKey resource);
 
     /// <summary>
-    /// Undo the most recent Entity Data change for a resource.
-    /// </summary>
-    Result<bool> Undo(ResourceKey resource);
-
-    /// <summary>
-    /// Redo the most recently undone Entity Data change for a resource.
-    /// </summary>
-    Result<bool> Redo(ResourceKey resource);
-
-    /// <summary>
     /// Saves all modified entities to disk asynchronously.
     /// </summary>
     Task<Result> SaveModifiedEntities();
@@ -82,5 +72,15 @@ public interface IEntityService
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
     Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull;
+
+    /// <summary>
+    /// Undo the most recent property change for a resource.
+    /// </summary>
+    Result<bool> UndoProperty(ResourceKey resource);
+
+    /// <summary>
+    /// Redo the most recently undone property change for a resource.
+    /// </summary>
+    Result<bool> RedoProperty(ResourceKey resource);
 }
 

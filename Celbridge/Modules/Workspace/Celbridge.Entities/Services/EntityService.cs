@@ -138,71 +138,6 @@ public class EntityService : IEntityService, IDisposable
         return relativePath;
     }
 
-
-    public Result<bool> Undo(ResourceKey resource)
-    {
-        var acquireResult = _entityRegistry.AcquireEntity(resource);
-        if (acquireResult.IsFailure)
-        {
-            return Result<bool>.Fail($"Failed to acquire entity: {resource}")
-                .WithErrors(acquireResult);
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
-        if (entity.UndoStack.Count == 0)
-        {
-            // Undo stack is empty. Succeed but return false to indicate that no changes were undone.
-            return Result<bool>.Ok(false);
-        }
-
-        // Pop the next patch summary from the Undo stack and apply it to the entity
-        var patchSummary = entity.UndoStack.Pop();
-        var reversePatch = patchSummary.ReversePatch;
-        Guard.IsNotNull(reversePatch);
-
-        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Undo);
-        if (applyResult.IsFailure)
-        {
-            return Result<bool>.Fail($"Failed to apply undo patch to resource: {resource}");
-        }
-
-        // Succeed and return true to indicate that a patch was undone.
-        return Result<bool>.Ok(true);
-    }
-
-    public Result<bool> Redo(ResourceKey resource)
-    {
-        var acquireResult = _entityRegistry.AcquireEntity(resource);
-        if (acquireResult.IsFailure)
-        {
-            return Result<bool>.Fail($"Failed to acquire entity: {resource}")
-                .WithErrors(acquireResult);
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
-        if (entity.RedoStack.Count == 0)
-        {
-            // Redo stack is empty. Succeed but return false to indicate no changes were redone.
-            return Result<bool>.Ok(false);
-        }
-
-        // Pop the next patch summary from the Redo stack and apply it to the entity
-        var patchSummary = entity.RedoStack.Pop();
-        var reversePatch = patchSummary.ReversePatch;
-        Guard.IsNotNull(reversePatch);
-
-        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Redo);
-        if (applyResult.IsFailure)
-        {
-            return Result<bool>.Fail($"Failed to apply redo patch to resource: {resource}");
-        }
-
-        // Succeed and return true to indicate that a patch was undone.
-        return Result<bool>.Ok(true);
-    }
-
     public async Task<Result> SaveModifiedEntities()
     {
         return await _entityRegistry.SaveModifiedEntities();
@@ -372,6 +307,70 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return Result.Ok();
+    }
+
+    public Result<bool> UndoProperty(ResourceKey resource)
+    {
+        var acquireResult = _entityRegistry.AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result<bool>.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        if (entity.UndoStack.Count == 0)
+        {
+            // Undo stack is empty. Succeed but return false to indicate that no changes were undone.
+            return Result<bool>.Ok(false);
+        }
+
+        // Pop the next patch summary from the Undo stack and apply it to the entity
+        var patchSummary = entity.UndoStack.Pop();
+        var reversePatch = patchSummary.ReversePatch;
+        Guard.IsNotNull(reversePatch);
+
+        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Undo);
+        if (applyResult.IsFailure)
+        {
+            return Result<bool>.Fail($"Failed to apply undo patch to resource: {resource}");
+        }
+
+        // Succeed and return true to indicate that a patch was undone.
+        return Result<bool>.Ok(true);
+    }
+
+    public Result<bool> RedoProperty(ResourceKey resource)
+    {
+        var acquireResult = _entityRegistry.AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result<bool>.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        if (entity.RedoStack.Count == 0)
+        {
+            // Redo stack is empty. Succeed but return false to indicate no changes were redone.
+            return Result<bool>.Ok(false);
+        }
+
+        // Pop the next patch summary from the Redo stack and apply it to the entity
+        var patchSummary = entity.RedoStack.Pop();
+        var reversePatch = patchSummary.ReversePatch;
+        Guard.IsNotNull(reversePatch);
+
+        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Redo);
+        if (applyResult.IsFailure)
+        {
+            return Result<bool>.Fail($"Failed to apply redo patch to resource: {resource}");
+        }
+
+        // Succeed and return true to indicate that a patch was undone.
+        return Result<bool>.Ok(true);
     }
 
     private static string GetComponentPropertyPath(int componentIndex, string propertyPath)

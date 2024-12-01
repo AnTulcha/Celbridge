@@ -20,7 +20,7 @@ public class UndoEntityCommand : CommandBase, IUndoEntityCommand
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        var applyResult = entityService.Undo(Resource);
+        var applyResult = entityService.UndoProperty(Resource);
 
         await Task.CompletedTask;
 
