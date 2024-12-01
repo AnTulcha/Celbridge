@@ -22,19 +22,14 @@ public interface IEntityService
     string GetEntityDataRelativePath(ResourceKey resource);
 
     /// <summary>
-    /// Apply a JSON Patch (RFC 6902) to the Entity Data for a resource.
+    /// Undo the most recent Entity Data change for a resource.
     /// </summary>
-    Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch);
+    Result<bool> Undo(ResourceKey resource);
 
     /// <summary>
-    /// Undo the most recently applied Entity Data patch for a resource.
+    /// Redo the most recently undone Entity Data change for a resource.
     /// </summary>
-    Result<bool> UndoPatch(ResourceKey resource);
-
-    /// <summary>
-    /// Redo the most recently applied Entity Data patch for a resource.
-    /// </summary>
-    Result<bool> RedoPatch(ResourceKey resource);
+    Result<bool> Redo(ResourceKey resource);
 
     /// <summary>
     /// Saves all modified entities to disk asynchronously.
@@ -86,6 +81,6 @@ public interface IEntityService
     /// Sets the value of an entity property for a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
-    Result<PatchSummary> SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull;
+    Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull;
 }
 

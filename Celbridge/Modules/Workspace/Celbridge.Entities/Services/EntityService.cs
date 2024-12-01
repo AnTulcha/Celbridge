@@ -15,7 +15,7 @@ namespace Celbridge.Entities.Services;
 /// <summary>
 /// Describes the context in which a patch is applied.
 /// </summary>
-public enum ApplyPatchContext
+public enum PatchContext
 {
     /// <summary>
     /// Modifying an entity.
@@ -138,12 +138,8 @@ public class EntityService : IEntityService, IDisposable
         return relativePath;
     }
 
-    public Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch)
-    {
-        return ApplyPatch(resource, patch, ApplyPatchContext.Modify);
-    }
 
-    public Result<bool> UndoPatch(ResourceKey resource)
+    public Result<bool> Undo(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -165,7 +161,7 @@ public class EntityService : IEntityService, IDisposable
         var reversePatch = patchSummary.ReversePatch;
         Guard.IsNotNull(reversePatch);
 
-        var applyResult = ApplyPatch(resource, reversePatch, ApplyPatchContext.Undo);
+        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Undo);
         if (applyResult.IsFailure)
         {
             return Result<bool>.Fail($"Failed to apply undo patch to resource: {resource}");
@@ -175,7 +171,7 @@ public class EntityService : IEntityService, IDisposable
         return Result<bool>.Ok(true);
     }
 
-    public Result<bool> RedoPatch(ResourceKey resource)
+    public Result<bool> Redo(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -197,7 +193,7 @@ public class EntityService : IEntityService, IDisposable
         var reversePatch = patchSummary.ReversePatch;
         Guard.IsNotNull(reversePatch);
 
-        var applyResult = ApplyPatch(resource, reversePatch, ApplyPatchContext.Redo);
+        var applyResult = ApplyPatch(resource, reversePatch, PatchContext.Redo);
         if (applyResult.IsFailure)
         {
             return Result<bool>.Fail($"Failed to apply redo patch to resource: {resource}");
@@ -360,7 +356,7 @@ public class EntityService : IEntityService, IDisposable
     }
 
     private record SetPropertyOperation(string op, string path, object value);
-    public Result<PatchSummary> SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull
+    public Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull
     {
         string componentPropertyPath = GetComponentPropertyPath(componentIndex, propertyPath);
 
@@ -372,11 +368,10 @@ public class EntityService : IEntityService, IDisposable
         var applyResult = ApplyPatch(resource, jsonPatch);
         if (applyResult.IsFailure)
         {
-            return Result<PatchSummary>.Fail($"Failed to apply entity patch for resource: {resource}");
+            return Result.Fail($"Failed to apply entity patch for resource: {resource}");
         }
-        var patchSummary = applyResult.Value;
 
-        return Result<PatchSummary>.Ok(patchSummary);
+        return Result.Ok();
     }
 
     private static string GetComponentPropertyPath(int componentIndex, string propertyPath)
@@ -389,12 +384,12 @@ public class EntityService : IEntityService, IDisposable
         _entityRegistry.CleanupEntities();
     }
 
-    private Result<PatchSummary> ApplyPatch(ResourceKey resource, string patch, ApplyPatchContext context)
+    private Result ApplyPatch(ResourceKey resource, string patch, PatchContext context = PatchContext.Modify)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
         {
-            return Result<PatchSummary>.Fail($"Failed to acquire entity: {resource}")
+            return Result.Fail($"Failed to acquire entity: {resource}")
                 .WithErrors(acquireResult);
         }
         var entity = acquireResult.Value;
@@ -403,7 +398,7 @@ public class EntityService : IEntityService, IDisposable
         var applyResult = entity.EntityData.ApplyPatch(resource, patch, _schemaRegistry);
         if (applyResult.IsFailure)
         {
-            return Result<PatchSummary>.Fail($"Failed to apply patch to entity for resource: {resource}")
+            return Result.Fail($"Failed to apply patch to entity for resource: {resource}")
                 .WithErrors(applyResult);
         }
         var patchSummary = applyResult.Value;
@@ -415,16 +410,16 @@ public class EntityService : IEntityService, IDisposable
             // Add the patch summary to the requested stack to support undo/redo
             switch (context)
             {
-                case ApplyPatchContext.Modify:
+                case PatchContext.Modify:
                     // Execute: Add patch summary to the Undo stack and clear the Redo stack.
                     entity.UndoStack.Push(patchSummary);
                     entity.RedoStack.Clear();
                     break;
-                case ApplyPatchContext.Undo:
+                case PatchContext.Undo:
                     // Undo: Add patch summary to the Redo stack.
                     entity.RedoStack.Push(patchSummary);
                     break;
-                case ApplyPatchContext.Redo:
+                case PatchContext.Redo:
                     // Undo: Add patch summary to the Undo stack.
                     entity.UndoStack.Push(patchSummary);
                     break;
@@ -437,7 +432,7 @@ public class EntityService : IEntityService, IDisposable
             }
         }
 
-        return Result<PatchSummary>.Ok(patchSummary);
+        return Result.Ok();
     }
 
     private bool _disposed;

@@ -19,7 +19,7 @@ public static class ServiceConfiguration
         //
         // Register commands
         //
-        config.AddTransient<IModifyEntityCommand, ModifyEntityCommand>();
+        config.AddTransient<ISetPropertyCommand, SetPropertyCommand>();
         config.AddTransient<IUndoEntityCommand, UndoEntityCommand>();
         config.AddTransient<IRedoEntityCommand, RedoEntityCommand>();
         config.AddTransient<IPrintPropertyCommand, PrintPropertyCommand>();
