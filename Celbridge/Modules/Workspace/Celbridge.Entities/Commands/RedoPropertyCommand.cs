@@ -4,13 +4,13 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Entities.Commands;
 
-public class RedoEntityCommand : CommandBase, IRedoEntityCommand
+public class RedoPropertyCommand : CommandBase, IRedoPropertyCommand
 {
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
     public ResourceKey Resource { get; set; }
 
-    public RedoEntityCommand(
+    public RedoPropertyCommand(
         IWorkspaceWrapper workspaceWrapper)
     {
         _workspaceWrapper = workspaceWrapper;
@@ -31,10 +31,10 @@ public class RedoEntityCommand : CommandBase, IRedoEntityCommand
     // Static methods for scripting support.
     //
 
-    public static void RedoEntity(ResourceKey resource)
+    public static void RedoProperty(ResourceKey resource)
     {
         var commandService = ServiceLocator.ServiceProvider.GetRequiredService<ICommandService>();
-        commandService.Execute<IRedoEntityCommand>(command =>
+        commandService.Execute<IRedoPropertyCommand>(command =>
         {
             command.Resource = resource;
         });
