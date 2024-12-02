@@ -32,13 +32,14 @@ public class EntityData
         return new EntityData(jsonClone, EntitySchema);
     }
 
-    public Result<int> GetComponentIndexOfType(string componentType)
+    public Result<List<int>> GetComponentsOfType(string componentType)
     {
         if (JsonObject["_components"] is not JsonArray components)
         {
-            return Result<int>.Fail("Entity data does not contain any components");
+            return Result<List<int>>.Fail("Entity data does not contain any components");
         }
 
+        var indices = new List<int>();
         for (int i = 0; i < components.Count; i++)
         {
             JsonNode? componentNode = components[i];
@@ -59,10 +60,10 @@ public class EntityData
                 continue;
             }
 
-            return Result<int>.Ok(i);
+            indices.Add(i);
         }
 
-        return Result<int>.Fail();
+        return Result<List<int>>.Ok(indices);
     }
 
     public Result<T> GetProperty<T>(string propertyPath)

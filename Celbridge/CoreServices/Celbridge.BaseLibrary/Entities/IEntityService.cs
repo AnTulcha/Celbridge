@@ -47,9 +47,9 @@ public interface IEntityService
     Result RemoveComponent(ResourceKey resource, int componentIndex);
 
     /// <summary>
-    /// Returns the index of the first component of the specified type in the entity for a resource.
+    /// Returns the indices of the entity components of the specified type.
     /// </summary>
-    Result<int> GetComponentIndexOfType(ResourceKey resourceKey, string componentType);
+    Result<List<int>> GetComponentsOfType(ResourceKey resourceKey, string componentType);
 
     /// <summary>
     /// Gets the value of a property from a component.

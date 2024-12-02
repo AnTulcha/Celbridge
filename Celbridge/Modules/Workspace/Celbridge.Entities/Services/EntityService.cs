@@ -231,9 +231,9 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
-    public Result<int> GetComponentIndexOfType(ResourceKey resourceKey, string componentType)
+    public Result<List<int>> GetComponentsOfType(ResourceKey resourceKey, string componentType)
     {
-        return _entityRegistry.GetComponentIndexOfType(resourceKey, componentType);
+        return _entityRegistry.GetComponentsOfType(resourceKey, componentType);
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
@@ -249,20 +249,26 @@ public class EntityService : IEntityService, IDisposable
 
     public T? GetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T? defaultValue) where T : notnull
     {
-        var getIndexResult = GetComponentIndexOfType(resource, componentType);
-        if (getIndexResult.IsFailure)
+        var getComponentsResult = GetComponentsOfType(resource, componentType);
+        if (getComponentsResult.IsFailure)
         {
             return default;
         }
-        var componentIndex = getIndexResult.Value;
+        var componentIndices = getComponentsResult.Value;
 
-        var getResult = GetProperty<T>(resource, componentIndex, propertyPath);
-        if (getResult.IsFailure)
+        if (componentIndices.Count < 1)
+        {
+            return default;
+        }
+        var componentIndex = componentIndices[0];
+
+        var getPropertyResult = GetProperty<T>(resource, componentIndex, propertyPath);
+        if (getPropertyResult.IsFailure)
         {
             return default;
         }
 
-        return getResult.Value;
+        return getPropertyResult.Value;
     }
 
     public Result<T> GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath) where T : notnull
@@ -334,12 +340,18 @@ public class EntityService : IEntityService, IDisposable
 
     public Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue) where T : notnull
     {
-        var getIndexResult = GetComponentIndexOfType(resource, componentType);
-        if (getIndexResult.IsFailure)
+        var geComponentsResult = GetComponentsOfType(resource, componentType);
+        if (geComponentsResult.IsFailure)
         {
-            return getIndexResult;
+            return geComponentsResult;
         }
-        var componentIndex = getIndexResult.Value;
+        var componentIndices = geComponentsResult.Value;
+
+        if (componentIndices.Count < 1)
+        {
+            return Result.Fail($"No components of type '{componentType}' were found");
+        }
+        var componentIndex = componentIndices[0];
 
         return SetProperty(resource, componentIndex, propertyPath, newValue);
     }

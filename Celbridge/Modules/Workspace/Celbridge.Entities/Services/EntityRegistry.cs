@@ -343,23 +343,23 @@ public class EntityRegistry
         _modifiedEntities[resource] = true;
     }
 
-    public Result<int> GetComponentIndexOfType(ResourceKey resourceKey, string componentType)
+    public Result<List<int>> GetComponentsOfType(ResourceKey resourceKey, string componentType)
     {
         var acquireResult = AcquireEntity(resourceKey);
         if (acquireResult.IsFailure)
         {
-            return Result<int>.Fail($"Failed to acquire entity for resource: {resourceKey}");
+            return Result<List<int>>.Fail($"Failed to acquire entity for resource: {resourceKey}");
         }
         var entity = acquireResult.Value;
 
-        var getIndexResult = entity.EntityData.GetComponentIndexOfType(componentType);
+        var getIndexResult = entity.EntityData.GetComponentsOfType(componentType);
         if (getIndexResult.IsFailure)
         {
-            return Result<int>.Fail($"Failed to get component index for type: {componentType}");
+            return Result<List<int>>.Fail($"Failed to get component indices for component type: {componentType}");
         }
-        var componentIndex = getIndexResult.Value;
+        var componentIndices = getIndexResult.Value;
 
-        return Result<int>.Ok(componentIndex);
+        return Result<List<int>>.Ok(componentIndices);
     }
 
     private string GetEntitiesFolderPath()
