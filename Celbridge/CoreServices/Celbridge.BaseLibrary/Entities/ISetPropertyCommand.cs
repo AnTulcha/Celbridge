@@ -19,7 +19,7 @@ public interface ISetPropertyCommand : IExecutableCommand
     int ComponentIndex { get; set; }
 
     /// <summary>
-    /// A JSON Pointer (RFC 6901) string representing the JSON property to set.
+    /// A JSON Pointer (RFC 6901) string representing the component property to set.
     /// </summary>
     string PropertyPath { get; set; }
 

@@ -1,5 +1,4 @@
 using Celbridge.Entities.Models;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 
 namespace Celbridge.Entities.Services;
@@ -8,7 +7,6 @@ public class ComponentPrototypeRegistry
 {
     private const string EntityConfigFolder = "EntityConfig";
     private const string ComponentPrototypesFolder = "ComponentPrototypes";
-    private const string EntityComponentTypesFile = "EntityComponentTypes.json";
 
     private readonly Dictionary<string, ComponentPrototype> _componentPrototypes = new();
     private readonly Dictionary<string, List<string>> _entityComponentTypes = new();
@@ -73,47 +71,6 @@ public class ComponentPrototypeRegistry
         catch (Exception ex)
         {
             return Result.Fail($"An exception occurred when loading component prototypes")
-                .WithException(ex);
-        }
-    }
-
-    public async Task<Result> LoadEntityComponentTypesAsync()
-    {
-        try
-        {
-            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConfigFolder);
-            var jsonFile = await configFolder.GetFileAsync(EntityComponentTypesFile);
-
-            var content = await FileIO.ReadTextAsync(jsonFile);
-
-            using var jsonDoc = JsonDocument.Parse(content);
-
-            foreach (var property in jsonDoc.RootElement.EnumerateObject())
-            {
-                if (property.Value.ValueKind != JsonValueKind.Array)
-                {
-                    return Result.Fail($"Expected object value for property: {property.Name}");
-                }
-
-                var list = new List<string>();
-                foreach (var item in property.Value.EnumerateArray())
-                {
-                    if (item.ValueKind != JsonValueKind.String)
-                    {
-                        return Result.Fail($"Expected string value for property: {property.Name}");
-                    }
-
-                    list.Add(item.GetString()!);
-                }
-
-                _entityComponentTypes[property.Name] = list;
-            }
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An exception occurred when loading entity component types")
                 .WithException(ex);
         }
     }

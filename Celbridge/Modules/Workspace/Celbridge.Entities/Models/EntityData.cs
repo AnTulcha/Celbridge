@@ -126,7 +126,7 @@ public class EntityData
             if (JsonNode.DeepEquals(JsonObject, newJsonObject))
             {
                 // The patch was valid, but did not result in any changes.
-                // This is indicated by returning an empty path list and reverse patch.
+                // This is indicated by returning an empty reverse patch and change list.
                 var emptyAppliedPatch = new PatchSummary(
                     patchJson,
                     string.Empty,

@@ -37,10 +37,14 @@ public partial class TextEditorDocumentViewModel : ObservableObject
 
     public void SetFileResource(ResourceKey fileResource)
     {
+        // SetFileResource() may be called multiple times if the resource is renamed.
+        // Unregister the message handler first to avoid multiple registrations.
         _messengerService.Unregister<ComponentChangedMessage>(this);
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
 
         _fileResource = fileResource;
+
+        // Todo: Check that component 0 is a Markdown component.
 
         UpdateEditorMode();
     }

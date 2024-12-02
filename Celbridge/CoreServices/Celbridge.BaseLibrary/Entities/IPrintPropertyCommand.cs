@@ -18,7 +18,7 @@ public interface IPrintPropertyCommand : IExecutableCommand
     int ComponentIndex { get; set; }
 
     /// <summary>
-    /// A JSON Pointer (RFC 6901) string representing the JSON property to get.
+    /// A JSON Pointer (RFC 6901) string representing the JSON property to be printed.
     /// </summary>
     string PropertyPath { get; set; }
 }
