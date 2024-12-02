@@ -231,8 +231,31 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
+    public Result<int> GetComponentIndexOfType(ResourceKey resourceKey, string componentType)
+    {
+        return _entityRegistry.GetComponentIndexOfType(resourceKey, componentType);
+    }
+
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
     {
+        var getResult = GetProperty<T>(resource, componentIndex, propertyPath);
+        if (getResult.IsFailure)
+        {
+            return default;
+        }
+
+        return getResult.Value;
+    }
+
+    public T? GetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T? defaultValue) where T : notnull
+    {
+        var getIndexResult = GetComponentIndexOfType(resource, componentType);
+        if (getIndexResult.IsFailure)
+        {
+            return default;
+        }
+        var componentIndex = getIndexResult.Value;
+
         var getResult = GetProperty<T>(resource, componentIndex, propertyPath);
         if (getResult.IsFailure)
         {
@@ -307,6 +330,18 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return Result.Ok();
+    }
+
+    public Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue) where T : notnull
+    {
+        var getIndexResult = GetComponentIndexOfType(resource, componentType);
+        if (getIndexResult.IsFailure)
+        {
+            return getIndexResult;
+        }
+        var componentIndex = getIndexResult.Value;
+
+        return SetProperty(resource, componentIndex, propertyPath, newValue);
     }
 
     public Result<bool> UndoProperty(ResourceKey resource)
