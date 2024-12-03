@@ -241,13 +241,67 @@ public class EntityService : IEntityService, IDisposable
 
         // Apply a patch operation to add the component to the entity
 
-        var componentPointer = JsonPointer.Create("_components", destComponentIndex);
-        var patchOperation = PatchOperation.Add(componentPointer, sourceComponentNode);
+        var destComponentPointer = JsonPointer.Create("_components", destComponentIndex);
+        var patchOperation = PatchOperation.Add(destComponentPointer, sourceComponentNode);
 
         var applyResult = ApplyPatchOperation(entity, patchOperation);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to add component to entity: {resource}")
+                .WithErrors(applyResult);
+        }
+
+        return Result.Ok();
+    }
+
+    public Result MoveComponent(ResourceKey resource, int sourceComponentIndex, int destComponentIndex)
+    {
+        if (sourceComponentIndex == destComponentIndex)
+        {
+            // No need to copy the component if the source and destination indices are the same
+            return Result.Ok();
+        }
+
+        // Acquire the entity for the specified resource
+
+        var acquireResult = _entityRegistry.AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+
+        // Get the component at the source index
+
+        var sourceComponentPointer = JsonPointer.Create("_components", sourceComponentIndex);
+        var getComponentResult = entity.EntityData.GetPropertyAsJsonNode(sourceComponentPointer);
+        if (getComponentResult.IsFailure)
+        {
+            return Result.Fail($"Failed to get component at index '{sourceComponentIndex}' for resource: {resource}")
+                .WithErrors(getComponentResult);
+        }
+        var sourceComponentNode = getComponentResult.Value;
+
+        // Apply a patch operation to remove the source component
+
+        var removeOperation = PatchOperation.Remove(sourceComponentPointer);
+        var removeResult = ApplyPatchOperation(entity, removeOperation);
+        if (removeResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply patch to remove source component from entity: {resource}")
+                .WithErrors(removeResult);
+        }
+
+        // Apply a patch operation to add the destination component
+
+        var destComponentPointer = JsonPointer.Create("_components", destComponentIndex);
+        var addOperation = PatchOperation.Add(destComponentPointer, sourceComponentNode);
+
+        var applyResult = ApplyPatchOperation(entity, addOperation);
+        if (removeResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply patch to add destination component to entity: {resource}")
                 .WithErrors(applyResult);
         }
 
