@@ -92,13 +92,13 @@ public interface IEntityService
     Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue) where T : notnull;
 
     /// <summary>
-    /// Undo the most recent property change for a resource.
+    /// Undo the most recent entity change for a resource.
     /// </summary>
-    Result<bool> UndoProperty(ResourceKey resource);
+    Result<bool> UndoEntity(ResourceKey resource);
 
     /// <summary>
-    /// Redo the most recently undone property change for a resource.
+    /// Redo the most recently undone entity change for a resource.
     /// </summary>
-    Result<bool> RedoProperty(ResourceKey resource);
+    Result<bool> RedoEntity(ResourceKey resource);
 }
 

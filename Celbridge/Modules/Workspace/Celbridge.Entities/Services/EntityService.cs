@@ -357,7 +357,7 @@ public class EntityService : IEntityService, IDisposable
         return SetProperty(resource, componentIndex, propertyPath, newValue);
     }
 
-    public Result<bool> UndoProperty(ResourceKey resource)
+    public Result<bool> UndoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -389,7 +389,7 @@ public class EntityService : IEntityService, IDisposable
         return Result<bool>.Ok(true);
     }
 
-    public Result<bool> RedoProperty(ResourceKey resource)
+    public Result<bool> RedoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
