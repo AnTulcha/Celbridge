@@ -137,52 +137,12 @@ public class EntityData
                 return Result<PatchSummary>.Ok(emptyPatchSummary);
             }
 
-            // Check if the patched JSON is still valid for the entity schema
+            // Check if the patched JSON is still valid against the entity schema
 
             var evaluateResult = EntitySchema.Evaluate(patchedJsonObject);
             if (!evaluateResult.IsValid)
             {
                 return Result<PatchSummary>.Fail($"Failed to apply JSON patch to entity data. Schema validation error.");
-            }
-
-            // Make reverse patch and component changed message
-            PatchOperation reverseOperation;
-            switch (operation.Op)
-            {
-                case OperationType.Add:
-                    reverseOperation = PatchOperation.Remove(operation.Path);
-                    break;
-
-                case OperationType.Remove:
-                    {
-                        if (!operation.Path.TryEvaluate(JsonObject, out var existingValue))
-                        {
-                            return Result<PatchSummary>.Fail($"Component does not exist at path: '{operation.Path}'");
-                        }
-                        reverseOperation = PatchOperation.Add(operation.Path, existingValue);
-                        break;
-                    }
-
-                case OperationType.Replace:
-                    {
-                        if (!operation.Path.TryEvaluate(JsonObject, out var existingValue))
-                        {
-                            return Result<PatchSummary>.Fail($"Component does not exist at path: '{operation.Path}'");
-                        }
-                        reverseOperation = PatchOperation.Replace(operation.Path, existingValue);
-                        break;
-                    }
-
-                case OperationType.Move:
-                    reverseOperation = PatchOperation.Move(operation.Path, operation.From);
-                    break;
-
-                case OperationType.Copy:
-                    reverseOperation = PatchOperation.Remove(operation.Path);
-                    break;
-
-                default:
-                    return Result<PatchSummary>.Fail("Unsupported patch operation");
             }
 
             // Make a note of the component change that the patch applied to the entity data.
@@ -194,41 +154,34 @@ public class EntityData
             }
             var componentChange = getResult.Value;
 
+            // Check that the allowMultipleComponents property is respected for add component operations.
+            bool isAddComponentOperation = operation.Path.Count == 2 && operation.Op == OperationType.Add;
+            if (isAddComponentOperation)
+            {
+                var checkMultipleResult = CheckMultipleComponentConstraint(componentChange, schemaRegistry);
+                if (checkMultipleResult.IsFailure)
+                {
+                    return Result<PatchSummary>.Fail($"Component type does not allow multiple components: '{componentChange.ComponentType}'")
+                        .WithErrors(checkMultipleResult);
+                }
+            }
+
             // Check that the component that was modified by the operation is still valid against its schema.
             // Removed component operations don't require validation.
-
             bool isRemoveComponentOperation = operation.Path.Count == 2 && operation.Op == OperationType.Remove;
             if (!isRemoveComponentOperation)
             {
-                var componentIndex = componentChange.ComponentIndex;
-                var componentType = componentChange.ComponentType;
-
-                var getSchemaResult = schemaRegistry.GetSchemaForComponentType(componentType);
-                if (getSchemaResult.IsFailure)
-                {
-                    return Result<PatchSummary>.Fail($"Failed to get schema for component type '{componentType}'")
-                        .WithErrors(getSchemaResult);
-                }
-                var componentSchema = getSchemaResult.Value;
-
-                var jsonPointer = JsonPointer.Parse($"/_components/{componentIndex}");
-                if (!jsonPointer.TryEvaluate(patchedJsonObject, out var componentNode))
-                {
-                    return Result<PatchSummary>.Fail($"Failed to get component at index: {componentIndex}");
-                }
-
-                if (componentNode is not JsonObject componentObject)
-                {
-                    return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not a JSON object");
-                }
-
-                var validateResult = componentSchema.ValidateJsonObject(componentObject);
-                if (validateResult.IsFailure)
-                {
-                    return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not valid against its schema")
-                        .WithErrors(validateResult);
-                }
+                var checkSchemaResult = CheckComponentSchemeConstraint(componentChange, schemaRegistry, patchedJsonObject);
             }
+
+            // Make reverse patch operation for undo
+            var createReverseResult = CreateReversePatchOperation(operation);
+            if (createReverseResult.IsFailure)
+            {
+                return Result<PatchSummary>.Fail($"Failed to create reverse patch operation")
+                    .WithErrors(createReverseResult);
+            }
+            var reverseOperation = createReverseResult.Value;
 
             // The patched component has passed validation, so we can now update the entity.
             JsonObject = patchedJsonObject;
@@ -316,5 +269,115 @@ public class EntityData
             return Result<ComponentChangedMessage>.Fail("An exception occurred when extracting changes from a component patch operation")
                 .WithException(ex);
         }
+    }
+
+    private Result CheckMultipleComponentConstraint(ComponentChangedMessage componentChange, ComponentSchemaRegistry schemaRegistry)
+    {
+        var addedComponentType = componentChange.ComponentType;
+        var getSchemaResult = schemaRegistry.GetSchemaForComponentType(addedComponentType);
+        if (getSchemaResult.IsFailure)
+        {
+            return Result<PatchSummary>.Fail($"Failed to get schema for component type '{addedComponentType}'")
+                .WithErrors(getSchemaResult);
+        }
+        var schema = getSchemaResult.Value;
+
+        var allowMultiple = schema.AllowMultipleComponents;
+        if (!allowMultiple)
+        {
+            // Check if the existing entity already contains a component of the same type
+            var getComponentsResult = GetComponentsOfType(addedComponentType);
+            if (getComponentsResult.IsFailure)
+            {
+                return Result<PatchSummary>.Fail($"Failed to get components of type '{addedComponentType}'")
+                    .WithErrors(getComponentsResult);
+            }
+            var componentCount = getComponentsResult.Value.Count;
+
+            if (componentCount > 0)
+            {
+                return Result<PatchSummary>.Fail($"Component type '{addedComponentType}' does not allow multiple components");
+            }
+        }
+
+        return Result.Ok();
+    }
+
+    private Result CheckComponentSchemeConstraint(ComponentChangedMessage componentChange, ComponentSchemaRegistry schemaRegistry, JsonObject patchedJsonObject)
+    {
+        var componentIndex = componentChange.ComponentIndex;
+        var componentType = componentChange.ComponentType;
+
+        var getSchemaResult = schemaRegistry.GetSchemaForComponentType(componentType);
+        if (getSchemaResult.IsFailure)
+        {
+            return Result<PatchSummary>.Fail($"Failed to get schema for component type '{componentType}'")
+                .WithErrors(getSchemaResult);
+        }
+        var componentSchema = getSchemaResult.Value;
+
+        var jsonPointer = JsonPointer.Parse($"/_components/{componentIndex}");
+        if (!jsonPointer.TryEvaluate(patchedJsonObject, out var componentNode))
+        {
+            return Result<PatchSummary>.Fail($"Failed to get component at index: {componentIndex}");
+        }
+
+        if (componentNode is not JsonObject componentObject)
+        {
+            return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not a JSON object");
+        }
+
+        var validateResult = componentSchema.ValidateJsonObject(componentObject);
+        if (validateResult.IsFailure)
+        {
+            return Result<PatchSummary>.Fail($"Component at index {componentIndex} is not valid against its schema")
+                .WithErrors(validateResult);
+        }
+
+        return Result.Ok();
+    }
+
+    private Result<PatchOperation> CreateReversePatchOperation(PatchOperation operation)
+    {
+        PatchOperation reverseOperation;
+        switch (operation.Op)
+        {
+            case OperationType.Add:
+                reverseOperation = PatchOperation.Remove(operation.Path);
+                break;
+
+            case OperationType.Remove:
+                {
+                    if (!operation.Path.TryEvaluate(JsonObject, out var existingValue))
+                    {
+                        return Result<PatchOperation>.Fail($"Component does not exist at path: '{operation.Path}'");
+                    }
+                    reverseOperation = PatchOperation.Add(operation.Path, existingValue);
+                    break;
+                }
+
+            case OperationType.Replace:
+                {
+                    if (!operation.Path.TryEvaluate(JsonObject, out var existingValue))
+                    {
+                        return Result<PatchOperation>.Fail($"Component does not exist at path: '{operation.Path}'");
+                    }
+                    reverseOperation = PatchOperation.Replace(operation.Path, existingValue);
+                    break;
+                }
+
+            case OperationType.Move:
+                reverseOperation = PatchOperation.Move(operation.Path, operation.From);
+                break;
+
+            case OperationType.Copy:
+                reverseOperation = PatchOperation.Remove(operation.Path);
+                break;
+
+            default:
+                return Result<PatchOperation>.Fail("Unsupported patch operation");
+        }
+
+        return Result<PatchOperation>.Ok(reverseOperation);
     }
 }
