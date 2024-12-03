@@ -84,20 +84,20 @@ public class EntityData
         }
     }
 
-    public Result<string> GetPropertyAsJSON(JsonPointer jsonPointer)
+    public Result<string> GetPropertyAsJSON(JsonPointer propertyPointer)
     {
         try
         {
-            if (!jsonPointer.TryEvaluate(JsonObject, out var valueNode))
+            if (!propertyPointer.TryEvaluate(JsonObject, out var valueNode))
             {
-                return Result<string>.Fail($"Property was not found at: '{jsonPointer}'");
+                return Result<string>.Fail($"Property was not found at: '{propertyPointer}'");
             }
 
             if (valueNode is null)
             {
                 // The property was found but it is a JSON null value.
                 // We treat this as an error for Entity Data.
-                return Result<string>.Fail($"Property is a JSON null value: '{jsonPointer}'");
+                return Result<string>.Fail($"Property is a JSON null value: '{propertyPointer}'");
             }
 
             var valueJSON = valueNode.ToJsonString();
@@ -106,7 +106,7 @@ public class EntityData
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail($"An exception occurred when getting entity property '{jsonPointer}'")
+            return Result<string>.Fail($"An exception occurred when getting entity property '{propertyPointer}'")
                 .WithException(ex);
         }
     }
@@ -132,7 +132,7 @@ public class EntityData
             if (JsonNode.DeepEquals(JsonObject, patchedJsonObject))
             {
                 // The patch was valid, but did not result in any changes.
-                // This is indicated by returning a null reverse patch and change message.
+                // This is indicated by returning null reverse patch and change message values.
                 var emptyPatchSummary = new PatchSummary(operation, null, null);
                 return Result<PatchSummary>.Ok(emptyPatchSummary);
             }
