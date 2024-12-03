@@ -80,16 +80,18 @@ public interface IEntityService
     Result<string> GetPropertyAsJSON(ResourceKey resource, int componentIndex, string propertyPath);
 
     /// <summary>
-    /// Sets the value of an entity property for a component.
+    /// Replaces the value of an existing entity property for a component.
+    /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
-    Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue) where T : notnull;
+    Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue, bool insert = false) where T : notnull;
 
     /// <summary>
-    /// Sets the value of a property from the first component of the specified type.
+    /// Replaces the value of an existing property from the first component of the specified type.
+    /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
-    Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue) where T : notnull;
+    Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue, bool insert = false) where T : notnull;
 
     /// <summary>
     /// Undo the most recent entity change for a resource.
