@@ -32,6 +32,8 @@ public class EntityService : IEntityService, IDisposable
     private readonly Dictionary<string, List<string>> _defaultComponents = new();
     private JsonSchema? _entitySchema;
 
+    private static long _undoGroup;
+
     public static JsonSerializerOptions SerializerOptions { get; } = new()
     {
         // Serialize enums as strings rather than numbers
@@ -173,7 +175,7 @@ public class EntityService : IEntityService, IDisposable
         var componentPointer = JsonPointer.Create("_components", componentIndex);
         var patchOperation = PatchOperation.Add(componentPointer, prototype.JsonObject);
 
-        var applyResult = ApplyPatchOperation(entity, patchOperation);
+        var applyResult = ApplyPatchOperation(entity, patchOperation, 0);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to add component to entity: {resource}")
@@ -200,7 +202,7 @@ public class EntityService : IEntityService, IDisposable
         var componentPointer = JsonPointer.Create("_components", componentIndex);
         var patchOperation = PatchOperation.Remove(componentPointer);
 
-        var applyResult = ApplyPatchOperation(entity, patchOperation);
+        var applyResult = ApplyPatchOperation(entity, patchOperation, 0);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to remove entity component at index '{componentIndex}' for resource: {resource}")
@@ -244,7 +246,7 @@ public class EntityService : IEntityService, IDisposable
         var destComponentPointer = JsonPointer.Create("_components", destComponentIndex);
         var patchOperation = PatchOperation.Add(destComponentPointer, sourceComponentNode);
 
-        var applyResult = ApplyPatchOperation(entity, patchOperation);
+        var applyResult = ApplyPatchOperation(entity, patchOperation, 0);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to add component to entity: {resource}")
@@ -283,10 +285,13 @@ public class EntityService : IEntityService, IDisposable
         }
         var sourceComponentNode = getComponentResult.Value;
 
+        // Both operations have the same non-zero undo group, so they will be undone together
+        _undoGroup++;
+
         // Apply a patch operation to remove the source component
 
         var removeOperation = PatchOperation.Remove(sourceComponentPointer);
-        var removeResult = ApplyPatchOperation(entity, removeOperation);
+        var removeResult = ApplyPatchOperation(entity, removeOperation, _undoGroup);
         if (removeResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to remove source component from entity: {resource}")
@@ -298,7 +303,7 @@ public class EntityService : IEntityService, IDisposable
         var destComponentPointer = JsonPointer.Create("_components", destComponentIndex);
         var addOperation = PatchOperation.Add(destComponentPointer, sourceComponentNode);
 
-        var applyResult = ApplyPatchOperation(entity, addOperation);
+        var applyResult = ApplyPatchOperation(entity, addOperation, _undoGroup);
         if (removeResult.IsFailure)
         {
             return Result.Fail($"Failed to apply patch to add destination component to entity: {resource}")
@@ -425,7 +430,7 @@ public class EntityService : IEntityService, IDisposable
             operation = PatchOperation.Replace(propertyPointer, jsonValue);
         }
 
-        var applyResult = ApplyPatchOperation(entity, operation);
+        var applyResult = ApplyPatchOperation(entity, operation, 0);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply entity patch for resource: {resource}");
@@ -472,13 +477,23 @@ public class EntityService : IEntityService, IDisposable
         // Pop the next patch summary from the Undo stack and apply it to the entity
         var patchSummary = entity.UndoStack.Pop();
         var reversePatchOperation = patchSummary.ReverseOperation;
+        var undoGroup = patchSummary.UndoGroup;
         Guard.IsNotNull(reversePatchOperation);
 
-        var applyResult = ApplyPatchOperation(entity, reversePatchOperation, PatchContext.Undo);
+        var applyResult = ApplyPatchOperation(entity, reversePatchOperation, undoGroup, PatchContext.Undo);
         if (applyResult.IsFailure)
         {
             return Result<bool>.Fail($"Failed to apply undo patch to resource: {resource}")
                 .WithErrors(applyResult);
+        }
+
+        // If the next patch summary in the Undo stack has the same UndoGroup, then undo it as well.
+        // The easiest way to do this is to call UndoEntity recursively.
+        if (patchSummary.UndoGroup != 0 &&
+            entity.UndoStack.Count != 0 &&
+            entity.UndoStack.Peek().UndoGroup == undoGroup)
+        {
+            return UndoEntity(resource);
         }
 
         // Succeed and return true to indicate that a patch was undone.
@@ -505,12 +520,22 @@ public class EntityService : IEntityService, IDisposable
         // Pop the next patch summary from the Redo stack and apply it to the entity
         var patchSummary = entity.RedoStack.Pop();
         var reverseOperation = patchSummary.ReverseOperation;
+        var undoGroup = patchSummary.UndoGroup;
         Guard.IsNotNull(reverseOperation);
 
-        var applyResult = ApplyPatchOperation(entity, reverseOperation, PatchContext.Redo);
+        var applyResult = ApplyPatchOperation(entity, reverseOperation, undoGroup, PatchContext.Redo);
         if (applyResult.IsFailure)
         {
             return Result<bool>.Fail($"Failed to apply redo patch to resource: {resource}");
+        }
+
+        // If the next patch summary in the Redo stack has the same UndoGroup, then redo it as well.
+        // The easiest way to do this is to call RedoEntity recursively.
+        if (patchSummary.UndoGroup != 0 &&
+            entity.RedoStack.Count != 0 &&
+            entity.RedoStack.Peek().UndoGroup == undoGroup)
+        {
+            return RedoEntity(resource);
         }
 
         // Succeed and return true to indicate that a patch was undone.
@@ -529,7 +554,7 @@ public class EntityService : IEntityService, IDisposable
         _entityRegistry.CleanupEntities();
     }
 
-    private Result ApplyPatchOperation(Entity entity, PatchOperation patchOperation, PatchContext context = PatchContext.Modify)
+    private Result ApplyPatchOperation(Entity entity, PatchOperation patchOperation, long undoGroup, PatchContext context = PatchContext.Modify)
     {
         if (patchOperation.Op == OperationType.Unknown ||
             patchOperation.Op == OperationType.Copy ||
@@ -539,7 +564,7 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Patch operation is not supported: {patchOperation.Op}");
         }
 
-        var applyResult = entity.ApplyPatchOperation(patchOperation, _schemaRegistry, context);
+        var applyResult = entity.ApplyPatchOperation(patchOperation, _schemaRegistry, undoGroup, context);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply entity patch for resource: '{entity.Resource}'")
