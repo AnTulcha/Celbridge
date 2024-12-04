@@ -11,6 +11,7 @@
             SelectionMode="Single"
             CanReorderItems="True"
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
+            SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
             AllowDrop="True">
 
     <ListView.ItemTemplate>

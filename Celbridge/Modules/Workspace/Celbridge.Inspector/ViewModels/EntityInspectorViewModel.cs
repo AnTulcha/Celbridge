@@ -3,6 +3,7 @@ using Celbridge.Inspector.Models;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
 
 namespace Celbridge.Inspector.ViewModels;
@@ -14,6 +15,9 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     private readonly IEntityService _entityService;
 
     public ObservableCollection<ComponentItem> ComponentItems { get; } = new();
+
+    [ObservableProperty]
+    private int _selectedComponentIndex;
 
     // Code gen requires a parameterless constructor
     public EntityInspectorViewModel()
@@ -69,6 +73,8 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         }
         var count = getCountResult.Value;
 
+        int previousIndex = SelectedComponentIndex;
+
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
@@ -89,5 +95,7 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         }
 
         ComponentItems.ReplaceWith(componentItems);
+
+        SelectedComponentIndex = previousIndex;
     }
 }
