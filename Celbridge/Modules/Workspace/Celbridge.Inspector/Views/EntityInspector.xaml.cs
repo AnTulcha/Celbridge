@@ -4,6 +4,8 @@ namespace Celbridge.Inspector.Views;
 
 public partial class EntityInspector : UserControl, IInspector
 {
+    public EntityInspectorViewModel ViewModel { get; private set; }
+
     // Code gen requires a parameterless constructor
     public EntityInspector()
     {
@@ -13,7 +15,15 @@ public partial class EntityInspector : UserControl, IInspector
     public EntityInspector(EntityInspectorViewModel viewModel)
     {
         this.InitializeComponent();
-        DataContext = viewModel;
+        ViewModel = viewModel;
+        DataContext = ViewModel;
+
+        Loaded += EntityInspector_Loaded;
+    }
+
+    private void EntityInspector_Loaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.OnViewLoaded();
     }
 
     public ResourceKey Resource { get; set; }

@@ -1,3 +1,4 @@
+using Json.More;
 using Json.Pointer;
 using Json.Schema;
 using System.Text.Json;
@@ -9,15 +10,15 @@ public class ComponentSchema
 {
     public string ComponentType { get; }
     public int ComponentVersion { get; }
-    public bool AllowMultipleComponents { get; }
+    public ComponentInfo ComponentInfo { get; }
 
     private readonly JsonSchema _jsonSchema;
 
-    private ComponentSchema(string componentType, int componentVersion, bool allowMultipleComponents, JsonSchema jsonSchema)
+    private ComponentSchema(string componentType, int componentVersion, ComponentInfo componentInfo, JsonSchema jsonSchema)
     {
         ComponentType = componentType;
         ComponentVersion = componentVersion;
-        AllowMultipleComponents = allowMultipleComponents;
+        ComponentInfo = componentInfo;
         _jsonSchema = jsonSchema;
     }
 
@@ -62,13 +63,45 @@ public class ComponentSchema
             }
             var componentVersion = componentVersionElement.Value.GetInt32();
 
-            // Get allowMultipleComponents
+            // Populate the component info
 
-            bool allowMultipleComponents = false;
-            if (root.TryGetProperty("allowMultipleComponents", out JsonElement allowMultipleElement))
+            var componentAttributes = new Dictionary<string, string>();
+            if (root.TryGetProperty("attributes", out JsonElement attributesElement))
             {
-                allowMultipleComponents = allowMultipleElement.GetBoolean();
+                foreach (var attribute in attributesElement.EnumerateObject())
+                {
+                    componentAttributes[attribute.Name] = attribute.Value.ToJsonString();
+                }
             }
+
+            var componentProperties = new List<ComponentPropertyInfo>();
+            if (root.TryGetProperty("properties", out JsonElement propertiesElement))
+            {
+                foreach (var propertyElement in propertiesElement.EnumerateObject())
+                {
+                    var propertyName = propertyElement.Name;
+                    if (propertyName.StartsWith('_'))
+                    {
+                        // Ignore internal-only properties
+                        continue;
+                    }
+
+                    var propertyType = propertyElement.Value.GetProperty("type").ToString();
+                    var propertyAttributes = new Dictionary<string, string>();
+                    if (propertyElement.Value.TryGetProperty("attributes", out JsonElement propertyAttributesElement))
+                    {
+                        foreach (var attribute in propertyAttributesElement.EnumerateObject())
+                        {
+                            propertyAttributes[attribute.Name] = attribute.Value.ToString();
+                        }
+                    }
+
+                    var propertyInfo = new ComponentPropertyInfo(propertyName, propertyType, propertyAttributes);
+                    componentProperties.Add(propertyInfo);
+                }
+            }
+
+            var componentInfo = new ComponentInfo(componentType, componentAttributes, componentProperties);
 
             // Create the JsonSchema object
 
@@ -78,7 +111,7 @@ public class ComponentSchema
                 return Result<ComponentSchema>.Fail($"Failed to parse schema for component type: '{componentType}'");
             }
 
-            var schema = new ComponentSchema(componentType, componentVersion, allowMultipleComponents, jsonSchema);
+            var schema = new ComponentSchema(componentType, componentVersion, componentInfo, jsonSchema);
 
             return Result<ComponentSchema>.Ok(schema);
         }

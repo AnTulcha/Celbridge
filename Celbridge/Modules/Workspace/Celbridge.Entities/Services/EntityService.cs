@@ -318,6 +318,61 @@ public class EntityService : IEntityService, IDisposable
         return _entityRegistry.GetComponentsOfType(resourceKey, componentType);
     }
 
+    public Result<int> GetComponentCount(ResourceKey resource)
+    {
+        // Acquire the entity for the specified resource
+
+        var acquireResult = _entityRegistry.AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result<int>.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+
+        // Get the component count
+
+        return entity.EntityData.GetComponentCount();
+    }
+
+    public Result<ComponentInfo> GetComponentInfo(ResourceKey resource, int componentIndex)
+    {
+        // Acquire the entity for the specified resource
+
+        var acquireResult = _entityRegistry.AcquireEntity(resource);
+        if (acquireResult.IsFailure)
+        {
+            return Result<ComponentInfo>.Fail($"Failed to acquire entity: {resource}")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+
+        // Get the component type
+
+        var componentTypePointer = JsonPointer.Create("_components", componentIndex, "_componentType");
+        var getTypeResult = entity.EntityData.GetProperty<string>(componentTypePointer);
+        if (getTypeResult.IsFailure)
+        {
+            return Result<ComponentInfo>.Fail($"Failed to get component type for component at index '{componentIndex}' for resource: {resource}")
+                .WithErrors(getTypeResult);
+        }
+        var componentType = getTypeResult.Value;
+
+        // Get the component schema
+
+        var getSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
+        if (getSchemaResult.IsFailure)
+        {
+            return Result<ComponentInfo>.Fail($"Failed to get schema for component type: {componentType}")
+                .WithErrors(getSchemaResult);
+        }
+        var componentSchema = getSchemaResult.Value;
+
+        // Return the component info
+
+        return Result<ComponentInfo>.Ok(componentSchema.ComponentInfo);
+    }
+
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
     {
         var getResult = GetProperty<T>(resource, componentIndex, propertyPath);

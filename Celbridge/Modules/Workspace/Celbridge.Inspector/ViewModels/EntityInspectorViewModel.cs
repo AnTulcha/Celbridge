@@ -1,10 +1,9 @@
-using Celbridge.Commands;
-using Celbridge.Documents;
 using Celbridge.Entities;
+using Celbridge.Inspector.Models;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
-using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -14,8 +13,7 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     private readonly IMessengerService _messengerService;
     private readonly IEntityService _entityService;
 
-    [ObservableProperty]
-    private EditorMode _editorMode;
+    public ObservableCollection<ComponentItem> ComponentItems { get; } = new();
 
     // Code gen requires a parameterless constructor
     public EntityInspectorViewModel()
@@ -35,6 +33,15 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
 
         PropertyChanged += EntityInspectorViewModel_PropertyChanged;
+    }
+
+    public void OnViewLoaded()
+    {
+        // Todo: Populate the component items list with the components of the entity
+
+        ComponentItems.Add(new ComponentItem { ComponentType = "Component 1" });
+        ComponentItems.Add(new ComponentItem { ComponentType = "Component 2" });
+        ComponentItems.Add(new ComponentItem { ComponentType = "Component 3" });
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)

@@ -59,7 +59,17 @@ public interface IEntityService
     /// <summary>
     /// Returns the indices of the entity components of the specified type.
     /// </summary>
-    Result<List<int>> GetComponentsOfType(ResourceKey resourceKey, string componentType);
+    Result<List<int>> GetComponentsOfType(ResourceKey resource, string componentType);
+
+    /// <summary>
+    /// Returns the number of components in the entity for a resource.
+    /// </summary>
+    Result<int> GetComponentCount(ResourceKey resource);
+
+    /// <summary>
+    /// Returns a ComponentInfo object describing the component at the specified index.
+    /// </summary>
+    Result<ComponentInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
 
     /// <summary>
     /// Gets the value of a property from a component.

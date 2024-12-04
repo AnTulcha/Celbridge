@@ -14,6 +14,7 @@
     "_componentType",
     "_componentVersion"
   ],
-  "additionalProperties": false,
-  "allowMultipleComponents": true
+  "attributes": {
+    "allowMultipleComponents": true
+  }
 }

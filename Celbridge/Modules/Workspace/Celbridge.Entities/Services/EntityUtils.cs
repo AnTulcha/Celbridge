@@ -138,10 +138,14 @@ public static class EntityUtils
         }
         var schema = getSchemaResult.Value;
 
-        var allowMultiple = schema.AllowMultipleComponents;
+        var componentInfo = schema.ComponentInfo;
+
+        // Check if the component type allows multiple components
+
+        var allowMultiple = componentInfo.GetBooleanAttribute("allowMultipleComponents"); 
         if (!allowMultiple)
         {
-            // Check if the existing entity already contains a component of the same type
+            // Check if the entity data already contains a component of the same type
             var getComponentsResult = GetComponentsOfType(entityData, componentType);
             if (getComponentsResult.IsFailure)
             {

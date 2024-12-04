@@ -171,6 +171,19 @@ public class EntityData
         }
     }
 
+    public Result<int> GetComponentCount()
+    {
+        var componentsPointer = JsonPointer.Parse("/_components");
+        if (componentsPointer.TryEvaluate(EntityJsonObject, out var componentsNode) &&
+            componentsNode is JsonArray componentsArray &&
+            componentsArray is not null)
+        {
+            return Result<int>.Ok(componentsArray.Count);
+        }
+
+        return Result<int>.Fail("Failed to get component count from entity data");
+    }
+
     private Result<ComponentChangedMessage> GetChangeForPatchOperation(ResourceKey resource, PatchOperation operation)
     {
         try
