@@ -37,7 +37,29 @@ public partial class EntityInspectorViewModel : InspectorViewModel
 
     public void OnViewLoaded()
     {
-        // Todo: Populate the component items list with the components of the entity
+        PopulateComponentList();
+    }
+
+    private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
+    {
+        if (message.Resource == Resource &&
+            message.PropertyPath == "/")
+        {
+            PopulateComponentList();
+        }
+    }
+
+    private void EntityInspectorViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Resource))
+        {
+            // Todo: Update component list
+        }
+    }
+
+    private void PopulateComponentList()
+    {
+        // Todo: Preserve selection if possible
 
         var getCountResult = _entityService.GetComponentCount(Resource);
         if (getCountResult.IsFailure)
@@ -47,6 +69,7 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         }
         var count = getCountResult.Value;
 
+        List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
             var getComponentResult = _entityService.GetComponentInfo(Resource, i);
@@ -62,23 +85,9 @@ public partial class EntityInspectorViewModel : InspectorViewModel
                 ComponentType = componentInfo.ComponentType
             };
 
-            ComponentItems.Add(componentItem);
+            componentItems.Add(componentItem);
         }
-    }
 
-    private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
-    {
-        if (message.Resource == Resource)
-        {
-            // Todo: Update component list
-        }
-    }
-
-    private void EntityInspectorViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(Resource))
-        {
-            // Todo: Update component list
-        }
+        ComponentItems.ReplaceWith(componentItems);
     }
 }

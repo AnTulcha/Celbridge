@@ -26,39 +26,9 @@ public partial class EntityInspector : UserControl, IInspector
         ViewModel.OnViewLoaded();
     }
 
-    public ResourceKey Resource { get; set; }
-
-    public void AddItem(ListViewItem listViewItem)
+    public ResourceKey Resource
     {
-        //ComponentList.Items.Add(listViewItem);
+        set => ViewModel.Resource = value;
+        get => ViewModel.Resource;
     }
-
-    //private void ShowComponentMockupButton_Click(object sender, RoutedEventArgs e)
-    //{
-    //    var listViewItem = new ListViewItem()
-    //        .Content
-    //        (
-    //            new Grid()
-    //                .ColumnDefinitions("*, 2*, auto")
-    //                .Children
-    //                (
-    //                    new TextBox()
-    //                        .Grid(column: 0)
-    //                        .VerticalAlignment(VerticalAlignment.Center)
-    //                        .Text("VoiceLine"),
-    //                    new TextBlock()
-    //                        .Grid(column: 1)
-    //                        .Margin(8, 0, 0, 0)
-    //                        .VerticalAlignment(VerticalAlignment.Center)
-    //                        .Text("Darth Vader: No, I am your father!"),
-    //                    new SymbolIcon()
-    //                        .Grid(column: 2)
-    //                        .Symbol(Symbol.Play)
-    //                        .ToolTipService(null, null, "Play using text to speech")
-    //                )
-    //        );
-
-    //    Guard.IsNotNull(_componentListView);
-    //    _componentListView.AddItem(listViewItem);
-    //}
 }
