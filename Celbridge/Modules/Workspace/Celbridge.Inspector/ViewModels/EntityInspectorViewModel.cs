@@ -4,6 +4,7 @@ using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
 namespace Celbridge.Inspector.ViewModels;
@@ -41,6 +42,74 @@ public partial class EntityInspectorViewModel : InspectorViewModel
 
     public void OnViewLoaded()
     {
+        PopulateComponentList();
+    }
+
+    public ICommand AddComponentCommand => new RelayCommand<int?>(AddComponent_Executed);
+    private void AddComponent_Executed(int? index)
+    {
+        int addIndex;
+        if (index is not null)
+        {
+            addIndex = (int)index;
+        }
+        else
+        {
+            // Select the index automatically
+            if (SelectedComponentIndex == -1)
+            {
+                var countResult = _entityService.GetComponentCount(Resource);
+                if (countResult.IsFailure)
+                {
+                    _logger.LogError(countResult.Error);
+                    return;
+                }
+
+                addIndex = countResult.Value;
+            }
+            else
+            {
+                addIndex = SelectedComponentIndex + 1;
+            }
+        }
+
+
+        var addComponentResult = _entityService.AddComponent(Resource, "Empty", addIndex);
+        if (addComponentResult.IsFailure)
+        {
+            _logger.LogError(addComponentResult.Error);
+            return;
+        }
+
+        PopulateComponentList();
+    }
+
+    public ICommand DeleteComponentCommand => new RelayCommand<int?>(DeleteComponent_Executed);
+    private void DeleteComponent_Executed(int? index)
+    {
+        int deleteIndex;
+        if (index is not null)
+        {
+            deleteIndex = (int)index;
+        }
+        else
+        {
+            // Select the index automatically
+            deleteIndex = SelectedComponentIndex;
+        }
+
+        if (deleteIndex == -1)
+        {
+            return;
+        }
+
+        var deleteResult = _entityService.RemoveComponent(Resource, deleteIndex);
+        if (deleteResult.IsFailure)
+        {
+            _logger.LogError(deleteResult.Error);
+            return;
+        }
+
         PopulateComponentList();
     }
 
@@ -86,9 +155,15 @@ public partial class EntityInspectorViewModel : InspectorViewModel
             }
             var componentInfo = getComponentResult.Value;
 
+            var componentType = componentInfo.ComponentType;
+            if (componentType == "Empty")
+            {
+                componentType = string.Empty;
+            }
+
             var componentItem = new ComponentItem
             {
-                ComponentType = componentInfo.ComponentType
+                ComponentType = componentType
             };
 
             componentItems.Add(componentItem);

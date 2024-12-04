@@ -7,25 +7,65 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
 
-  <ListView x:Name="ComponentList"
+  <UserControl.Resources>
+    <MenuFlyout x:Name="EntityContextMenu">
+
+      <MenuFlyoutItem Text="Add"
+                      Click="OnAddComponentClicked">
+        <MenuFlyoutItem.Icon>
+          <SymbolIcon Symbol="Add"/>
+        </MenuFlyoutItem.Icon>
+      </MenuFlyoutItem>
+
+      <MenuFlyoutItem Text="Delete"
+                      Click="OnDeleteComponentClicked">
+        <MenuFlyoutItem.Icon>
+          <FontIcon Glyph="&#xE107;"/>
+        </MenuFlyoutItem.Icon>
+      </MenuFlyoutItem>
+    </MenuFlyout>
+    
+  </UserControl.Resources>
+
+  <StackPanel Orientation="Vertical">
+
+    <ListView x:Name="ComponentList"
             SelectionMode="Single"
             CanReorderItems="True"
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
             SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
             AllowDrop="True">
 
-    <ListView.ItemTemplate>
-      <DataTemplate x:DataType="models:ComponentItem">
-        <StackPanel Orientation="Horizontal"
-                    Margin="0"
-                    Padding="0">
-          <TextBox Text="{x:Bind ComponentType}"
-                   MinWidth="140"
-                   Margin="0"/>
-        </StackPanel>
-      </DataTemplate>
-    </ListView.ItemTemplate>
+      <ListView.ItemTemplate>
+        <DataTemplate x:DataType="models:ComponentItem">
+
+          <Grid HorizontalAlignment="Stretch"
+                Margin="0"
+                Padding="0"
+                Background="Transparent"
+                ContextFlyout="{StaticResource EntityContextMenu}">
+
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBox Text="{x:Bind ComponentType}"
+                     MinWidth="140"
+                     Margin="0"
+                     Grid.Column="0"/>
+
+          </Grid>
+        </DataTemplate>
+      </ListView.ItemTemplate>
+
+    </ListView>
+
+    <Button HorizontalAlignment="Center"
+            Command="{x:Bind ViewModel.AddComponentCommand}">
+      <SymbolIcon Symbol="Add"/>
+    </Button>
     
-  </ListView>
+  </StackPanel>
 
 </UserControl>
