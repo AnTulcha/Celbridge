@@ -39,9 +39,31 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     {
         // Todo: Populate the component items list with the components of the entity
 
-        ComponentItems.Add(new ComponentItem { ComponentType = "Component 1" });
-        ComponentItems.Add(new ComponentItem { ComponentType = "Component 2" });
-        ComponentItems.Add(new ComponentItem { ComponentType = "Component 3" });
+        var getCountResult = _entityService.GetComponentCount(Resource);
+        if (getCountResult.IsFailure)
+        {
+            _logger.LogError(getCountResult.Error);
+            return;
+        }
+        var count = getCountResult.Value;
+
+        for (int i = 0; i < count; i++)
+        {
+            var getComponentResult = _entityService.GetComponentInfo(Resource, i);
+            if (getComponentResult.IsFailure)
+            {
+                _logger.LogError(getComponentResult.Error);
+                return;
+            }
+            var componentInfo = getComponentResult.Value;
+
+            var componentItem = new ComponentItem
+            {
+                ComponentType = componentInfo.ComponentType
+            };
+
+            ComponentItems.Add(componentItem);
+        }
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)

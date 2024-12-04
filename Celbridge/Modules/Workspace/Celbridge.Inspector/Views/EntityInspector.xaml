@@ -8,7 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
 
   <ListView x:Name="ComponentList"
-            Header="Components"
             SelectionMode="Single"
             CanReorderItems="True"
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
@@ -16,8 +15,12 @@
 
     <ListView.ItemTemplate>
       <DataTemplate x:DataType="models:ComponentItem">
-        <StackPanel Orientation="Horizontal" Margin="5">
-          <TextBlock Text="{x:Bind ComponentType}" />
+        <StackPanel Orientation="Horizontal"
+                    Margin="0"
+                    Padding="0">
+          <TextBox Text="{x:Bind ComponentType}"
+                   MinWidth="140"
+                   Margin="0"/>
         </StackPanel>
       </DataTemplate>
     </ListView.ItemTemplate>
