@@ -13,7 +13,8 @@
 
       <MenuFlyoutItem Text="Add"
                       Command="{x:Bind ViewModel.AddComponentCommand, Mode=OneWay}"
-                      CommandParameter="{Binding}">
+                      CommandParameter="{Binding}"
+                      ToolTipService.ToolTip="{x:Bind ContextMenuAddTooltipString}">
         <MenuFlyoutItem.Icon>
           <SymbolIcon Symbol="Add"/>
         </MenuFlyoutItem.Icon>
@@ -21,14 +22,16 @@
 
       <MenuFlyoutItem Text="Delete"
                       Command="{x:Bind ViewModel.DeleteComponentCommand, Mode=OneWay}"
-                      CommandParameter="{Binding}">
+                      CommandParameter="{Binding}"
+                      ToolTipService.ToolTip="{x:Bind ContextMenuDeleteTooltipString}">
         <MenuFlyoutItem.Icon>
           <FontIcon Glyph="&#xE107;"/>
         </MenuFlyoutItem.Icon>
       </MenuFlyoutItem>
       <MenuFlyoutItem Text="Duplicate"
                       Command="{x:Bind ViewModel.DuplicateComponentCommand, Mode=OneWay}"
-                      CommandParameter="{Binding}">
+                      CommandParameter="{Binding}"
+                      ToolTipService.ToolTip="{x:Bind ContextMenuDuplicateTooltipString}">
         <MenuFlyoutItem.Icon>
           <SymbolIcon Symbol="Copy"/>
         </MenuFlyoutItem.Icon>

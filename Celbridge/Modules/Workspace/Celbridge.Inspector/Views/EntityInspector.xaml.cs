@@ -13,6 +13,9 @@ public partial class EntityInspector : UserControl, IInspector
     private IStringLocalizer _stringLocalizer;
 
     public LocalizedString AddComponentTooltipString => _stringLocalizer.GetString("EntityInspector_AddComponentTooltip");
+    public LocalizedString ContextMenuAddTooltipString => _stringLocalizer.GetString("EntityInspector_ContextMenu_Add");
+    public LocalizedString ContextMenuDeleteTooltipString => _stringLocalizer.GetString("EntityInspector_ContextMenu_Delete");
+    public LocalizedString ContextMenuDuplicateTooltipString => _stringLocalizer.GetString("EntityInspector_ContextMenu_Duplicate");
 
     public EntityInspectorViewModel ViewModel { get; private set; }
 
