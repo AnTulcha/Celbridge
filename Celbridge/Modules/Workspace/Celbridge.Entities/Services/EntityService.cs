@@ -636,6 +636,8 @@ public class EntityService : IEntityService, IDisposable
             _messengerService.Send(patchSummary.ComponentChangedMessage);
         }
 
+        _logger.LogDebug($"Modified entity: {patchSummary.ComponentChangedMessage}");
+
         return Result.Ok();
     }
 
