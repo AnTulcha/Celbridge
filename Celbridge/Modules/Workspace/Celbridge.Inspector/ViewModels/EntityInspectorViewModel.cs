@@ -7,7 +7,6 @@ using CommunityToolkit.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
-using System.Reflection.Metadata;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -89,13 +88,18 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     public ICommand DeleteComponentCommand => new RelayCommand<object?>(DeleteComponent_Executed);
     private void DeleteComponent_Executed(object? parameter)
     {
-        var componentItem = parameter as ComponentItem;
-        if (componentItem is null)
+        var deleteIndex = -1;
+
+        switch (parameter)
         {
-            return;
+            case int index:
+                deleteIndex = index;
+                break;
+            case ComponentItem componentItem:
+                deleteIndex = ComponentItems.IndexOf(componentItem);
+                break;
         }
 
-        var deleteIndex = ComponentItems.IndexOf(componentItem);
         if (deleteIndex == -1)
         {
             return;
@@ -222,6 +226,14 @@ public partial class EntityInspectorViewModel : InspectorViewModel
 
         ComponentItems.ReplaceWith(componentItems);
 
-        SelectedComponentIndex = previousIndex;
+        if (count == 0)
+        {
+            SelectedComponentIndex = -1;
+        }
+        else
+        {
+            SelectedComponentIndex = Math.Clamp(previousIndex, 0, count - 1);
+        
+        }
     }
 }

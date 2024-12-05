@@ -45,6 +45,12 @@
             SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
             AllowDrop="True">
 
+      <ListView.KeyboardAccelerators>
+        <KeyboardAccelerator 
+            Key="Delete" 
+            Invoked="ComponentList_Delete"/>
+      </ListView.KeyboardAccelerators>
+
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">
 

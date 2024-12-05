@@ -57,4 +57,13 @@ public partial class EntityInspector : UserControl, IInspector
             }
         }
     }
+
+    private void ComponentList_Delete(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    {
+        int deleteIndex = ComponentList.SelectedIndex;
+        if (deleteIndex >= 0)
+        {
+            ViewModel.DeleteComponentCommand.Execute(deleteIndex);
+        }
+    }
 }
