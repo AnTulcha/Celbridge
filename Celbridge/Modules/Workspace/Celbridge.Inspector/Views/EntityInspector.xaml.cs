@@ -1,5 +1,6 @@
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.ViewModels;
+using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
 using System.Collections.ObjectModel;
 using Windows.System;
@@ -9,6 +10,10 @@ namespace Celbridge.Inspector.Views;
 
 public partial class EntityInspector : UserControl, IInspector
 {
+    private IStringLocalizer _stringLocalizer;
+
+    public LocalizedString AddComponentTooltipString => _stringLocalizer.GetString("EntityInspector_AddComponentTooltip");
+
     public EntityInspectorViewModel ViewModel { get; private set; }
 
     // Code gen requires a parameterless constructor
@@ -23,6 +28,9 @@ public partial class EntityInspector : UserControl, IInspector
 
         ViewModel = viewModel;
         DataContext = ViewModel;
+
+        var serviceProvider = ServiceLocator.ServiceProvider;
+        _stringLocalizer = serviceProvider.GetRequiredService<IStringLocalizer>();
 
         Loaded += EntityInspector_Loaded;
     }

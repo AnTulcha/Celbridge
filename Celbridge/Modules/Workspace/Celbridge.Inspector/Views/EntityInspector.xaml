@@ -76,7 +76,9 @@
     </ListView>
 
     <Button HorizontalAlignment="Center"
-            Command="{x:Bind ViewModel.AddComponentCommand}">
+            Margin="6"
+            Command="{x:Bind ViewModel.AddComponentCommand}"
+            ToolTipService.ToolTip="{x:Bind AddComponentTooltipString}">
       <SymbolIcon Symbol="Add"/>
     </Button>
     

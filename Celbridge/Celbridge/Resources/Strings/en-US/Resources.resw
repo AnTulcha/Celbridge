@@ -390,4 +390,7 @@
   <data name="InspectorPanel_OpenDocumentTooltip" xml:space="preserve">
     <value>Open document</value>
   </data>
+  <data name="EntityInspector_AddComponentTooltip" xml:space="preserve">
+    <value>Add a new component</value>
+  </data>
 </root>
