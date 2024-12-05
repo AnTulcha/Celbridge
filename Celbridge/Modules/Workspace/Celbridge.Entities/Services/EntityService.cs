@@ -182,6 +182,8 @@ public class EntityService : IEntityService, IDisposable
                 .WithErrors(applyResult);
         }
 
+        _logger.LogDebug($"Added entity component at '{componentIndex}' for resource '{resource}'");
+
         return Result.Ok();
     }
 
@@ -208,6 +210,8 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Failed to apply patch to remove entity component at index '{componentIndex}' for resource: {resource}")
                 .WithErrors(applyResult);
         }
+
+        _logger.LogDebug($"Removed entity component at '{componentIndex}' for resource '{resource}'");
 
         return Result.Ok();
     }
@@ -252,6 +256,8 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Failed to apply patch to add component to entity: {resource}")
                 .WithErrors(applyResult);
         }
+
+        _logger.LogDebug($"Copied entity component from '{sourceComponentIndex}' to '{destComponentIndex}' for resource '{resource}'");
 
         return Result.Ok();
     }
@@ -309,6 +315,8 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Failed to apply patch to add destination component to entity: {resource}")
                 .WithErrors(applyResult);
         }
+
+        _logger.LogDebug($"Moved entity component from '{sourceComponentIndex}' to '{destComponentIndex}' for resource '{resource}'");
 
         return Result.Ok();
     }
@@ -488,8 +496,11 @@ public class EntityService : IEntityService, IDisposable
         var applyResult = ApplyPatchOperation(entity, operation, 0);
         if (applyResult.IsFailure)
         {
-            return Result.Fail($"Failed to apply entity patch for resource: {resource}");
+            return Result.Fail($"Failed to apply entity patch for resource: {resource}")
+                .WithErrors(applyResult);
         }
+
+        _logger.LogDebug($"Set property '{propertyPath}' for resource '{resource}'");
 
         return Result.Ok();
     }
@@ -551,6 +562,8 @@ public class EntityService : IEntityService, IDisposable
             return TryUndoEntity(resource);
         }
 
+        _logger.LogDebug($"Undo entity: {resource}");
+
         // Succeed and return true to indicate that a patch was undone.
         return Result<bool>.Ok(true);
     }
@@ -592,6 +605,8 @@ public class EntityService : IEntityService, IDisposable
         {
             return TryRedoEntity(resource);
         }
+
+        _logger.LogDebug($"Redo entity: {resource}");
 
         // Succeed and return true to indicate that a patch was undone.
         return Result<bool>.Ok(true);
