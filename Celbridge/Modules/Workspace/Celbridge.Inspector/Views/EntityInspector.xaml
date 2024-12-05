@@ -62,7 +62,8 @@
             <TextBox Text="{x:Bind ComponentType}"
                      MinWidth="140"
                      Margin="0"
-                     Grid.Column="0"/>
+                     Grid.Column="0"
+                     KeyDown="TextBox_KeyDown"/>
 
           </Grid>
         </DataTemplate>

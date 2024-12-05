@@ -50,22 +50,32 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
     private void AddComponent_Executed(object? parameter)
     {
-        int addIndex;
-        if (parameter is null)
+        int addIndex = -1;
+        switch (parameter)
         {
-            addIndex = ComponentItems.Count;
-        }
-        else
-        {
-            var componentItem = parameter as ComponentItem;
-            Guard.IsNotNull(componentItem);
+            case null:
+                // Append to end of list
+                addIndex = ComponentItems.Count;
+                break;
 
-            addIndex = ComponentItems.IndexOf(componentItem) + 1;
-            if (addIndex == -1)
-            {
-                return;
-            }
+            case int index:
+                // Insert after specified index
+                addIndex = index + 1;
+                break;
+
+            case ComponentItem componentItem:
+                Guard.IsNotNull(componentItem);
+
+                // Insert after specified item
+                addIndex = ComponentItems.IndexOf(componentItem) + 1;
+                break;
         }
+
+        if (addIndex == -1)
+        {
+            return;
+        }
+
         var addComponentResult = _entityService.AddComponent(Resource, "Empty", addIndex);
         if (addComponentResult.IsFailure)
         {
