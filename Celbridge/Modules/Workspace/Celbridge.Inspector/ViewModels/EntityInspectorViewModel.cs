@@ -75,14 +75,22 @@ public partial class EntityInspectorViewModel : InspectorViewModel
             return;
         }
 
-        var addComponentResult = _entityService.AddComponent(Resource, "Empty", addIndex);
-        if (addComponentResult.IsFailure)
+        // Update the list view
+        var emptyComponentItem = new ComponentItem();
+        ComponentItems.Insert(addIndex, emptyComponentItem);
+
+        // Supress the refresh
+        _supressRefreshCount = 1;
+
+        var addResult = _entityService.AddComponent(Resource, "Empty", addIndex);
+        if (addResult.IsFailure)
         {
-            _logger.LogError(addComponentResult.Error);
+            // Log the error and refresh the list to attempt to recover
+            _logger.LogError(addResult.Error);
+            _supressRefreshCount = 0;
+            PopulateComponentList();
             return;
         }
-
-        PopulateComponentList();
     }
 
     public ICommand DeleteComponentCommand => new RelayCommand<object?>(DeleteComponent_Executed);
@@ -105,14 +113,21 @@ public partial class EntityInspectorViewModel : InspectorViewModel
             return;
         }
 
+        // Update the list view
+        ComponentItems.RemoveAt(deleteIndex);
+
+        // Supress the refresh
+        _supressRefreshCount = 1;
+
         var deleteResult = _entityService.RemoveComponent(Resource, deleteIndex);
         if (deleteResult.IsFailure)
         {
+            // Log the error and refresh the list to attempt to recover
             _logger.LogError(deleteResult.Error);
+            _supressRefreshCount = 0;
+            PopulateComponentList();
             return;
         }
-
-        PopulateComponentList();
     }
 
     public ICommand DuplicateComponentCommand => new RelayCommand<object?>(DuplicateComponent_Executed, CanDuplicateComponent);
@@ -130,14 +145,22 @@ public partial class EntityInspectorViewModel : InspectorViewModel
             return;
         }
 
+        // Update the list view
+        var item = ComponentItems[duplicateIndex];
+        ComponentItems.Insert(duplicateIndex + 1, item);
+
+        // Supress the refresh
+        _supressRefreshCount = 1;
+
         var copyResult = _entityService.CopyComponent(Resource, duplicateIndex, duplicateIndex + 1);
         if (copyResult.IsFailure)
         {
+            // Log the error and refresh the list to attempt to recover
             _logger.LogError(copyResult.Error);
+            _supressRefreshCount = 0;
+            PopulateComponentList();
             return;
         }
-
-        PopulateComponentList();
     }
 
     private bool CanDuplicateComponent(object? parameter)
@@ -184,16 +207,14 @@ public partial class EntityInspectorViewModel : InspectorViewModel
             return;
         }
 
-        // The displayed list is already in the correct order, so we can suppress refreshing the component list
-        // for both the remove and add operation.
+        // A move consists of both a remove and add operation, so we need to supress the refresh twice
         _supressRefreshCount = 2;
         var moveResult = _entityService.MoveComponent(Resource, oldIndex, newIndex);
         if (moveResult.IsFailure)
         {
-            // Something went wrong when moving components.
-            // Log the error and rebuild the component list to attempt to recover
-            _supressRefreshCount = 0;
+            // Log the error and refresh the list to attempt to recover
             _logger.LogError(moveResult.Error);
+            _supressRefreshCount = 0;
             PopulateComponentList();
             return;
         }
