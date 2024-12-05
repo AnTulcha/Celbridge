@@ -58,8 +58,18 @@ public partial class EntityInspector : UserControl, IInspector
         }
     }
 
+    private bool _deleteKeyHandled = false;
+
     private void ComponentList_Delete(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
     {
+        // This event fires twice, once for keydown and once for keyup (I think).
+        // We could use args.Handled to prevent the second event from firing, but Uno Platform doesn't support this yet.
+        if (_deleteKeyHandled)
+        {
+            return;
+        }
+        _deleteKeyHandled = true;
+
         int deleteIndex = ComponentList.SelectedIndex;
         if (deleteIndex >= 0)
         {
