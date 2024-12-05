@@ -114,13 +114,15 @@ public interface IEntityService
     Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue, bool insert = false) where T : notnull;
 
     /// <summary>
-    /// Undo the most recent entity change for a resource.
+    /// Attempt to undo the most recent entity change for a resource.
+    /// Returns true if the undo was successful.
     /// </summary>
-    Result<bool> UndoEntity(ResourceKey resource);
+    Result<bool> TryUndoEntity(ResourceKey resource);
 
     /// <summary>
-    /// Redo the most recently undone entity change for a resource.
+    /// Attempt to redo the most recently undone entity change for a resource.
+    /// Returns true if the redo was successful.
     /// </summary>
-    Result<bool> RedoEntity(ResourceKey resource);
+    Result<bool> TryRedoEntity(ResourceKey resource);
 }
 

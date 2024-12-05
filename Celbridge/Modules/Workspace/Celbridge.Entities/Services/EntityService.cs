@@ -512,7 +512,7 @@ public class EntityService : IEntityService, IDisposable
         return SetProperty(resource, componentIndex, propertyPath, newValue, insert);
     }
 
-    public Result<bool> UndoEntity(ResourceKey resource)
+    public Result<bool> TryUndoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -548,14 +548,14 @@ public class EntityService : IEntityService, IDisposable
             entity.UndoStack.Count != 0 &&
             entity.UndoStack.Peek().UndoGroup == undoGroup)
         {
-            return UndoEntity(resource);
+            return TryUndoEntity(resource);
         }
 
         // Succeed and return true to indicate that a patch was undone.
         return Result<bool>.Ok(true);
     }
 
-    public Result<bool> RedoEntity(ResourceKey resource)
+    public Result<bool> TryRedoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -590,7 +590,7 @@ public class EntityService : IEntityService, IDisposable
             entity.RedoStack.Count != 0 &&
             entity.RedoStack.Peek().UndoGroup == undoGroup)
         {
-            return RedoEntity(resource);
+            return TryRedoEntity(resource);
         }
 
         // Succeed and return true to indicate that a patch was undone.

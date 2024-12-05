@@ -58,22 +58,20 @@ public partial class EntityInspector : UserControl, IInspector
         }
     }
 
-    private bool _deleteKeyHandled = false;
-
-    private void ComponentList_Delete(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+    private void UserControl_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        // This event fires twice, once for keydown and once for keyup (I think).
-        // We could use args.Handled to prevent the second event from firing, but Uno Platform doesn't support this yet.
-        if (_deleteKeyHandled)
-        {
-            return;
-        }
-        _deleteKeyHandled = true;
+        var key = e.Key;
 
-        int deleteIndex = ComponentList.SelectedIndex;
-        if (deleteIndex >= 0)
+        // Delete selected component keyboard shortcut
+        if (key == VirtualKey.Delete)
         {
-            ViewModel.DeleteComponentCommand.Execute(deleteIndex);
+            int deleteIndex = ComponentList.SelectedIndex;
+            if (deleteIndex >= 0)
+            {
+                ViewModel.DeleteComponentCommand.Execute(deleteIndex);
+            }
+            e.Handled = true;
+            return;
         }
     }
 }

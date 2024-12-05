@@ -138,7 +138,7 @@ public class CommandService : ICommandService
         }
     }
 
-    public UndoStackName ActiveUndoStack { get; set; } = UndoStackName.None;
+    public UndoStackName ActiveUndoStack { get; set; } = UndoStackName.Explorer;
 
     public bool IsUndoStackEmpty(UndoStackName undoStackName)
     {

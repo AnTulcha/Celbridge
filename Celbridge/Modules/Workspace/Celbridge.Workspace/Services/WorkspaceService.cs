@@ -33,6 +33,8 @@ public class WorkspaceService : IWorkspaceService, IDisposable
     public IEntityService EntityService { get; }
     public IGenerativeAIService GenerativeAIService { get; }
 
+    public WorkspacePanel ActivePanel { get; set; }
+
     private bool _workspaceStateIsDirty;
 
     private bool _showToolsPanelOnExitFocusMode;

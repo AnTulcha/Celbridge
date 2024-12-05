@@ -5,7 +5,8 @@
     xmlns:local="using:Celbridge.Inspector.Views"
     xmlns:models="using:Celbridge.Inspector.Models"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    KeyDown="UserControl_KeyDown">
 
   <UserControl.Resources>
     <MenuFlyout x:Name="EntityContextMenu">
@@ -44,12 +45,6 @@
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
             SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
             AllowDrop="True">
-
-      <ListView.KeyboardAccelerators>
-        <KeyboardAccelerator 
-            Key="Delete" 
-            Invoked="ComponentList_Delete"/>
-      </ListView.KeyboardAccelerators>
 
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">
