@@ -3,9 +3,11 @@ using Celbridge.Inspector.Models;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
+using CommunityToolkit.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.Reflection.Metadata;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -45,35 +47,25 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         PopulateComponentList();
     }
 
-    public ICommand AddComponentCommand => new RelayCommand<int?>(AddComponent_Executed);
-    private void AddComponent_Executed(int? index)
+    public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
+    private void AddComponent_Executed(object? parameter)
     {
         int addIndex;
-        if (index is not null)
+        if (parameter is null)
         {
-            addIndex = (int)index;
+            addIndex = ComponentItems.Count;
         }
         else
         {
-            // Select the index automatically
-            if (SelectedComponentIndex == -1)
-            {
-                var countResult = _entityService.GetComponentCount(Resource);
-                if (countResult.IsFailure)
-                {
-                    _logger.LogError(countResult.Error);
-                    return;
-                }
+            var componentItem = parameter as ComponentItem;
+            Guard.IsNotNull(componentItem);
 
-                addIndex = countResult.Value;
-            }
-            else
+            addIndex = ComponentItems.IndexOf(componentItem) + 1;
+            if (addIndex == -1)
             {
-                addIndex = SelectedComponentIndex + 1;
+                return;
             }
         }
-
-
         var addComponentResult = _entityService.AddComponent(Resource, "Empty", addIndex);
         if (addComponentResult.IsFailure)
         {
@@ -84,20 +76,16 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         PopulateComponentList();
     }
 
-    public ICommand DeleteComponentCommand => new RelayCommand<int?>(DeleteComponent_Executed);
-    private void DeleteComponent_Executed(int? index)
+    public ICommand DeleteComponentCommand => new RelayCommand<object?>(DeleteComponent_Executed);
+    private void DeleteComponent_Executed(object? parameter)
     {
-        int deleteIndex;
-        if (index is not null)
+        var componentItem = parameter as ComponentItem;
+        if (componentItem is null)
         {
-            deleteIndex = (int)index;
-        }
-        else
-        {
-            // Select the index automatically
-            deleteIndex = SelectedComponentIndex;
+            return;
         }
 
+        var deleteIndex = ComponentItems.IndexOf(componentItem);
         if (deleteIndex == -1)
         {
             return;
@@ -111,6 +99,59 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         }
 
         PopulateComponentList();
+    }
+
+    public ICommand DuplicateComponentCommand => new RelayCommand<object?>(DuplicateComponent_Executed, CanDuplicateComponent);
+    private void DuplicateComponent_Executed(object? parameter)
+    {
+        var componentItem = parameter as ComponentItem;
+        if (componentItem is null)
+        {
+            return;
+        }
+
+        int duplicateIndex = ComponentItems.IndexOf(componentItem);
+        if (duplicateIndex == -1)
+        {
+            return;
+        }
+
+        var copyResult = _entityService.CopyComponent(Resource, duplicateIndex, duplicateIndex + 1);
+        if (copyResult.IsFailure)
+        {
+            _logger.LogError(copyResult.Error);
+            return;
+        }
+
+        PopulateComponentList();
+    }
+
+    private bool CanDuplicateComponent(object? parameter)
+    {
+        var componentItem = parameter as ComponentItem;
+        if (componentItem is null)
+        {
+            return false;
+        }
+
+        int duplicateIndex = ComponentItems.IndexOf(componentItem);
+        if (duplicateIndex == -1)
+        {
+            return false;
+        }
+
+        var getResults = _entityService.GetComponentInfo(Resource, duplicateIndex);
+        if (getResults.IsFailure)
+        {
+            _logger.LogError(getResults.Error);
+            return false;
+        }
+
+        var componentInfo = getResults.Value;
+
+        var allowMultipleComponents = componentInfo.GetBooleanAttribute("allowMultipleComponents");
+
+        return allowMultipleComponents;
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)

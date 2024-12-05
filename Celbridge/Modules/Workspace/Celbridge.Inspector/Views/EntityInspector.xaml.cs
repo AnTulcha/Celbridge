@@ -33,32 +33,4 @@ public partial class EntityInspector : UserControl, IInspector
         set => ViewModel.Resource = value;
         get => ViewModel.Resource;
     }
-
-    private void OnAddComponentClicked(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is ComponentItem component)
-        {
-            // Insert at the next index in the list
-            int index = ViewModel.ComponentItems.IndexOf(component);
-            if (index != -1)
-            {
-                ViewModel.AddComponentCommand.Execute(index + 1);
-            }
-        }
-    }
-
-    private void OnDeleteComponentClicked(object sender, RoutedEventArgs e)
-    {
-        if (sender is MenuFlyoutItem menuItem &&
-            menuItem.DataContext is ComponentItem component)
-        {
-            // Insert at the next index in the list
-            int index = ViewModel.ComponentItems.IndexOf(component);
-            if (index != -1)
-            {
-                ViewModel.DeleteComponentCommand.Execute(index);
-            }
-        }
-    }
 }
