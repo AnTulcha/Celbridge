@@ -44,7 +44,10 @@
             CanReorderItems="True"
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
             SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
-            AllowDrop="True">
+            CanDragItems="True"
+            AllowDrop="True"
+            DragItemsStarting="ListView_DragItemsStarting"
+            DragItemsCompleted="ListView_DragItemsCompleted">
 
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">

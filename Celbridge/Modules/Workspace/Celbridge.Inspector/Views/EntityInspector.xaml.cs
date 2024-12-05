@@ -1,6 +1,7 @@
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.ViewModels;
 using Microsoft.UI.Input;
+using System.Collections.ObjectModel;
 using Windows.System;
 using Windows.UI.Core;
 
@@ -73,5 +74,30 @@ public partial class EntityInspector : UserControl, IInspector
             e.Handled = true;
             return;
         }
+    }
+
+    private int _originalIndex = -1;
+
+    private void ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    {
+        var listView = sender as ListView;
+        if (listView?.ItemsSource is ObservableCollection<ComponentItem> items)
+        {
+            var draggedItem = e.Items.FirstOrDefault();
+            _originalIndex = items.IndexOf((ComponentItem)draggedItem!);
+        }
+    }
+
+    private void ListView_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
+    {
+        if (sender.ItemsSource is ObservableCollection<ComponentItem> items)
+        {
+            var draggedItem = args.Items.FirstOrDefault();
+            int newIndex = items.IndexOf((ComponentItem)draggedItem!);
+
+            ViewModel.MoveComponentCommand.Execute((_originalIndex, newIndex));
+        }
+
+        _originalIndex = -1;
     }
 }

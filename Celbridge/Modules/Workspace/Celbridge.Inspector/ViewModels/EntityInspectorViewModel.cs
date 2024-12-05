@@ -168,12 +168,51 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         return allowMultipleComponents;
     }
 
+    private int _supressRefreshCount;
+
+    public ICommand MoveComponentCommand => new RelayCommand<object?>(MoveComponent_Executed);
+    private void MoveComponent_Executed(object? parameter)
+    {
+        if (parameter is not (int oldIndex, int newIndex))
+        {
+            throw new InvalidCastException();
+        }
+
+        if (oldIndex == newIndex)
+        {
+            // This will happen if you drag an item and drop it in the same place
+            return;
+        }
+
+        // The displayed list is already in the correct order, so we can suppress refreshing the component list
+        // for both the remove and add operation.
+        _supressRefreshCount = 2;
+        var moveResult = _entityService.MoveComponent(Resource, oldIndex, newIndex);
+        if (moveResult.IsFailure)
+        {
+            // Something went wrong when moving components.
+            // Log the error and rebuild the component list to attempt to recover
+            _supressRefreshCount = 0;
+            _logger.LogError(moveResult.Error);
+            PopulateComponentList();
+            return;
+        }
+    }
+
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
         if (message.Resource == Resource &&
             message.PropertyPath == "/")
         {
-            PopulateComponentList();
+            // Ignore the requested number of component change messages
+            if (_supressRefreshCount > 0)
+            {
+                _supressRefreshCount--;
+            }
+            else
+            {            
+                PopulateComponentList();
+            }
         }
     }
 
