@@ -11,7 +11,7 @@ using System.ComponentModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
-public partial class EntityInspectorViewModel : InspectorViewModel
+public partial class ComponentListViewModel : InspectorViewModel
 {
     private readonly ILogger<MarkdownInspectorViewModel> _logger;
     private readonly IMessengerService _messengerService;
@@ -23,12 +23,12 @@ public partial class EntityInspectorViewModel : InspectorViewModel
     private int _selectedComponentIndex;
 
     // Code gen requires a parameterless constructor
-    public EntityInspectorViewModel()
+    public ComponentListViewModel()
     {
         throw new NotImplementedException();
     }
 
-    public EntityInspectorViewModel(
+    public ComponentListViewModel(
         ILogger<MarkdownInspectorViewModel> logger,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)

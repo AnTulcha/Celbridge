@@ -16,7 +16,7 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
     private ILogger<InspectorPanel> _logger;
     private IStringLocalizer _stringLocalizer;
 
-    private InspectorItemView _inspectorItemView;
+    private EntityEditor _entityEditor;
 
     public InspectorPanel()
     {
@@ -43,13 +43,13 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
                     .VerticalAlignment(VerticalAlignment.Center)
             );
 
-        _inspectorItemView = new InspectorItemView()
+        _entityEditor = new EntityEditor()
             .Margin(4)
             .Grid(row: 1);
 
         var panelGrid = new Grid()
             .RowDefinitions("40, *")
-            .Children(titleBar, _inspectorItemView);
+            .Children(titleBar, _entityEditor);
            
         //
         // Set the data context and page content
@@ -70,8 +70,8 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
 
     private void UpdateSelectedResource(ResourceKey resource)
     {
-        _inspectorItemView.ClearComponentsPanel();
-        _inspectorItemView.ClearComponentPicker();
+        _entityEditor.ClearComponentsPanel();
+        _entityEditor.ClearComponentPicker();
 
         if (resource.IsEmpty)
         {
@@ -114,6 +114,6 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
             inspectorElements.Add(entityInspector);
         }
 
-        _inspectorItemView.PopulateComponentsPanel(inspectorElements);
+        _entityEditor.PopulateComponentsPanel(inspectorElements);
     }
 }

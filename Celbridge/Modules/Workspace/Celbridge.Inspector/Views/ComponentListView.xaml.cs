@@ -17,7 +17,7 @@ public partial class ComponentListView : UserControl, IInspector
     public LocalizedString ContextMenuDeleteTooltipString => _stringLocalizer.GetString("EntityInspector_ContextMenu_Delete");
     public LocalizedString ContextMenuDuplicateTooltipString => _stringLocalizer.GetString("EntityInspector_ContextMenu_Duplicate");
 
-    public EntityInspectorViewModel ViewModel { get; private set; }
+    public ComponentListViewModel ViewModel { get; private set; }
 
     // Code gen requires a parameterless constructor
     public ComponentListView()
@@ -25,7 +25,7 @@ public partial class ComponentListView : UserControl, IInspector
         throw new NotImplementedException();
     }
 
-    public ComponentListView(EntityInspectorViewModel viewModel)
+    public ComponentListView(ComponentListViewModel viewModel)
     {
         this.InitializeComponent();
 
@@ -95,8 +95,8 @@ public partial class ComponentListView : UserControl, IInspector
     {
         if (sender is Button button)
         {
-            EntityContextMenu.Placement = FlyoutPlacementMode.Bottom;
-            EntityContextMenu.ShowAt(button);
+            ComponentContextMenu.Placement = FlyoutPlacementMode.Bottom;
+            ComponentContextMenu.ShowAt(button);
         }
     }
 

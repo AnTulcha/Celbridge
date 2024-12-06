@@ -1,16 +1,16 @@
 
 namespace Celbridge.Inspector.Views;
 
-public sealed partial class InspectorItemView : UserControl
+public sealed partial class EntityEditor : UserControl
 {
-    public InspectorItemView()
+    public EntityEditor()
     {
         this.InitializeComponent();
     }
 
     public void ClearComponentsPanel()
     {
-        ComponentsPanel.Children.Clear();
+        ComponentListPanel.Children.Clear();
     }
 
     public void PopulateComponentsPanel(List<UIElement> elements)
@@ -18,7 +18,7 @@ public sealed partial class InspectorItemView : UserControl
         ClearComponentsPanel();
         foreach (UIElement element in elements)
         {
-            ComponentsPanel.Children.Add(element);
+            ComponentListPanel.Children.Add(element);
         }
     }
 

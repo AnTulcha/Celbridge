@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="Celbridge.Inspector.Views.ComponentInspector"
+    x:Class="Celbridge.Inspector.Views.ComponentEditor"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Celbridge.Inspector.Views"

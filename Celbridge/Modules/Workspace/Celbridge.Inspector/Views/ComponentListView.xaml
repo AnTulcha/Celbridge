@@ -9,7 +9,7 @@
     KeyDown="UserControl_KeyDown">
 
   <UserControl.Resources>
-    <MenuFlyout x:Name="EntityContextMenu">
+    <MenuFlyout x:Name="ComponentContextMenu">
 
       <MenuFlyoutItem Text="Add"
                       Command="{x:Bind ViewModel.AddComponentCommand, Mode=OneWay}"
@@ -59,7 +59,7 @@
                 Margin="0"
                 Padding="0"
                 Background="Transparent"
-                ContextFlyout="{StaticResource EntityContextMenu}">
+                ContextFlyout="{StaticResource ComponentContextMenu}">
 
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="Auto"/>

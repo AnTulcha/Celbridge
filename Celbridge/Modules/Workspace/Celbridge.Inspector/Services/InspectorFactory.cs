@@ -38,7 +38,7 @@ public class InspectorFactory : IInspectorFactory
     {
         try
         {
-            var inspector = CreateInspector<ComponentListView, EntityInspectorViewModel>(resource);
+            var inspector = CreateInspector<ComponentListView, ComponentListViewModel>(resource);
             return Result<IInspector>.Ok(inspector);
         }
         catch (Exception ex)

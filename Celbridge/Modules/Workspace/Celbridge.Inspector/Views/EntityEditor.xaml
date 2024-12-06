@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="Celbridge.Inspector.Views.InspectorItemView"
+    x:Class="Celbridge.Inspector.Views.EntityEditor"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Celbridge.Inspector.Views"
@@ -18,7 +18,7 @@
                 Grid.Row="0"
                 Orientation="Vertical"/>
     
-    <StackPanel x:Name="ComponentsPanel"
+    <StackPanel x:Name="ComponentListPanel"
                 Grid.Row="1"
                 Orientation="Vertical"/>
     
@@ -27,8 +27,8 @@
           BorderBrush="{ThemeResource PanelBorderBrush}"
           BorderThickness="0,2,0,0">
 
-      <local:ComponentInspector x:Name="ComponentInspector"
-                                Visibility="Collapsed"/>
+      <local:ComponentEditor x:Name="ComponentEditor"
+                             Visibility="Collapsed"/>
       <local:ComponentPicker x:Name="ComponentPicker"
                              Visibility="Collapsed"/>
 
