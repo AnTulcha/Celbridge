@@ -70,8 +70,8 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
 
     private void UpdateSelectedResource(ResourceKey resource)
     {
-        _inspectorItemView.ClearInspectorElements();
-        _inspectorItemView.ClearDetailElements();
+        _inspectorItemView.ClearComponentsPanel();
+        _inspectorItemView.ClearComponentPicker();
 
         if (resource.IsEmpty)
         {
@@ -104,8 +104,8 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
             inspectorElements.Add(resourceInspector);
         }
 
-        // Create the entity inspector for the selected resource
-        var entityInspectorResult = factory.CreateEntityInspector(resource);
+        // Create the component list view for the selected resource
+        var entityInspectorResult = factory.CreateComponentListView(resource);
         if (entityInspectorResult.IsSuccess)
         {
             var entityInspector = entityInspectorResult.Value as UserControl;
@@ -114,16 +114,6 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
             inspectorElements.Add(entityInspector);
         }
 
-        _inspectorItemView.SetInspectorElements(inspectorElements);
-
-        if (resource.ToString().Contains("screenplay", StringComparison.InvariantCultureIgnoreCase))
-        {
-            var voiceLineView = new VoiceLineView();
-
-            List<UIElement> detailElements = new();
-            detailElements.Add(voiceLineView);
-
-            _inspectorItemView.SetDetailElements(detailElements);
-        }
+        _inspectorItemView.PopulateComponentsPanel(inspectorElements);
     }
 }

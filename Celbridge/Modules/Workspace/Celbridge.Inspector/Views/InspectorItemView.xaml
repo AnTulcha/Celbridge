@@ -9,24 +9,33 @@
 
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="2*" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
-    <Grid x:Name="SelectedItem"
-          Grid.Row="0">
-      <StackPanel x:Name="InspectorStackPanel"
-                  Orientation="Vertical"/>
-    </Grid>
-    <Grid x:Name="SelectedItemDetail"
-          Visibility="Collapsed"
-          Grid.Row="1"
+
+    <StackPanel x:Name="UtilitiesPanel"
+                Grid.Row="0"
+                Orientation="Vertical"/>
+    
+    <StackPanel x:Name="ComponentsPanel"
+                Grid.Row="1"
+                Orientation="Vertical"/>
+    
+    <Grid Grid.Row="2"
           Margin="4,0,0,0"
           BorderBrush="{ThemeResource PanelBorderBrush}"
           BorderThickness="0,2,0,0">
+
+      <local:ComponentInspector x:Name="ComponentInspector"
+                                Visibility="Collapsed"/>
+      <local:ComponentPicker x:Name="ComponentPicker"
+                             Visibility="Collapsed"/>
+
     </Grid>
+    
     <controls:GridSplitter x:Name="DetailSplitter"
-                           Visibility="Collapsed"
-                           Grid.Row="1"
+                           Grid.Row="2"
                            VerticalAlignment="Top"
                            ResizeDirection="Auto"
                            ResizeBehavior="BasedOnAlignment"/>

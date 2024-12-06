@@ -8,7 +8,7 @@ using Windows.UI.Core;
 
 namespace Celbridge.Inspector.Views;
 
-public partial class EntityInspector : UserControl, IInspector
+public partial class ComponentListView : UserControl, IInspector
 {
     private IStringLocalizer _stringLocalizer;
 
@@ -20,12 +20,12 @@ public partial class EntityInspector : UserControl, IInspector
     public EntityInspectorViewModel ViewModel { get; private set; }
 
     // Code gen requires a parameterless constructor
-    public EntityInspector()
+    public ComponentListView()
     {
         throw new NotImplementedException();
     }
 
-    public EntityInspector(EntityInspectorViewModel viewModel)
+    public ComponentListView(EntityInspectorViewModel viewModel)
     {
         this.InitializeComponent();
 

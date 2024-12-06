@@ -8,34 +8,45 @@ public sealed partial class InspectorItemView : UserControl
         this.InitializeComponent();
     }
 
-    public void ClearInspectorElements()
+    public void ClearComponentsPanel()
     {
-        InspectorStackPanel.Children.Clear();
+        ComponentsPanel.Children.Clear();
     }
 
-    public void SetInspectorElements(List<UIElement> elements)
+    public void PopulateComponentsPanel(List<UIElement> elements)
     {
-        ClearInspectorElements();
+        ClearComponentsPanel();
         foreach (UIElement element in elements)
         {
-            InspectorStackPanel.Children.Add(element);
+            ComponentsPanel.Children.Add(element);
         }
     }
 
-    public void ClearDetailElements()
+    public void ClearComponentInspector()
     {
-        SelectedItemDetail.Children.Clear();
+        //ComponentInspector.PropertyInspectors.Children.Clear();
     }
 
-    public void SetDetailElements(List<UIElement> elements)
+    public void PopulateComponentInspector(List<UIElement> elements)
     {
-        ClearDetailElements();
-        foreach (UIElement element in elements)
-        {
-            SelectedItemDetail.Children.Add(element);
-        }
+        //ClearDetailElements();
+        //foreach (UIElement element in elements)
+        //{
+        //    DetailPanel.Children.Add(element);
+        //}
+    }
 
-        SelectedItemDetail.Visibility = Visibility.Visible;
-        DetailSplitter.Visibility = Visibility.Visible;
+    public void ClearComponentPicker()
+    {
+        //ComponentInspector.PropertyInspectors.Children.Clear();
+    }
+
+    public void PopulateComponentPicker(List<UIElement> elements)
+    {
+        //ClearDetailElements();
+        //foreach (UIElement element in elements)
+        //{
+        //    DetailPanel.Children.Add(element);
+        //}
     }
 }
