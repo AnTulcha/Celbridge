@@ -66,11 +66,47 @@
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <TextBox Text="{x:Bind ComponentType}"
-                     MinWidth="140"
-                     Margin="0"
-                     Grid.Column="0"
-                     KeyDown="TextBox_KeyDown"/>
+            <!-- Editable TextBlock and TextBox -->
+            <Grid Grid.Column="0"
+                  Margin="0 0 6 0">
+
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+              </Grid.ColumnDefinitions>
+
+              <TextBlock x:Name="DisplayTextBlock"
+                         Grid.Column="0"
+                         Text="{x:Bind ComponentType, Mode=TwoWay}"
+                         VerticalAlignment="Center"
+                         MinWidth="116"
+                         Tapped="ComponentItem_DisplayTextBlock_Tapped"
+                         Visibility="Visible"/>
+
+              <TextBox x:Name="EditTextBox"
+                       Grid.Column="0"
+                       Text="{x:Bind ComponentType, Mode=TwoWay}"
+                       VerticalAlignment="Center"
+                       MinWidth="140"
+                       Visibility="Collapsed"
+                       LostFocus="ComponentItem_EditTextBox_LostFocus"
+                       KeyDown="ComponentItem_EditTextBox_KeyDown"/>
+
+              <Button x:Name="MenuButton"
+                      Grid.Column="1"
+                      Width="24"
+                      Height="24"
+                      Padding="0"
+                      BorderThickness="0"
+                      Opacity="0.5"
+                      Background="Transparent"
+                      Click="ComponentMenuButton_Click"
+                      Visibility="Visible">
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE70D;"
+                          FontSize="12"/>
+              </Button>
+            </Grid>
 
           </Grid>
         </DataTemplate>

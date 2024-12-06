@@ -49,27 +49,6 @@ public partial class EntityInspector : UserControl, IInspector
         get => ViewModel.Resource;
     }
 
-    private void TextBox_KeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-
-        // Shift + Enter adds a new component after the current component
-        if (e.Key == VirtualKey.Enter && shiftDown)
-        {
-            e.Handled = true;
-
-            if (sender is TextBox textBox)
-            {
-                var componentItem = textBox.DataContext as ComponentItem;
-                if (componentItem != null)
-                {
-                    int index = ViewModel.ComponentItems.IndexOf(componentItem);
-                    ViewModel.AddComponentCommand.Execute(index);
-                }
-            }
-        }
-    }
-
     private void UserControl_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         var key = e.Key;
@@ -110,5 +89,79 @@ public partial class EntityInspector : UserControl, IInspector
         }
 
         _originalIndex = -1;
+    }
+
+    private void ComponentMenuButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button)
+        {
+            EntityContextMenu.Placement = FlyoutPlacementMode.Bottom;
+            EntityContextMenu.ShowAt(button);
+        }
+    }
+
+    private void ComponentItem_DisplayTextBlock_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        if (sender is TextBlock textBlock)
+        {
+            var parentGrid = (Grid)textBlock.Parent;
+
+            var textBox = parentGrid.Children.OfType<TextBox>().FirstOrDefault();
+            if (textBox != null)
+            {
+                textBlock.Visibility = Visibility.Collapsed;
+                textBox.Visibility = Visibility.Visible;
+
+                textBox.Focus(FocusState.Programmatic);
+            }
+
+            var menuButton = parentGrid.Children.OfType<Button>().FirstOrDefault();
+            if (menuButton != null)
+            {
+                menuButton.Visibility = Visibility.Collapsed;
+            }
+        }
+    }
+
+    private void ComponentItem_EditTextBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            var parentGrid = (Grid)textBox.Parent;
+
+            var textBlock = parentGrid.Children.OfType<TextBlock>().FirstOrDefault();
+            if (textBlock != null)
+            {
+                textBox.Visibility = Visibility.Collapsed;
+                textBlock.Visibility = Visibility.Visible;
+            }
+
+            var menuButton = parentGrid.Children.OfType<Button>().FirstOrDefault();
+            if (menuButton != null)
+            {
+                menuButton.Visibility = Visibility.Visible;
+            }
+        }
+    }
+
+    private void ComponentItem_EditTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
+
+        // Shift + Enter adds a new component after the current component
+        if (e.Key == VirtualKey.Enter && shiftDown)
+        {
+            e.Handled = true;
+
+            if (sender is TextBox textBox)
+            {
+                var componentItem = textBox.DataContext as ComponentItem;
+                if (componentItem != null)
+                {
+                    int index = ViewModel.ComponentItems.IndexOf(componentItem);
+                    ViewModel.AddComponentCommand.Execute(index);
+                }
+            }
+        }
     }
 }

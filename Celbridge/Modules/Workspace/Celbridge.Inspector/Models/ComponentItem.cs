@@ -1,3 +1,6 @@
 namespace Celbridge.Inspector.Models;
 
-public record ComponentItem(string ComponentType = "");
+public class ComponentItem
+{
+    public string ComponentType { get; set; } = string.Empty;
+}
