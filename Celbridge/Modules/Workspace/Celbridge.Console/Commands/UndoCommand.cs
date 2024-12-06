@@ -7,7 +7,7 @@ public class UndoCommand : CommandBase, IUndoCommand
     public override async Task<Result> ExecuteAsync()
     {
         var commandService = ServiceLocator.ServiceProvider.GetRequiredService<ICommandService>();
-        commandService.TryUndo();
+        commandService.Undo();
 
         await Task.CompletedTask;
         return Result.Ok();

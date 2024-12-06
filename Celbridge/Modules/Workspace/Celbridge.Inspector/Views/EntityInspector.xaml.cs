@@ -66,7 +66,7 @@ public partial class EntityInspector : UserControl, IInspector
         }
     }
 
-    private int _originalIndex = -1;
+    private int _dragStartIndex = -1;
 
     private void ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
@@ -74,7 +74,7 @@ public partial class EntityInspector : UserControl, IInspector
         if (listView?.ItemsSource is ObservableCollection<ComponentItem> items)
         {
             var draggedItem = e.Items.FirstOrDefault();
-            _originalIndex = items.IndexOf((ComponentItem)draggedItem!);
+            _dragStartIndex = items.IndexOf((ComponentItem)draggedItem!);
         }
     }
 
@@ -83,12 +83,12 @@ public partial class EntityInspector : UserControl, IInspector
         if (sender.ItemsSource is ObservableCollection<ComponentItem> items)
         {
             var draggedItem = args.Items.FirstOrDefault();
-            int newIndex = items.IndexOf((ComponentItem)draggedItem!);
+            int dragEndIndex = items.IndexOf((ComponentItem)draggedItem!);
 
-            ViewModel.MoveComponentCommand.Execute((_originalIndex, newIndex));
+            ViewModel.MoveComponentCommand.Execute((_dragStartIndex, dragEndIndex));
         }
 
-        _originalIndex = -1;
+        _dragStartIndex = -1;
     }
 
     private void ComponentMenuButton_Click(object sender, RoutedEventArgs e)
@@ -146,22 +146,22 @@ public partial class EntityInspector : UserControl, IInspector
 
     private void ComponentItem_EditTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
+        var key = e.Key;
         var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
 
         // Shift + Enter adds a new component after the current component
-        if (e.Key == VirtualKey.Enter && shiftDown)
+        if (key == VirtualKey.Enter && 
+            shiftDown &&
+            sender is TextBox textBox)
         {
-            e.Handled = true;
-
-            if (sender is TextBox textBox)
+            var componentItem = textBox.DataContext as ComponentItem;
+            if (componentItem != null)
             {
-                var componentItem = textBox.DataContext as ComponentItem;
-                if (componentItem != null)
-                {
-                    int index = ViewModel.ComponentItems.IndexOf(componentItem);
-                    ViewModel.AddComponentCommand.Execute(index);
-                }
+                int index = ViewModel.ComponentItems.IndexOf(componentItem);
+                ViewModel.AddComponentCommand.Execute(index);
             }
+
+            e.Handled = true;
         }
     }
 }

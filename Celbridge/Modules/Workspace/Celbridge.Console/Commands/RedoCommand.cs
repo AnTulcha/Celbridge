@@ -7,7 +7,7 @@ public class RedoCommand : CommandBase, IRedoCommand
     public override async Task<Result> ExecuteAsync()
     {
         var commandService = ServiceLocator.ServiceProvider.GetRequiredService<ICommandService>();
-        commandService.TryRedo();
+        commandService.Redo();
 
         await Task.CompletedTask;
         return Result.Ok();

@@ -7,6 +7,7 @@ using CommunityToolkit.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -203,7 +204,7 @@ public partial class EntityInspectorViewModel : InspectorViewModel
 
         if (oldIndex == newIndex)
         {
-            // This will happen if you drag an item and drop it in the same place
+            // Item was dragged and dropped at the same index
             return;
         }
 
@@ -237,7 +238,7 @@ public partial class EntityInspectorViewModel : InspectorViewModel
         }
     }
 
-    private void EntityInspectorViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void EntityInspectorViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(Resource))
         {
@@ -247,8 +248,6 @@ public partial class EntityInspectorViewModel : InspectorViewModel
 
     private void PopulateComponentList()
     {
-        // Todo: Preserve selection if possible
-
         var getCountResult = _entityService.GetComponentCount(Resource);
         if (getCountResult.IsFailure)
         {

@@ -1,7 +1,7 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Describes a component type and its properties.
+/// Describes the attributes and properties of a component type.
 /// </summary>
 public record ComponentInfo(string ComponentType, IReadOnlyDictionary<string, string> Attributes, IReadOnlyList<ComponentPropertyInfo> Properties)
 {

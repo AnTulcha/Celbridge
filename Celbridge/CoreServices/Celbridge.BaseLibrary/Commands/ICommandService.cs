@@ -79,12 +79,12 @@ public interface ICommandService
     /// The call will succeed whether an undo is performed or not (e.g. if the undo stack is empty).
     /// The boolean return value indicates whether an undo operation was actually performed.
     /// </summary>
-    Result<bool> TryUndo();
+    Result<bool> Undo();
 
     /// <summary>
     /// Attempts to pop the most recently undone command from the redo stack and execute it.
     /// The call will succeed whether a redo is performed or not (e.g. if the redo stack is empty).
     /// The boolean return value indicates whether a redo operation was actually performed.
     /// </summary>
-    Result<bool> TryRedo();
+    Result<bool> Redo();
 }

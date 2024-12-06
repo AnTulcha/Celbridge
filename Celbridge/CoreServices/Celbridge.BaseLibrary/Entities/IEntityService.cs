@@ -12,7 +12,7 @@ public interface IEntityService
 
     /// <summary>
     /// Returns the absolute path of the Entity Data file for a resource.
-    /// The path will be generated regardless of whether the resource or Entity Data file actually exist.
+    /// A path will be generated regardless of whether the resource or Entity Data file actually exist.
     /// </summary>
     string GetEntityDataPath(ResourceKey resource);
 
@@ -24,7 +24,7 @@ public interface IEntityService
     /// <summary>
     /// Saves all modified entities to disk asynchronously.
     /// </summary>
-    Task<Result> SaveModifiedEntities();
+    Task<Result> SaveEntitiesAsync();
 
     /// <summary>
     /// Move the entity data file for a resource, if one exists, to a new resource location.
@@ -32,7 +32,7 @@ public interface IEntityService
     Result MoveEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
 
     /// <summary>
-    /// Copy the entity data file for a resource, if one exists, to a new resource location.
+    /// Copy the Entity Data file for a resource, if one exists, to a new resource location.
     /// </summary>
     Result CopyEntityDataFile(ResourceKey sourceResource, ResourceKey destResource);
 
@@ -74,7 +74,7 @@ public interface IEntityService
     /// <summary>
     /// Gets the value of a property from a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Returns a default value if the property cannot be found.
+    /// Returns a default value if the component or property cannot be found.
     /// </summary>
     T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull;
 
@@ -93,7 +93,7 @@ public interface IEntityService
     Result<T> GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath) where T : notnull;
 
     /// <summary>
-    /// Gets the value of a property from a component. The value is returned as a JSON encoded string.
+    /// Gets the value of a property from a component, returned as a JSON encoded string.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Fails if the property cannot be found.
     /// </summary>
@@ -115,14 +115,13 @@ public interface IEntityService
 
     /// <summary>
     /// Attempt to undo the most recent entity change for a resource.
-    /// Returns true if the undo was successful.
+    /// Returns false if there was no operation on the undo stack to undo.
     /// </summary>
-    Result<bool> TryUndoEntity(ResourceKey resource);
+    Result<bool> UndoEntity(ResourceKey resource);
 
     /// <summary>
     /// Attempt to redo the most recently undone entity change for a resource.
-    /// Returns true if the redo was successful.
+    /// Returns false if there was no operation on the redo stack to redo.
     /// </summary>
-    Result<bool> TryRedoEntity(ResourceKey resource);
+    Result<bool> RedoEntity(ResourceKey resource);
 }
-

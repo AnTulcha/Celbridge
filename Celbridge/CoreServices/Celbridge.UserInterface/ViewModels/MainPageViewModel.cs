@@ -150,12 +150,12 @@ public partial class MainPageViewModel : ObservableObject, INavigationProvider
 
     public void Undo()
     {
-        _undoService.TryUndo();
+        _undoService.Undo();
     }
 
     public void Redo()
     {
-        _undoService.TryRedo();
+        _undoService.Redo();
     }
 }
 

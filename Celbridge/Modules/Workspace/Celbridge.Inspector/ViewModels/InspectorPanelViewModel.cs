@@ -7,8 +7,6 @@ namespace Celbridge.Inspector.ViewModels;
 
 public partial class InspectorPanelViewModel : ObservableObject
 {
-    private readonly IWorkspaceWrapper _workspaceWrapper;
-
     [ObservableProperty]
     private ResourceKey _selectedResource;
 
@@ -17,12 +15,8 @@ public partial class InspectorPanelViewModel : ObservableObject
         throw new NotImplementedException();
     }
 
-    public InspectorPanelViewModel(
-        IMessengerService messengerService,
-        IWorkspaceWrapper workspaceWrapper)
+    public InspectorPanelViewModel(IMessengerService messengerService)
     {
-        _workspaceWrapper = workspaceWrapper;
-
         messengerService.Register<SelectedResourceChangedMessage>(this, OnSelectedResourceChangedMessage);
     }
 
@@ -30,5 +24,4 @@ public partial class InspectorPanelViewModel : ObservableObject
     {
         SelectedResource = message.Resource;
     }
-
 }

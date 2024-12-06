@@ -16,10 +16,6 @@ namespace Celbridge.Entities.Services;
 
 public class EntityService : IEntityService, IDisposable
 {
-    public const string ComponentConfigFolder = "ComponentConfig";
-    public const string SchemasFolder = "Schemas";
-    public const string PrototypesFolder = "Prototypes";
-
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<EntityService> _logger;
     private readonly IMessengerService _messengerService;
@@ -123,7 +119,7 @@ public class EntityService : IEntityService, IDisposable
         return relativePath;
     }
 
-    public async Task<Result> SaveModifiedEntities()
+    public async Task<Result> SaveEntitiesAsync()
     {
         return await _entityRegistry.SaveModifiedEntities();
     }
@@ -523,7 +519,7 @@ public class EntityService : IEntityService, IDisposable
         return SetProperty(resource, componentIndex, propertyPath, newValue, insert);
     }
 
-    public Result<bool> TryUndoEntity(ResourceKey resource)
+    public Result<bool> UndoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -559,7 +555,7 @@ public class EntityService : IEntityService, IDisposable
             entity.UndoStack.Count != 0 &&
             entity.UndoStack.Peek().UndoGroup == undoGroup)
         {
-            return TryUndoEntity(resource);
+            return UndoEntity(resource);
         }
 
         _logger.LogDebug($"Undo entity: {resource}");
@@ -568,7 +564,7 @@ public class EntityService : IEntityService, IDisposable
         return Result<bool>.Ok(true);
     }
 
-    public Result<bool> TryRedoEntity(ResourceKey resource)
+    public Result<bool> RedoEntity(ResourceKey resource)
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
@@ -603,7 +599,7 @@ public class EntityService : IEntityService, IDisposable
             entity.RedoStack.Count != 0 &&
             entity.RedoStack.Peek().UndoGroup == undoGroup)
         {
-            return TryRedoEntity(resource);
+            return RedoEntity(resource);
         }
 
         _logger.LogDebug($"Redo entity: {resource}");

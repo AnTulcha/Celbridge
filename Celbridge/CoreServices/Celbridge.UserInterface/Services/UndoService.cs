@@ -16,7 +16,7 @@ public class UndoService : IUndoService
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public Result<bool> TryUndo()
+    public Result<bool> Undo()
     {
         // First try to undo the selected entity if the inspector panel is active
         if (_workspaceWrapper.IsWorkspacePageLoaded)
@@ -30,16 +30,16 @@ public class UndoService : IUndoService
                 if (!selectedResource.IsEmpty)
                 {
                     var entityService = _workspaceWrapper.WorkspaceService.EntityService;
-                    return entityService.TryUndoEntity(selectedResource);
+                    return entityService.UndoEntity(selectedResource);
                 }
             }
         }
 
         // If no entity was selected, try to undo the last command
-        return _commandService.TryUndo();
+        return _commandService.Undo();
     }
 
-    public Result<bool> TryRedo()
+    public Result<bool> Redo()
     {
         // First try to redo the selected entity if the inspector panel is active
         if (_workspaceWrapper.IsWorkspacePageLoaded)
@@ -53,12 +53,12 @@ public class UndoService : IUndoService
                 if (!selectedResource.IsEmpty)
                 {
                     var entityService = _workspaceWrapper.WorkspaceService.EntityService;
-                    return entityService.TryRedoEntity(selectedResource);
+                    return entityService.RedoEntity(selectedResource);
                 }
             }
         }
 
         // If no entity was selected, try to redo the last command
-        return _commandService.TryRedo();
+        return _commandService.Redo();
     }
 }

@@ -66,7 +66,6 @@
               <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Editable TextBlock and TextBox -->
             <Grid Grid.Column="0"
                   Margin="0 0 6 0">
 
@@ -75,6 +74,7 @@
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
 
+              <!-- TextBlock is displayed when component name does not have focus -->
               <TextBlock x:Name="DisplayTextBlock"
                          Grid.Column="0"
                          Text="{x:Bind ComponentType, Mode=TwoWay}"
@@ -83,6 +83,7 @@
                          Tapped="ComponentItem_DisplayTextBlock_Tapped"
                          Visibility="Visible"/>
 
+              <!-- TextBox is displayed when component name has focus -->
               <TextBox x:Name="EditTextBox"
                        Grid.Column="0"
                        Text="{x:Bind ComponentType, Mode=TwoWay}"
@@ -92,6 +93,7 @@
                        LostFocus="ComponentItem_EditTextBox_LostFocus"
                        KeyDown="ComponentItem_EditTextBox_KeyDown"/>
 
+              <!-- MenuButton is displayed when component name does not have focus -->
               <Button x:Name="MenuButton"
                       Grid.Column="1"
                       Width="24"

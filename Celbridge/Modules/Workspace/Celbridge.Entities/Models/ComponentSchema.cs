@@ -8,6 +8,12 @@ namespace Celbridge.Entities.Models;
 
 public class ComponentSchema
 {
+    private const string ComponentTypeConstKey = "/properties/_componentType/const";
+    private const string ComponentVersionConstKey = "/properties/_componentVersion/const";
+    private const string AttributesKey = "attributes";
+    private const string PropertiesKey = "properties";
+    private const string TypeKey = "type";
+
     public string ComponentType { get; }
     public int ComponentVersion { get; }
     public ComponentInfo ComponentInfo { get; }
@@ -36,7 +42,7 @@ public class ComponentSchema
 
             // Get component type
 
-            var componentTypePointer = JsonPointer.Parse("/properties/_componentType/const");
+            var componentTypePointer = JsonPointer.Parse(ComponentTypeConstKey);
             var componentTypeElement = componentTypePointer.Evaluate(root);
 
             if (componentTypeElement is null ||
@@ -53,7 +59,7 @@ public class ComponentSchema
 
             // Get component version 
             
-            var componentVersionPointer = JsonPointer.Parse("/properties/_componentVersion/const");
+            var componentVersionPointer = JsonPointer.Parse(ComponentVersionConstKey);
             var componentVersionElement = componentVersionPointer.Evaluate(root);
 
             if (componentVersionElement is null ||
@@ -66,7 +72,7 @@ public class ComponentSchema
             // Populate the component info
 
             var componentAttributes = new Dictionary<string, string>();
-            if (root.TryGetProperty("attributes", out JsonElement attributesElement))
+            if (root.TryGetProperty(AttributesKey, out JsonElement attributesElement))
             {
                 foreach (var attribute in attributesElement.EnumerateObject())
                 {
@@ -75,7 +81,7 @@ public class ComponentSchema
             }
 
             var componentProperties = new List<ComponentPropertyInfo>();
-            if (root.TryGetProperty("properties", out JsonElement propertiesElement))
+            if (root.TryGetProperty(PropertiesKey, out JsonElement propertiesElement))
             {
                 foreach (var propertyElement in propertiesElement.EnumerateObject())
                 {
@@ -86,9 +92,9 @@ public class ComponentSchema
                         continue;
                     }
 
-                    var propertyType = propertyElement.Value.GetProperty("type").ToString();
+                    var propertyType = propertyElement.Value.GetProperty(TypeKey).ToString();
                     var propertyAttributes = new Dictionary<string, string>();
-                    if (propertyElement.Value.TryGetProperty("attributes", out JsonElement propertyAttributesElement))
+                    if (propertyElement.Value.TryGetProperty(AttributesKey, out JsonElement propertyAttributesElement))
                     {
                         foreach (var attribute in propertyAttributesElement.EnumerateObject())
                         {

@@ -140,7 +140,7 @@ public class CommandTests
 
         testCommand.UndoComplete.Should().BeFalse();
         
-        var undoResult = _commandService.TryUndo();
+        var undoResult = _commandService.Undo();
         undoResult.IsSuccess.Should().BeTrue();
         undoResult.Value.Should().BeTrue();
 
@@ -164,7 +164,7 @@ public class CommandTests
 
         _commandService.IsRedoStackEmpty().Should().BeFalse();
 
-        var redoResult = _commandService.TryRedo();
+        var redoResult = _commandService.Redo();
         redoResult.IsSuccess.Should().BeTrue();
         redoResult.Value.Should().BeTrue();
 

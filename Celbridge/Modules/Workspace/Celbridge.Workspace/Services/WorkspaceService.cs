@@ -124,7 +124,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
             }
         }
 
-        var saveEntitiesResult = await EntityService.SaveModifiedEntities();
+        var saveEntitiesResult = await EntityService.SaveEntitiesAsync();
         if (saveEntitiesResult.IsFailure)
         {
             return Result.Fail($"Failed to save modified entities")

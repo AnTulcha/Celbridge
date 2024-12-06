@@ -151,13 +151,8 @@ public class CommandService : ICommandService
         }
     }
 
-    public Result<bool> TryUndo()
+    public Result<bool> Undo()
     {
-        if (IsUndoStackEmpty())
-        {
-            return Result<bool>.Ok(false);
-        }
-
         lock (_lock)
         {
             if (IsUndoStackEmpty())
@@ -189,7 +184,7 @@ public class CommandService : ICommandService
         return Result<bool>.Ok(true);
     }
 
-    public Result<bool> TryRedo()
+    public Result<bool> Redo()
     {
         lock (_lock)
         {

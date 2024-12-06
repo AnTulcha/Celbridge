@@ -7,13 +7,13 @@ public interface IUndoService
 {
     /// <summary>
     /// Attempt to undo the last operation.
-    /// Returns true if the undo was successful.
+    /// Returns false if there was no operation on the undo stack to undo.
     /// </summary>
-    Result<bool> TryUndo();
+    Result<bool> Undo();
 
     /// <summary>
-    /// Attempt to redo the last operation.
-    /// Returns true if the redo was successful.
+    /// Attempt to redo the most recently undone operation.
+    /// Returns false if there was no operation on the redo stack to redo.
     /// </summary>
-    Result<bool> TryRedo();
+    Result<bool> Redo();
 }
