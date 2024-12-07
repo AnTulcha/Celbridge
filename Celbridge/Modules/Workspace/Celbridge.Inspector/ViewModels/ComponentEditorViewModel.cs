@@ -1,23 +1,30 @@
-using System.Text;
 using Celbridge.Entities;
+using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text;
 
 namespace Celbridge.Inspector.ViewModels;
 
 public partial class ComponentEditorViewModel : ObservableObject
 {
+    private readonly ILogger<ComponentEditorViewModel> _logger;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
 
     [ObservableProperty]
-    private string _inspectedItem = string.Empty;
+    private string _componentName = string.Empty;
+
+    [ObservableProperty]
+    private string _propertyList = string.Empty;
 
     public ComponentEditorViewModel(
+        ILogger<ComponentEditorViewModel> logger,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {
+        _logger = logger;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
 
@@ -45,26 +52,30 @@ public partial class ComponentEditorViewModel : ObservableObject
 
     private void PopulatePropertyList(ResourceKey resource, int componentIndex)
     {
+        PropertyList = string.Empty;
+
         if (resource.IsEmpty)
         {
-            InspectedItem = "Resource: None";
+            ComponentName = "None";
             return;
         }
 
         if (componentIndex < 0)
         {
-            InspectedItem = $"Resource: {resource}";
+            ComponentName = "None";
             return;
         }
 
         var getResult = _entityService.GetComponentInfo(resource, componentIndex);
         if (getResult.IsFailure)
         {
-            InspectedItem = $"Failed to get component info: {resource}, {componentIndex}";
+            _logger.LogError($"Failed to get component info: {resource}, {componentIndex}");
             return;
         }
 
         var componentInfo = getResult.Value;
+
+        ComponentName = componentInfo.ComponentType;
 
         var sb = new StringBuilder();
 
@@ -74,7 +85,7 @@ public partial class ComponentEditorViewModel : ObservableObject
             var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
             if (getValueResult.IsFailure)
             {
-                sb.AppendLine($"{property.PropertyName} ({property.PropertyType}): Failed to get value");
+                _logger.LogError($"Failed to get value: {property.PropertyName} ({property.PropertyType})");
                 continue;
             }
             var value = getValueResult.Value;
@@ -82,6 +93,6 @@ public partial class ComponentEditorViewModel : ObservableObject
             sb.AppendLine($"{property.PropertyName} ({property.PropertyType}): {value}");
         }
 
-        InspectedItem = sb.ToString();
+        PropertyList = sb.ToString();
     }
 }

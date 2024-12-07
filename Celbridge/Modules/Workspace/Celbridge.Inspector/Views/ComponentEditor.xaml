@@ -6,8 +6,25 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
 
-  <Grid x:Name="PropertyInspectors">
-    <TextBlock x:Name="InspectionTarget"
-               Text="{x:Bind ViewModel.InspectedItem, Mode=OneWay}"/>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="28"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <Grid Grid.Row="0"
+          Background="{ThemeResource SystemAccentColor}">
+      <TextBlock VerticalAlignment="Center"
+                 Margin="6 0 0 0"
+                 FontWeight="Bold"
+                 Text="{x:Bind ViewModel.ComponentName, Mode=OneWay}"/>
+    </Grid>
+
+    <Grid x:Name="PropertyInspectors"
+          Grid.Row="1">
+      <TextBlock Margin="6"
+                 Text="{x:Bind ViewModel.PropertyList, Mode=OneWay}"/>
+    </Grid>
   </Grid>
+
 </UserControl>
