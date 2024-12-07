@@ -1,3 +1,4 @@
+using Celbridge.Explorer;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 
@@ -13,6 +14,10 @@ public class InspectorService : IInspectorService, IDisposable
 
     public IInspectorFactory InspectorFactory { get; }
 
+    public ResourceKey InspectedResource { get; private set; }
+
+    public int InspectedComponentIndex {  get; private set; }
+
     public InspectorService(
         IServiceProvider serviceProvider,
         IMessengerService messengerService)
@@ -21,6 +26,8 @@ public class InspectorService : IInspectorService, IDisposable
         _messengerService = messengerService;
 
         _messengerService.Register<WorkspaceWillPopulatePanelsMessage>(this, OnWorkspaceWillPopulatePanelsMessage);
+        _messengerService.Register<SelectedResourceChangedMessage>(this, OnSelectedResourceChangedMessage);
+        _messengerService.Register<SelectedComponentChangedMessage>(this, OnSelectedComponentChangedMessage);
 
         InspectorFactory = _serviceProvider.GetRequiredService<IInspectorFactory>();
     }
@@ -28,6 +35,23 @@ public class InspectorService : IInspectorService, IDisposable
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)
     {
         _inspectorPanel = _serviceProvider.GetRequiredService<IInspectorPanel>();
+    }
+
+    private void OnSelectedResourceChangedMessage(object recipient, SelectedResourceChangedMessage message)
+    {
+        InspectedResource = message.Resource;
+        InspectedComponentIndex = -1;
+
+        var changedMessage = new InspectorTargetChangedMessage(InspectedResource, InspectedComponentIndex);
+        _messengerService.Send(changedMessage);
+    }
+
+    private void OnSelectedComponentChangedMessage(object recipient, SelectedComponentChangedMessage message)
+    {
+        InspectedComponentIndex = message.componentIndex;
+
+        var changedMessage = new InspectorTargetChangedMessage(InspectedResource, InspectedComponentIndex);
+        _messengerService.Send(changedMessage);
     }
 
     private bool _disposed;

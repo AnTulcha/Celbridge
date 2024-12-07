@@ -45,6 +45,9 @@ public partial class ComponentListViewModel : InspectorViewModel
     public void OnViewLoaded()
     {
         PopulateComponentList();
+
+        // Send a message to populate the component editor in the inspector
+        OnPropertyChanged(nameof(SelectedComponentIndex)); 
     }
 
     public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
@@ -240,9 +243,10 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void EntityInspectorViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(Resource))
+        if (e.PropertyName == nameof(SelectedComponentIndex))
         {
-            // Todo: Update component list
+            var message = new SelectedComponentChangedMessage(SelectedComponentIndex);
+            _messengerService.Send(message);
         }
     }
 
@@ -292,7 +296,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         else
         {
             SelectedComponentIndex = Math.Clamp(previousIndex, 0, count - 1);
-        
         }
     }
 }

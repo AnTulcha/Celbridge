@@ -28,9 +28,9 @@
           BorderThickness="0,2,0,0">
 
       <local:ComponentEditor x:Name="ComponentEditor"
-                             Visibility="Collapsed"/>
+                             Visibility="{x:Bind ViewModel.ComponentEditorVisibility, Mode=OneWay}"/>
       <local:ComponentPicker x:Name="ComponentPicker"
-                             Visibility="Collapsed"/>
+                             Visibility="{x:Bind ViewModel.ComponentPickerVisibility, Mode=OneWay}"/>
 
     </Grid>
     

@@ -92,11 +92,11 @@ public class EntityService : IEntityService, IDisposable
                     .WithErrors(loadPrototypesResult);
             }
 
-            var loadDefaultsResult = await _entityRegistry.Initialize(_entitySchema, _prototypeRegistry, _schemaRegistry);
-            if (loadDefaultsResult.IsFailure)
+            var initEntitiesResult = await _entityRegistry.Initialize(_entitySchema, _prototypeRegistry, _schemaRegistry);
+            if (initEntitiesResult.IsFailure)
             {
                 return Result.Fail("Failed to load file default components")
-                    .WithErrors(loadDefaultsResult);
+                    .WithErrors(initEntitiesResult);
             }
 
             return Result.Ok();

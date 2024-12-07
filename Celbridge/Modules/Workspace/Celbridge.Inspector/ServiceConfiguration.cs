@@ -31,6 +31,8 @@ public static class ServiceConfiguration
         config.AddTransient<WebInspectorViewModel>();
         config.AddTransient<MarkdownInspectorViewModel>();
         config.AddTransient<ComponentListViewModel>();
+        config.AddTransient<EntityEditorViewModel>();
+        config.AddTransient<ComponentEditorViewModel>();
     }
 
     public static Result Initialize()
