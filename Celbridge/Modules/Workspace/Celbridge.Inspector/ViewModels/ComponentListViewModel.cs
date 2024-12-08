@@ -16,11 +16,15 @@ public partial class ComponentListViewModel : InspectorViewModel
     private readonly ILogger<MarkdownInspectorViewModel> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IEntityService _entityService;
+    private readonly IInspectorService _inspectorService;
 
     public ObservableCollection<ComponentItem> ComponentItems { get; } = new();
 
     [ObservableProperty]
-    private int _selectedComponentIndex;
+    private int _selectedIndex;
+
+    [ObservableProperty]
+    private bool _isEditingComponentType;
 
     // Code gen requires a parameterless constructor
     public ComponentListViewModel()
@@ -36,6 +40,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         _logger = logger;
         _messengerService = messengerService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
+        _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
 
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
 
@@ -47,7 +52,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         PopulateComponentList();
 
         // Send a message to populate the component editor in the inspector
-        OnPropertyChanged(nameof(SelectedComponentIndex)); 
+        OnPropertyChanged(nameof(SelectedIndex)); 
     }
 
     public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
@@ -243,10 +248,16 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void EntityInspectorViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(SelectedComponentIndex))
+        if (e.PropertyName == nameof(SelectedIndex))
         {
-            var message = new SelectedComponentChangedMessage(SelectedComponentIndex);
+            var message = new SelectedComponentChangedMessage(SelectedIndex);
             _messengerService.Send(message);
+
+            UpdateEditMode();
+        }
+        else if (e.PropertyName == nameof(IsEditingComponentType))
+        {
+            UpdateEditMode();
         }
     }
 
@@ -260,7 +271,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
         var count = getCountResult.Value;
 
-        int previousIndex = SelectedComponentIndex;
+        int previousIndex = SelectedIndex;
 
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
@@ -291,11 +302,30 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         if (count == 0)
         {
-            SelectedComponentIndex = -1;
+            SelectedIndex = -1;
         }
         else
         {
-            SelectedComponentIndex = Math.Clamp(previousIndex, 0, count - 1);
+            SelectedIndex = Math.Clamp(previousIndex, 0, count - 1);
         }
+    }
+
+    private void UpdateEditMode()
+    {
+        var editMode = ComponentPanelMode.None;
+
+        if (SelectedIndex > -1)
+        {
+            if (IsEditingComponentType)
+            {
+                editMode = ComponentPanelMode.ComponentType;
+            }
+            else
+            {
+                editMode = ComponentPanelMode.ComponentValue;
+            }
+        }
+
+        _inspectorService.ComponentPanelMode = editMode;
     }
 }

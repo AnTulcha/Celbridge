@@ -71,7 +71,6 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
     private void UpdateSelectedResource(ResourceKey resource)
     {
         _entityEditor.ClearComponentsPanel();
-        _entityEditor.ClearComponentPicker();
 
         if (resource.IsEmpty)
         {

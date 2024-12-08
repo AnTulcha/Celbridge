@@ -100,6 +100,12 @@ public partial class ComponentListView : UserControl, IInspector
         }
     }
 
+    // If the user switches between editing component types for two different components, the the focus event for the
+    // second component is sent _before_ the lost focus event for the first component.
+    // We use a counter to track the number of focussed text boxes at any time, if it's greater than zero then we are in
+    // component type editing mode.
+    private int _focusCount;
+
     private void ComponentItem_DisplayTextBlock_Tapped(object sender, TappedRoutedEventArgs e)
     {
         if (sender is TextBlock textBlock)
@@ -120,6 +126,10 @@ public partial class ComponentListView : UserControl, IInspector
             {
                 menuButton.Visibility = Visibility.Collapsed;
             }
+
+            _focusCount++;
+
+            ViewModel.IsEditingComponentType = _focusCount > 0;
         }
     }
 
@@ -141,6 +151,10 @@ public partial class ComponentListView : UserControl, IInspector
             {
                 menuButton.Visibility = Visibility.Visible;
             }
+
+            _focusCount--;
+
+            ViewModel.IsEditingComponentType = _focusCount > 0;
         }
     }
 

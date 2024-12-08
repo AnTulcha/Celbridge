@@ -14,10 +14,16 @@ public partial class ComponentEditorViewModel : ObservableObject
     private readonly IInspectorService _inspectorService;
 
     [ObservableProperty]
-    private string _componentName = string.Empty;
+    private string _componentType = string.Empty;
 
     [ObservableProperty]
     private string _propertyList = string.Empty;
+
+    [ObservableProperty]
+    private Visibility _componentValueEditorVisibility = Visibility.Collapsed;
+
+    [ObservableProperty]
+    private Visibility _componentTypeEditorVisibility = Visibility.Collapsed;
 
     public ComponentEditorViewModel(
         ILogger<ComponentEditorViewModel> logger,
@@ -30,12 +36,19 @@ public partial class ComponentEditorViewModel : ObservableObject
 
         messengerService.Register<InspectorTargetChangedMessage>(this, OnInspectedResourceChangedMessage);
         messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+        messengerService.Register<ComponentPanelModeChangedMessage>(this, OnComponentEditModeChangedMessage);
+    }
+
+    private void OnComponentEditModeChangedMessage(object recipient, ComponentPanelModeChangedMessage message)
+    {
+        UpdateEditorVisibility();
     }
 
     private void OnInspectedResourceChangedMessage(object recipient, InspectorTargetChangedMessage message)
     {
         var (resource, componentIndex) = message;
         PopulatePropertyList(resource, componentIndex);
+        UpdateEditorVisibility();
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
@@ -47,6 +60,7 @@ public partial class ComponentEditorViewModel : ObservableObject
             _inspectorService.InspectedComponentIndex == componentIndex)
         {
             PopulatePropertyList(resource, componentIndex);
+            UpdateEditorVisibility();
         }
     }
 
@@ -56,13 +70,13 @@ public partial class ComponentEditorViewModel : ObservableObject
 
         if (resource.IsEmpty)
         {
-            ComponentName = "None";
+            ComponentType = string.Empty;
             return;
         }
 
         if (componentIndex < 0)
         {
-            ComponentName = "None";
+            ComponentType = string.Empty;
             return;
         }
 
@@ -75,7 +89,7 @@ public partial class ComponentEditorViewModel : ObservableObject
 
         var componentInfo = getResult.Value;
 
-        ComponentName = componentInfo.ComponentType;
+        ComponentType = componentInfo.ComponentType;
 
         var sb = new StringBuilder();
 
@@ -94,5 +108,28 @@ public partial class ComponentEditorViewModel : ObservableObject
         }
 
         PropertyList = sb.ToString();
+    }
+
+    private void UpdateEditorVisibility()
+    {
+        var editMode = _inspectorService.ComponentPanelMode;
+
+        switch (editMode)
+        {
+            case ComponentPanelMode.None:
+                ComponentValueEditorVisibility = Visibility.Collapsed;
+                ComponentTypeEditorVisibility = Visibility.Collapsed;
+                break;
+
+            case ComponentPanelMode.ComponentValue:
+                ComponentValueEditorVisibility = Visibility.Visible;
+                ComponentTypeEditorVisibility = Visibility.Collapsed;
+                break;
+
+            case ComponentPanelMode.ComponentType:
+                ComponentValueEditorVisibility = Visibility.Collapsed;
+                ComponentTypeEditorVisibility = Visibility.Visible;
+                break;
+        }
     }
 }

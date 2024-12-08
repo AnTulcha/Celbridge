@@ -8,21 +8,26 @@ public interface IInspectorService
     /// <summary>
     /// The current resource being inspected.
     /// </summary>
-    public ResourceKey InspectedResource { get; }
+    ResourceKey InspectedResource { get; }
 
     /// <summary>
     /// The index of the current component being inspected.
     /// -1 if no component is currently being inspected.
     /// </summary>
-    public int InspectedComponentIndex { get; }
+    int InspectedComponentIndex { get; }
+
+    /// <summary>
+    /// Set the editing mode for the component panel.
+    /// </summary>
+    ComponentPanelMode ComponentPanelMode { get; set; }
 
     /// <summary>
     /// Returns the inspector panel view.
     /// </summary>
-    public IInspectorPanel InspectorPanel { get; }
+    IInspectorPanel InspectorPanel { get; }
 
     /// <summary>
     /// Returns the factory used to create inspector UI elements. 
     /// </summary>
-    public IInspectorFactory InspectorFactory { get; }
+    IInspectorFactory InspectorFactory { get; }
 }

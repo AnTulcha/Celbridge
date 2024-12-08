@@ -17,14 +17,22 @@
       <TextBlock VerticalAlignment="Center"
                  Margin="6 0 0 0"
                  FontWeight="Bold"
-                 Text="{x:Bind ViewModel.ComponentName, Mode=OneWay}"/>
+                 Text="{x:Bind ViewModel.ComponentType, Mode=OneWay}"/>
     </Grid>
 
-    <Grid x:Name="PropertyInspectors"
-          Grid.Row="1">
+    <Grid x:Name="ComponentValueEditor"
+          Grid.Row="1"
+          Visibility="{x:Bind ViewModel.ComponentValueEditorVisibility, Mode=OneWay}">
       <TextBlock Margin="6"
                  Text="{x:Bind ViewModel.PropertyList, Mode=OneWay}"/>
     </Grid>
+
+    <Grid x:Name="ComponentTypeEditor"
+          Grid.Row="1"
+          Visibility="{x:Bind ViewModel.ComponentTypeEditorVisibility, Mode=OneWay}">
+      <TextBlock Margin="6"
+                 Text="Select component type"/>
+    </Grid>    
   </Grid>
 
 </UserControl>

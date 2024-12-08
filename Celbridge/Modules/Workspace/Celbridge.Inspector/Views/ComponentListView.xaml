@@ -46,7 +46,7 @@
             SelectionMode="Single"
             CanReorderItems="True"
             ItemsSource="{x:Bind ViewModel.ComponentItems}"
-            SelectedIndex="{x:Bind ViewModel.SelectedComponentIndex, Mode=TwoWay}"
+            SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=TwoWay}"
             CanDragItems="True"
             AllowDrop="True"
             DragItemsStarting="ListView_DragItemsStarting"

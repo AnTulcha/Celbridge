@@ -1,4 +1,3 @@
-using Celbridge.Entities;
 using Celbridge.Messaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -7,25 +6,34 @@ namespace Celbridge.Inspector.ViewModels;
 public partial class EntityEditorViewModel : ObservableObject
 {
     [ObservableProperty]
-    private Visibility _componentEditorVisibility = Visibility.Collapsed;
+    private Visibility _componentValueEditorVisibility = Visibility.Collapsed;
 
     [ObservableProperty]
-    private Visibility _componentPickerVisibility = Visibility.Collapsed;
+    private Visibility _componentTypeEditorVisibility = Visibility.Collapsed;
 
     public EntityEditorViewModel(IMessengerService messengerService)
     {
-        messengerService.Register<SelectedComponentChangedMessage>(this, OnSelectedComponentChangedMessage);
+        messengerService.Register<ComponentPanelModeChangedMessage>(this, OnComponentPanelModeChangedMessage);
     }
 
-    private void OnSelectedComponentChangedMessage(object recipient, SelectedComponentChangedMessage message)
+    private void OnComponentPanelModeChangedMessage(object recipient, ComponentPanelModeChangedMessage message)
     {
-        bool isComponentSelected = message.componentIndex >= 0;
-        UpdateVisibility(isComponentSelected);
-    }
+        switch (message.EditMode)
+        {
+            case ComponentPanelMode.None:
+                ComponentValueEditorVisibility = Visibility.Collapsed;
+                ComponentTypeEditorVisibility = Visibility.Collapsed;
+                break;
 
-    private void UpdateVisibility(bool isComponentSelected)
-    {
-        ComponentEditorVisibility = isComponentSelected ? Visibility.Visible : Visibility.Collapsed;
-        ComponentPickerVisibility = isComponentSelected ? Visibility.Collapsed : Visibility.Visible;
+            case ComponentPanelMode.ComponentValue:
+                ComponentValueEditorVisibility = Visibility.Visible;
+                ComponentTypeEditorVisibility = Visibility.Collapsed;
+                break;
+
+            case ComponentPanelMode.ComponentType:
+                ComponentValueEditorVisibility = Visibility.Collapsed;
+                ComponentTypeEditorVisibility = Visibility.Visible;
+                break;
+        }
     }
 }

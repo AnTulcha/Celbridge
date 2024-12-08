@@ -9,3 +9,8 @@ public record SelectedComponentChangedMessage(int componentIndex);
 /// A message sent when the target item in the inspector changes.
 /// </summary>
 public record InspectorTargetChangedMessage(ResourceKey Resource, int ComponentIndex);
+
+/// <summary>
+/// A message sent when the component panel edit mode changes.
+/// </summary>
+public record ComponentPanelModeChangedMessage(ComponentPanelMode EditMode);

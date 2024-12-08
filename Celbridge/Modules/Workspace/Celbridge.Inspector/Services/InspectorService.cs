@@ -1,4 +1,5 @@
 using Celbridge.Explorer;
+using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 
@@ -6,6 +7,7 @@ namespace Celbridge.Inspector.Services;
 
 public class InspectorService : IInspectorService, IDisposable
 {
+    private readonly ILogger<InspectorService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IMessengerService _messengerService;
 
@@ -18,11 +20,31 @@ public class InspectorService : IInspectorService, IDisposable
 
     public int InspectedComponentIndex {  get; private set; }
 
+    private ComponentPanelMode _componentPanelMode;
+    public ComponentPanelMode ComponentPanelMode 
+    {
+        get => _componentPanelMode;
+        set
+        {
+            if (ComponentPanelMode == value)
+            {
+                return;
+            }
+
+            _componentPanelMode = value;
+
+            var message = new ComponentPanelModeChangedMessage(_componentPanelMode);
+            _messengerService.Send(message);
+        }
+    }
+
     public InspectorService(
         IServiceProvider serviceProvider,
+        ILogger<InspectorService> logger,
         IMessengerService messengerService)
     {
         _serviceProvider = serviceProvider;
+        _logger = logger;
         _messengerService = messengerService;
 
         _messengerService.Register<WorkspaceWillPopulatePanelsMessage>(this, OnWorkspaceWillPopulatePanelsMessage);
