@@ -312,20 +312,38 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void UpdateEditMode()
     {
-        var editMode = ComponentPanelMode.None;
+        var mode = ComponentPanelMode.None;
 
         if (SelectedIndex > -1)
         {
             if (IsEditingComponentType)
             {
-                editMode = ComponentPanelMode.ComponentType;
+                mode = ComponentPanelMode.ComponentType;
             }
             else
             {
-                editMode = ComponentPanelMode.ComponentValue;
+                mode = ComponentPanelMode.ComponentValue;
             }
         }
 
-        _inspectorService.ComponentPanelMode = editMode;
+        _inspectorService.ComponentPanelMode = mode;
+
+        if (mode == ComponentPanelMode.ComponentType)
+        {
+            UpdateComponentTypeInput();
+        }
+    }
+
+    private void UpdateComponentTypeInput()
+    {
+        if (SelectedIndex < 0 || SelectedIndex >= ComponentItems.Count)
+        {
+            return;
+        }
+
+        var componentType = ComponentItems[SelectedIndex].ComponentType;
+
+        var message = new ComponentTypeInputChangedMessage(componentType);
+        _messengerService.Send(message);
     }
 }

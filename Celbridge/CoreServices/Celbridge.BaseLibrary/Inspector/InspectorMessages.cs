@@ -14,3 +14,5 @@ public record InspectorTargetChangedMessage(ResourceKey Resource, int ComponentI
 /// A message sent when the component panel edit mode changes.
 /// </summary>
 public record ComponentPanelModeChangedMessage(ComponentPanelMode EditMode);
+
+public record ComponentTypeInputChangedMessage(string ComponentType);

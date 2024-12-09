@@ -17,12 +17,12 @@
       <TextBlock VerticalAlignment="Center"
                  Margin="6 0 0 0"
                  FontWeight="Bold"
-                 Text="Select instruction"/>
+                 Text="Select component"/>
     </Grid>
 
     <Grid Grid.Row="1">
-      <TextBlock Margin="6"
-                 Text="Instruction list"/>
+      <ListView Margin="6"
+                ItemsSource="{x:Bind ViewModel.ComponentTypeList}"/>
     </Grid>
   </Grid>
   
