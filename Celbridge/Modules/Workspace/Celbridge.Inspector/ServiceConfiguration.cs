@@ -32,7 +32,7 @@ public static class ServiceConfiguration
         config.AddTransient<MarkdownInspectorViewModel>();
         config.AddTransient<ComponentListViewModel>();
         config.AddTransient<EntityEditorViewModel>();
-        config.AddTransient<ComponentEditorViewModel>();
+        config.AddTransient<ComponentValueEditorViewModel>();
     }
 
     public static Result Initialize()

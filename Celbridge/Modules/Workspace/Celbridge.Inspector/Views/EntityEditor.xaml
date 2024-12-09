@@ -27,10 +27,10 @@
           BorderBrush="{ThemeResource PanelBorderBrush}"
           BorderThickness="0,2,0,0">
 
-      <local:ComponentEditor x:Name="ComponentEditor"
-                             Visibility="{x:Bind ViewModel.ComponentValueEditorVisibility, Mode=OneWay}"/>
-      <local:ComponentPicker x:Name="ComponentPicker"
-                             Visibility="{x:Bind ViewModel.ComponentTypeEditorVisibility, Mode=OneWay}"/>
+      <local:ComponentValueEditor x:Name="ComponentValueEditor"
+                                  Visibility="{x:Bind ViewModel.ComponentValueEditorVisibility, Mode=OneWay}"/>
+      <local:ComponentTypeEditor x:Name="ComponentTypeEditor"
+                                 Visibility="{x:Bind ViewModel.ComponentTypeEditorVisibility, Mode=OneWay}"/>
 
     </Grid>
     

@@ -7,9 +7,9 @@ using System.Text;
 
 namespace Celbridge.Inspector.ViewModels;
 
-public partial class ComponentEditorViewModel : ObservableObject
+public partial class ComponentValueEditorViewModel : ObservableObject
 {
-    private readonly ILogger<ComponentEditorViewModel> _logger;
+    private readonly ILogger<ComponentValueEditorViewModel> _logger;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
 
@@ -19,14 +19,8 @@ public partial class ComponentEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _propertyList = string.Empty;
 
-    [ObservableProperty]
-    private Visibility _componentValueEditorVisibility = Visibility.Collapsed;
-
-    [ObservableProperty]
-    private Visibility _componentTypeEditorVisibility = Visibility.Collapsed;
-
-    public ComponentEditorViewModel(
-        ILogger<ComponentEditorViewModel> logger,
+    public ComponentValueEditorViewModel(
+        ILogger<ComponentValueEditorViewModel> logger,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {
@@ -36,19 +30,12 @@ public partial class ComponentEditorViewModel : ObservableObject
 
         messengerService.Register<InspectorTargetChangedMessage>(this, OnInspectedResourceChangedMessage);
         messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
-        messengerService.Register<ComponentPanelModeChangedMessage>(this, OnComponentEditModeChangedMessage);
-    }
-
-    private void OnComponentEditModeChangedMessage(object recipient, ComponentPanelModeChangedMessage message)
-    {
-        UpdateEditorVisibility();
     }
 
     private void OnInspectedResourceChangedMessage(object recipient, InspectorTargetChangedMessage message)
     {
         var (resource, componentIndex) = message;
         PopulatePropertyList(resource, componentIndex);
-        UpdateEditorVisibility();
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
@@ -60,7 +47,6 @@ public partial class ComponentEditorViewModel : ObservableObject
             _inspectorService.InspectedComponentIndex == componentIndex)
         {
             PopulatePropertyList(resource, componentIndex);
-            UpdateEditorVisibility();
         }
     }
 
@@ -108,28 +94,5 @@ public partial class ComponentEditorViewModel : ObservableObject
         }
 
         PropertyList = sb.ToString();
-    }
-
-    private void UpdateEditorVisibility()
-    {
-        var editMode = _inspectorService.ComponentPanelMode;
-
-        switch (editMode)
-        {
-            case ComponentPanelMode.None:
-                ComponentValueEditorVisibility = Visibility.Collapsed;
-                ComponentTypeEditorVisibility = Visibility.Collapsed;
-                break;
-
-            case ComponentPanelMode.ComponentValue:
-                ComponentValueEditorVisibility = Visibility.Visible;
-                ComponentTypeEditorVisibility = Visibility.Collapsed;
-                break;
-
-            case ComponentPanelMode.ComponentType:
-                ComponentValueEditorVisibility = Visibility.Collapsed;
-                ComponentTypeEditorVisibility = Visibility.Visible;
-                break;
-        }
     }
 }
