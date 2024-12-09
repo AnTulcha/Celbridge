@@ -227,6 +227,9 @@ public partial class ComponentListViewModel : InspectorViewModel
             PopulateComponentList();
             return;
         }
+
+        // Select the component in its new position
+        SelectedIndex = newIndex;
     }
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
