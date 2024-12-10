@@ -44,7 +44,7 @@ public interface IEntityService
     /// <summary>
     /// Add a component to the the entity for a resource at the specified index.
     /// </summary>
-    Result AddComponent(ResourceKey resource, string componentType, int componentIndex);
+    Result AddComponent(ResourceKey resource, int componentIndex, string componentType);
 
     /// <summary>
     /// Removes a component at the specified index from the entity for a resource.

@@ -167,27 +167,30 @@ public partial class ComponentListView : UserControl, IInspector
 
     private void ComponentItem_EditTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        var key = e.Key;
-        var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-
         // Shift + Enter adds a new component after the current component
-        if (sender is TextBox textBox &&
-            key == VirtualKey.Enter) 
+        if (sender is not TextBox textBox)
         {
+            return;
+        }
+
+        if (e.Key == VirtualKey.Enter)
+        {
+            var componentItem = textBox.DataContext as ComponentItem;
+            Guard.IsNotNull(componentItem);
+
+            var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
             if (shiftDown)
             {
-                var componentItem = textBox.DataContext as ComponentItem;
-                if (componentItem != null)
-                {
-                    int index = ViewModel.ComponentItems.IndexOf(componentItem);
-                    ViewModel.AddComponentCommand.Execute(index);
-                }
-
+                int componentIndex = ViewModel.ComponentItems.IndexOf(componentItem);
+                ViewModel.AddComponentCommand.Execute(componentIndex);                
                 e.Handled = true;
             }
             else
             {
                 // Todo: Submit the edited text by broadcasting an event
+                ViewModel.NotifyComponentTypeEntered();
+
+                // Todo: Move focus to the list item if a new component is not assigned
             }
         }
     }

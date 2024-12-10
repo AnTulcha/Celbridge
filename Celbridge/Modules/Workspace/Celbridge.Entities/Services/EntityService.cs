@@ -136,7 +136,7 @@ public class EntityService : IEntityService, IDisposable
         return _entityRegistry.CopyEntityDataFile(sourceResource, destResource);
     }
 
-    public Result AddComponent(ResourceKey resource, string componentType, int componentIndex)
+    public Result AddComponent(ResourceKey resource, int componentIndex, string componentType)
     {
         // Acquire the entity for the specified resource
 

@@ -91,7 +91,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Supress the refresh
         _supressRefreshCount = 1;
 
-        var addResult = _entityService.AddComponent(Resource, "Empty", addIndex);
+        var addResult = _entityService.AddComponent(Resource, addIndex, "Empty");
         if (addResult.IsFailure)
         {
             // Log the error and refresh the list to attempt to recover
@@ -352,6 +352,12 @@ public partial class ComponentListViewModel : InspectorViewModel
     public void NotifyComponentTypeInputTextChanged(string inputText)
     {
         var message = new ComponentTypeInputTextChangedMessage(inputText);
+        _messengerService.Send(message);
+    }
+
+    public void NotifyComponentTypeEntered()
+    {
+        var message = new ComponentTypeEnteredMessage();
         _messengerService.Send(message);
     }
 }

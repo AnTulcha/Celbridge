@@ -1,9 +1,9 @@
-using System.Collections.ObjectModel;
 using Celbridge.Entities;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.ObjectModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -11,6 +11,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
 {
     private readonly ILogger<ComponentValueEditorViewModel> _logger;
     private readonly IEntityService _entityService;
+    private readonly IInspectorService _inspectorService;
 
     [ObservableProperty]
     private ObservableCollection<string> _componentTypeList = new();
@@ -23,8 +24,10 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         _logger = logger;
 
         messengerService.Register<ComponentTypeInputTextChangedMessage>(this, OnComponentTypeInputTextChangedMessage);
+        messengerService.Register<ComponentTypeEnteredMessage>(this, OnComponentTypeEnteredMessage);
 
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
+        _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
     }
 
     private void OnComponentTypeInputTextChangedMessage(object recipient, ComponentTypeInputTextChangedMessage message)
@@ -60,6 +63,8 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
             // Remove any component types that have already been added
             componentTypes.Remove(item => filteredList.Contains(item));
 
+            // Todo: Remove any component types that don't allow multiples of the same type (if there's already an instance)
+
             // Now add any remaining component types that contain the input text
             foreach (var name in componentTypes)
             {
@@ -78,32 +83,29 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         ComponentTypeList.ReplaceWith(filteredList);
     }
 
-    static void SyncObservableCollection<T>(ObservableCollection<T> observable, IList<T> target)
+    private void OnComponentTypeEnteredMessage(object recipient, ComponentTypeEnteredMessage message)
     {
-        int i = 0;
-
-        // Traverse both lists and make changes as needed
-        while (i < observable.Count && i < target.Count)
+        if (ComponentTypeList.Count == 0)
         {
-            if (!EqualityComparer<T>.Default.Equals(observable[i], target[i]))
-            {
-                // Replace item if different
-                observable[i] = target[i];
-            }
-            i++;
+            // Enter is a noop if no component types are available
+            return;
         }
 
-        // Remove extra items from ObservableCollection
-        while (observable.Count > target.Count)
-        {
-            observable.RemoveAt(observable.Count - 1);
-        }
+        var newComponentType = ComponentTypeList[0];
 
-        // Add missing items from target list
-        while (i < target.Count)
+        var resource = _inspectorService.InspectedResource;
+        var componentIndex = _inspectorService.InspectedComponentIndex;
+
+        // Todo: Check errors and use undo group - make a method
+
+        var addResult = _entityService.AddComponent(resource, componentIndex, newComponentType);
+        if (addResult.IsFailure)
         {
-            observable.Add(target[i]);
-            i++;
+            return;
         }
+        
+        _entityService.RemoveComponent(resource, componentIndex + 1);
+
+        // _logger.LogInformation($"New component type: {newComponentType} at {componentIndex}");
     }
 }
