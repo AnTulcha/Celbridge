@@ -11,6 +11,11 @@ public interface IEntityService
     Task<Result> InitializeAsync();
 
     /// <summary>
+    /// Returns the component type information for all registered component types.
+    /// </summary>
+    IReadOnlyDictionary<string, ComponentTypeInfo> ComponentTypes { get; }
+
+    /// <summary>
     /// Returns the absolute path of the Entity Data file for a resource.
     /// A path will be generated regardless of whether the resource or Entity Data file actually exist.
     /// </summary>
@@ -69,7 +74,7 @@ public interface IEntityService
     /// <summary>
     /// Returns a ComponentInfo object describing the component at the specified index.
     /// </summary>
-    Result<ComponentInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
+    Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
 
     /// <summary>
     /// Gets the value of a property from a component.

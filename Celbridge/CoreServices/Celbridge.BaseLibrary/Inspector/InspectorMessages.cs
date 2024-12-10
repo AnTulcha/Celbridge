@@ -15,4 +15,4 @@ public record InspectorTargetChangedMessage(ResourceKey Resource, int ComponentI
 /// </summary>
 public record ComponentPanelModeChangedMessage(ComponentPanelMode EditMode);
 
-public record ComponentTypeInputChangedMessage(string ComponentType);
+public record ComponentTypeInputTextChangedMessage(string ComponentType);

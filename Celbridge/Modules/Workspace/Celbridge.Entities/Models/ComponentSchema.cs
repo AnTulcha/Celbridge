@@ -16,11 +16,11 @@ public class ComponentSchema
 
     public string ComponentType { get; }
     public int ComponentVersion { get; }
-    public ComponentInfo ComponentInfo { get; }
+    public ComponentTypeInfo ComponentInfo { get; }
 
     private readonly JsonSchema _jsonSchema;
 
-    private ComponentSchema(string componentType, int componentVersion, ComponentInfo componentInfo, JsonSchema jsonSchema)
+    private ComponentSchema(string componentType, int componentVersion, ComponentTypeInfo componentInfo, JsonSchema jsonSchema)
     {
         ComponentType = componentType;
         ComponentVersion = componentVersion;
@@ -107,7 +107,7 @@ public class ComponentSchema
                 }
             }
 
-            var componentInfo = new ComponentInfo(componentType, componentAttributes, componentProperties);
+            var componentInfo = new ComponentTypeInfo(componentType, componentAttributes, componentProperties);
 
             // Create the JsonSchema object
 

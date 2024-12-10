@@ -90,6 +90,7 @@
                        VerticalAlignment="Center"
                        MinWidth="140"
                        Visibility="Collapsed"
+                       TextChanged="EditTextBox_TextChanged"
                        LostFocus="ComponentItem_EditTextBox_LostFocus"
                        KeyDown="ComponentItem_EditTextBox_KeyDown"/>
 

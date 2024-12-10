@@ -1,7 +1,9 @@
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.ViewModels;
+using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
+using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
 using Windows.System;
 using Windows.UI.Core;
@@ -36,6 +38,11 @@ public partial class ComponentListView : UserControl, IInspector
         _stringLocalizer = serviceProvider.GetRequiredService<IStringLocalizer>();
 
         Loaded += EntityInspector_Loaded;
+
+#if WINDOWS
+        // Remove the distracting animations when items are added or removed from the list
+        ComponentList.ItemContainerTransitions.Clear();
+#endif
     }
 
     private void EntityInspector_Loaded(object sender, RoutedEventArgs e)
@@ -177,5 +184,14 @@ public partial class ComponentListView : UserControl, IInspector
 
             e.Handled = true;
         }
+    }
+
+    private void EditTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var textBox = sender as TextBox;
+        Guard.IsNotNull(textBox);
+
+        var text = textBox.Text;
+        ViewModel.NotifyComponentTypeInputTextChanged(text);
     }
 }
