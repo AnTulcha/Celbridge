@@ -52,6 +52,11 @@ public interface IEntityService
     Result RemoveComponent(ResourceKey resource, int componentIndex);
 
     /// <summary>
+    /// Replace the entity component for a resource at the specified index.
+    /// </summary>
+    Result ReplaceComponent(ResourceKey resource, int componentIndex, string componentType);
+
+    /// <summary>
     /// Copy an entity component from a source index to a destination index.
     /// </summary>
     Result CopyComponent(ResourceKey resource, int sourceComponentIndex, int destComponentIndex);

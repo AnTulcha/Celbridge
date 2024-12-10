@@ -187,10 +187,7 @@ public partial class ComponentListView : UserControl, IInspector
             }
             else
             {
-                // Todo: Submit the edited text by broadcasting an event
                 ViewModel.NotifyComponentTypeEntered();
-
-                // Todo: Move focus to the list item if a new component is not assigned
             }
         }
     }

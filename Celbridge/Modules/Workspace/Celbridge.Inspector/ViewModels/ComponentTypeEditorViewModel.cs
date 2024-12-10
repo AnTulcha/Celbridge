@@ -96,16 +96,12 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        // Todo: Check errors and use undo group - make a method
-
-        var addResult = _entityService.AddComponent(resource, componentIndex, newComponentType);
-        if (addResult.IsFailure)
+        var replaceResult = _entityService.ReplaceComponent(resource, componentIndex, newComponentType);
+        if (replaceResult.IsFailure)
         {
-            return;
-        }
-        
-        _entityService.RemoveComponent(resource, componentIndex + 1);
+            _logger.LogError(replaceResult.Error);
 
-        // _logger.LogInformation($"New component type: {newComponentType} at {componentIndex}");
+            return;
+        }        
     }
 }
