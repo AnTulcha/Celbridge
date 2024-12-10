@@ -171,18 +171,24 @@ public partial class ComponentListView : UserControl, IInspector
         var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
 
         // Shift + Enter adds a new component after the current component
-        if (key == VirtualKey.Enter && 
-            shiftDown &&
-            sender is TextBox textBox)
+        if (sender is TextBox textBox &&
+            key == VirtualKey.Enter) 
         {
-            var componentItem = textBox.DataContext as ComponentItem;
-            if (componentItem != null)
+            if (shiftDown)
             {
-                int index = ViewModel.ComponentItems.IndexOf(componentItem);
-                ViewModel.AddComponentCommand.Execute(index);
-            }
+                var componentItem = textBox.DataContext as ComponentItem;
+                if (componentItem != null)
+                {
+                    int index = ViewModel.ComponentItems.IndexOf(componentItem);
+                    ViewModel.AddComponentCommand.Execute(index);
+                }
 
-            e.Handled = true;
+                e.Handled = true;
+            }
+            else
+            {
+                // Todo: Submit the edited text by broadcasting an event
+            }
         }
     }
 
