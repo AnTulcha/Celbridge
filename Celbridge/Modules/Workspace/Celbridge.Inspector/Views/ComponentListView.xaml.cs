@@ -79,21 +79,32 @@ public partial class ComponentListView : UserControl, IInspector
     {
         if (e.Key == VirtualKey.Enter)
         {
-            var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-
-            if (_focusCount == 0 && !shiftDown)
+            // Not currently focussed on a component text box
+            if (_focusCount == 0)
             {
-                var listViewItem = ComponentList.ContainerFromIndex(ComponentList.SelectedIndex) as ListViewItem;
-                if (listViewItem is not null)
+                var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
+                if (shiftDown)
                 {
-                    var textBlock = FindChild<TextBlock>(listViewItem, "DisplayTextBlock");
-                    if (textBlock is not null)
+                    // Shift + Enter adds a new component after the current component
+                    int componentIndex = ComponentList.SelectedIndex;
+                    ViewModel.AddComponentCommand.Execute(componentIndex);
+                    ViewModel.SelectedIndex = componentIndex + 1;
+                    e.Handled = true;
+                }
+                else
+                {
+                    var listViewItem = ComponentList.ContainerFromIndex(ComponentList.SelectedIndex) as ListViewItem;
+                    if (listViewItem is not null)
                     {
-                        SelectDisplayTextBlock(textBlock);
+                        var textBlock = FindChild<TextBlock>(listViewItem, "DisplayTextBlock");
+                        if (textBlock is not null)
+                        {
+                            SelectDisplayTextBlock(textBlock);
 
-                        // Mark event as handled. Otherwise, the list view handles the enter key and selects the list view item causing the
-                        // text box to lose focus.
-                        e.Handled = true;
+                            // Mark event as handled. Otherwise, the list view handles the enter key and selects the list view item causing the
+                            // text box to lose focus.
+                            e.Handled = true;
+                        }
                     }
                 }
             }
@@ -211,35 +222,35 @@ public partial class ComponentListView : UserControl, IInspector
 
     private void ComponentItem_EditTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
-        // Shift + Enter adds a new component after the current component
         if (sender is not TextBox textBox)
         {
             return;
         }
 
+        bool selectListItem = false;
+
         if (e.Key == VirtualKey.Enter)
+        {
+            ViewModel.NotifyComponentTypeEntered();
+            selectListItem = true;
+        }
+        else if (e.Key == VirtualKey.Escape)
+        {
+            selectListItem = true;
+        }
+
+        if (selectListItem)
         {
             var componentItem = textBox.DataContext as ComponentItem;
             Guard.IsNotNull(componentItem);
 
             int componentIndex = ViewModel.ComponentItems.IndexOf(componentItem);
 
-            var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-            if (shiftDown)
+            var listViewItem = ComponentList.ContainerFromIndex(componentIndex) as ListViewItem;
+            if (listViewItem is not null)
             {
-                ViewModel.AddComponentCommand.Execute(componentIndex);                
-                e.Handled = true;
-            }
-            else
-            {
-                ViewModel.NotifyComponentTypeEntered();
-
-                var listViewItem = ComponentList.ContainerFromIndex(componentIndex) as ListViewItem;
-                if (listViewItem is not null)
-                {
-                    listViewItem.IsSelected = true;
-                    listViewItem.Focus(FocusState.Programmatic);
-                }
+                listViewItem.IsSelected = true;
+                listViewItem.Focus(FocusState.Programmatic);
             }
         }
     }
