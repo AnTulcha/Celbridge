@@ -1,5 +1,6 @@
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.ViewModels;
+using Celbridge.Logging;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
@@ -11,6 +12,7 @@ namespace Celbridge.Inspector.Views;
 
 public partial class ComponentListView : UserControl, IInspector
 {
+    private ILogger<ComponentListView> _logger;
     private IStringLocalizer _stringLocalizer;
 
     public LocalizedString AddComponentTooltipString => _stringLocalizer.GetString("EntityInspector_AddComponentTooltip");
@@ -34,6 +36,7 @@ public partial class ComponentListView : UserControl, IInspector
         DataContext = ViewModel;
 
         var serviceProvider = ServiceLocator.ServiceProvider;
+        _logger = serviceProvider.GetRequiredService<ILogger<ComponentListView>>();
         _stringLocalizer = serviceProvider.GetRequiredService<IStringLocalizer>();
 
         Loaded += EntityInspector_Loaded;
@@ -72,9 +75,34 @@ public partial class ComponentListView : UserControl, IInspector
         }
     }
 
+    private void ComponentList_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key == VirtualKey.Enter)
+        {
+            var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
+
+            if (_focusCount == 0 && !shiftDown)
+            {
+                var listViewItem = ComponentList.ContainerFromIndex(ComponentList.SelectedIndex) as ListViewItem;
+                if (listViewItem is not null)
+                {
+                    var textBlock = FindChild<TextBlock>(listViewItem, "DisplayTextBlock");
+                    if (textBlock is not null)
+                    {
+                        SelectDisplayTextBlock(textBlock);
+
+                        // Mark event as handled. Otherwise, the list view handles the enter key and selects the list view item causing the
+                        // text box to lose focus.
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
+    }
+
     private int _dragStartIndex = -1;
 
-    private void ListView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+    private void ComponentList_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
     {
         var listView = sender as ListView;
         if (listView?.ItemsSource is ObservableCollection<ComponentItem> items)
@@ -84,7 +112,7 @@ public partial class ComponentListView : UserControl, IInspector
         }
     }
 
-    private void ListView_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
+    private void ComponentList_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
     {
         if (sender.ItemsSource is ObservableCollection<ComponentItem> items)
         {
@@ -116,27 +144,32 @@ public partial class ComponentListView : UserControl, IInspector
     {
         if (sender is TextBlock textBlock)
         {
-            var parentGrid = (Grid)textBlock.Parent;
-
-            var textBox = parentGrid.Children.OfType<TextBox>().FirstOrDefault();
-            if (textBox != null)
-            {
-                textBlock.Visibility = Visibility.Collapsed;
-                textBox.Visibility = Visibility.Visible;
-
-                textBox.Focus(FocusState.Programmatic);
-            }
-
-            var menuButton = parentGrid.Children.OfType<Button>().FirstOrDefault();
-            if (menuButton != null)
-            {
-                menuButton.Visibility = Visibility.Collapsed;
-            }
-
-            _focusCount++;
-
-            ViewModel.IsEditingComponentType = _focusCount > 0;
+            SelectDisplayTextBlock(textBlock);
         }
+    }
+
+    private void SelectDisplayTextBlock(TextBlock textBlock)
+    {
+        var parentGrid = (Grid)textBlock.Parent;
+
+        var textBox = parentGrid.Children.OfType<TextBox>().FirstOrDefault();
+        if (textBox != null)
+        {
+            textBlock.Visibility = Visibility.Collapsed;
+            textBox.Visibility = Visibility.Visible;
+
+            textBox.Focus(FocusState.Programmatic);
+        }
+
+        var menuButton = parentGrid.Children.OfType<Button>().FirstOrDefault();
+        if (menuButton != null)
+        {
+            menuButton.Visibility = Visibility.Collapsed;
+        }
+
+        _focusCount++;
+
+        ViewModel.IsEditingComponentType = _focusCount > 0;
     }
 
     private void ComponentItem_EditTextBox_GotFocus(object sender, RoutedEventArgs e)
@@ -156,6 +189,9 @@ public partial class ComponentListView : UserControl, IInspector
             var textBlock = parentGrid.Children.OfType<TextBlock>().FirstOrDefault();
             if (textBlock != null)
             {
+                // Reset any entered text back to match the display text
+                textBox.Text = textBlock.Text;
+
                 textBox.Visibility = Visibility.Collapsed;
                 textBlock.Visibility = Visibility.Visible;
             }
@@ -169,6 +205,7 @@ public partial class ComponentListView : UserControl, IInspector
             _focusCount--;
 
             ViewModel.IsEditingComponentType = _focusCount > 0;
+
         }
     }
 
@@ -197,13 +234,11 @@ public partial class ComponentListView : UserControl, IInspector
             {
                 ViewModel.NotifyComponentTypeEntered();
 
-                if (string.IsNullOrEmpty(textBox.Text))
+                var listViewItem = ComponentList.ContainerFromIndex(componentIndex) as ListViewItem;
+                if (listViewItem is not null)
                 {
-                    var item = ComponentList.Items[componentIndex];
-                    //if (item is not null)
-                    //{
-                    //    item.Focus(FocusState.Programmatic);
-                    //}
+                    listViewItem.IsSelected = true;
+                    listViewItem.Focus(FocusState.Programmatic);
                 }
             }
         }
@@ -216,5 +251,26 @@ public partial class ComponentListView : UserControl, IInspector
 
         var text = textBox.Text;
         ViewModel.NotifyComponentTypeInputTextChanged(text);
+    }
+
+    private T? FindChild<T>(DependencyObject parent, string childName) where T : FrameworkElement
+    {
+        int childCount = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < childCount; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+
+            if (child is T childElement && childElement.Name == childName)
+            {
+                return childElement;
+            }
+
+            var foundChild = FindChild<T>(child, childName);
+            if (foundChild != null)
+            {
+                return foundChild;
+            }
+        }
+        return null;
     }
 }

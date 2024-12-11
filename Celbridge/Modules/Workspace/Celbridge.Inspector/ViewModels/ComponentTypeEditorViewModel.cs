@@ -96,11 +96,25 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
+        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
+        if (getComponentResult.IsFailure)
+        {
+            _logger.LogError(getComponentResult.Error);
+            return;
+        }
+
+        var componentInfo = getComponentResult.Value;
+
+        if (componentInfo.ComponentType == newComponentType)
+        {
+            // No change required
+            return;
+        }
+
         var replaceResult = _entityService.ReplaceComponent(resource, componentIndex, newComponentType);
         if (replaceResult.IsFailure)
         {
             _logger.LogError(replaceResult.Error);
-
             return;
         }        
     }

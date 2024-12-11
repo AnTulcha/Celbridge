@@ -49,8 +49,9 @@
             SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=TwoWay}"
             CanDragItems="True"
             AllowDrop="True"
-            DragItemsStarting="ListView_DragItemsStarting"
-            DragItemsCompleted="ListView_DragItemsCompleted">
+            PreviewKeyDown="ComponentList_PreviewKeyDown"              
+            DragItemsStarting="ComponentList_DragItemsStarting"
+            DragItemsCompleted="ComponentList_DragItemsCompleted">
 
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">
@@ -77,7 +78,7 @@
               <!-- TextBlock is displayed when component name does not have focus -->
               <TextBlock x:Name="DisplayTextBlock"
                          Grid.Column="0"
-                         Text="{x:Bind ComponentType, Mode=TwoWay}"
+                         Text="{x:Bind ComponentType, Mode=OneWay}"
                          VerticalAlignment="Center"
                          MinWidth="116"
                          Tapped="ComponentItem_DisplayTextBlock_Tapped"
@@ -86,7 +87,7 @@
               <!-- TextBox is displayed when component name has focus -->
               <TextBox x:Name="EditTextBox"
                        Grid.Column="0"
-                       Text="{x:Bind ComponentType, Mode=TwoWay}"
+                       Text="{x:Bind ComponentType, Mode=OneWay}"
                        VerticalAlignment="Center"
                        MinWidth="140"
                        Visibility="Collapsed"
