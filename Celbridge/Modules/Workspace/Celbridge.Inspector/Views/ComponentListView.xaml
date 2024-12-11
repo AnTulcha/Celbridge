@@ -91,6 +91,7 @@
                        MinWidth="140"
                        Visibility="Collapsed"
                        TextChanged="EditTextBox_TextChanged"
+                       GotFocus="ComponentItem_EditTextBox_GotFocus"
                        LostFocus="ComponentItem_EditTextBox_LostFocus"
                        KeyDown="ComponentItem_EditTextBox_KeyDown"/>
 

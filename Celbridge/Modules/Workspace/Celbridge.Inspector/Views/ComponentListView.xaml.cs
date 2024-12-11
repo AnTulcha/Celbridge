@@ -3,7 +3,6 @@ using Celbridge.Inspector.ViewModels;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
-using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
 using Windows.System;
 using Windows.UI.Core;
@@ -140,6 +139,14 @@ public partial class ComponentListView : UserControl, IInspector
         }
     }
 
+    private void ComponentItem_EditTextBox_GotFocus(object sender, RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            textBox.SelectAll();
+        }
+    }
+
     private void ComponentItem_EditTextBox_LostFocus(object sender, RoutedEventArgs e)
     {
         if (sender is TextBox textBox)
@@ -178,16 +185,26 @@ public partial class ComponentListView : UserControl, IInspector
             var componentItem = textBox.DataContext as ComponentItem;
             Guard.IsNotNull(componentItem);
 
+            int componentIndex = ViewModel.ComponentItems.IndexOf(componentItem);
+
             var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
             if (shiftDown)
             {
-                int componentIndex = ViewModel.ComponentItems.IndexOf(componentItem);
                 ViewModel.AddComponentCommand.Execute(componentIndex);                
                 e.Handled = true;
             }
             else
             {
                 ViewModel.NotifyComponentTypeEntered();
+
+                if (string.IsNullOrEmpty(textBox.Text))
+                {
+                    var item = ComponentList.Items[componentIndex];
+                    //if (item is not null)
+                    //{
+                    //    item.Focus(FocusState.Programmatic);
+                    //}
+                }
             }
         }
     }
