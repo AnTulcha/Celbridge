@@ -16,6 +16,9 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<string> _componentTypeList = new();
 
+    [ObservableProperty]
+    private int _selectedIndex = -1;
+
     public ComponentTypeEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
         IMessengerService messengerService,
@@ -81,6 +84,10 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         }
 
         ComponentTypeList.ReplaceWith(filteredList);
+
+        // Force the first item in the component type list to be selected
+        SelectedIndex = ComponentTypeList.Count == 0 ? -1 : 0;
+        OnPropertyChanged(nameof(SelectedIndex));
     }
 
     private void OnComponentTypeEnteredMessage(object recipient, ComponentTypeEnteredMessage message)

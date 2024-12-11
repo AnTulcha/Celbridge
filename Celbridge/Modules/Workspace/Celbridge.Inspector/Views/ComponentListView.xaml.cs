@@ -101,8 +101,8 @@ public partial class ComponentListView : UserControl, IInspector
                         {
                             SelectDisplayTextBlock(textBlock);
 
-                            // Mark event as handled. Otherwise, the list view handles the enter key and selects the list view item causing the
-                            // text box to lose focus.
+                            // Mark event as handled. Otherwise, the list view would handle the enter key event and select the list view item,
+                            // causing the text box to lose focus.
                             e.Handled = true;
                         }
                     }

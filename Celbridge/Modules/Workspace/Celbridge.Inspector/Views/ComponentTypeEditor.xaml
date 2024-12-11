@@ -22,7 +22,8 @@
 
     <Grid Grid.Row="1">
       <ListView Margin="6"
-                ItemsSource="{x:Bind ViewModel.ComponentTypeList}"/>
+                ItemsSource="{x:Bind ViewModel.ComponentTypeList}"
+                SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=OneWay}"/>
     </Grid>
   </Grid>
   
