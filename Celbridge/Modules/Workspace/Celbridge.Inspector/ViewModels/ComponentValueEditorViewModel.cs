@@ -84,21 +84,21 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         // Resource and component index are valid, so get the component info and display the properties
 
-        var getResult = _entityService.GetComponentInfo(resource, componentIndex);
+        var getResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getResult.IsFailure)
         {
             _logger.LogError($"Failed to get component info: {resource}, {componentIndex}");
             return;
         }
 
-        var componentInfo = getResult.Value;
+        var componentTypeInfo = getResult.Value;
 
-        ComponentType = componentInfo.ComponentType;
+        ComponentType = componentTypeInfo.ComponentType;
 
         var sb = new StringBuilder();
 
-        // sb.AppendLine($"{resource}, {componentIndex}, {componentInfo.ComponentType}");
-        foreach (var property in componentInfo.Properties)
+        // sb.AppendLine($"{resource}, {componentIndex}, {componentTypeInfo.ComponentType}");
+        foreach (var property in componentTypeInfo.Properties)
         {
             var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
             if (getValueResult.IsFailure)

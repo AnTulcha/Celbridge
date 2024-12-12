@@ -373,7 +373,7 @@ public class EntityService : IEntityService, IDisposable
         return entity.EntityData.GetComponentCount();
     }
 
-    public Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex)
+    public Result<ComponentTypeInfo> GetComponentTypeInfo(ResourceKey resource, int componentIndex)
     {
         // Acquire the entity for the specified resource
 
@@ -408,7 +408,7 @@ public class EntityService : IEntityService, IDisposable
 
         // Return the component info
 
-        return Result<ComponentTypeInfo>.Ok(componentSchema.ComponentInfo);
+        return Result<ComponentTypeInfo>.Ok(componentSchema.ComponentTypeInfo);
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull

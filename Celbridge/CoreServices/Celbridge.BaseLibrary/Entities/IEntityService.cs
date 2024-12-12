@@ -77,9 +77,9 @@ public interface IEntityService
     Result<int> GetComponentCount(ResourceKey resource);
 
     /// <summary>
-    /// Returns a ComponentInfo object describing the component at the specified index.
+    /// Returns a ComponentTypeInfo object describing the component at the specified index.
     /// </summary>
-    Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
+    Result<ComponentTypeInfo> GetComponentTypeInfo(ResourceKey resource, int componentIndex);
 
     /// <summary>
     /// Gets the value of a property from a component.

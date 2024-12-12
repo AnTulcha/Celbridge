@@ -40,18 +40,18 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
+        var getComponentResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getComponentResult.IsFailure)
         {
             _logger.LogError(getComponentResult.Error);
             return;
         }
-        var componentInfo = getComponentResult.Value;
+        var componentTypeInfo = getComponentResult.Value;
 
         // Ensure we are dealing with an empty string if componentType is null
         componentType ??= string.Empty;
 
-        if (componentInfo.ComponentType == componentType)
+        if (componentTypeInfo.ComponentType == componentType)
         {
             // No change required
             return;
@@ -135,16 +135,16 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
+        var getComponentResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getComponentResult.IsFailure)
         {
             _logger.LogError(getComponentResult.Error);
             return;
         }
 
-        var componentInfo = getComponentResult.Value;
+        var componentTypeInfo = getComponentResult.Value;
 
-        if (componentInfo.ComponentType == newComponentType)
+        if (componentTypeInfo.ComponentType == newComponentType)
         {
             // No change required
             return;

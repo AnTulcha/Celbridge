@@ -186,16 +186,16 @@ public partial class ComponentListViewModel : InspectorViewModel
             return false;
         }
 
-        var getResults = _entityService.GetComponentInfo(Resource, duplicateIndex);
+        var getResults = _entityService.GetComponentTypeInfo(Resource, duplicateIndex);
         if (getResults.IsFailure)
         {
             _logger.LogError(getResults.Error);
             return false;
         }
 
-        var componentInfo = getResults.Value;
+        var componentTypeInfo = getResults.Value;
 
-        var allowMultipleComponents = componentInfo.GetBooleanAttribute("allowMultipleComponents");
+        var allowMultipleComponents = componentTypeInfo.GetBooleanAttribute("allowMultipleComponents");
 
         return allowMultipleComponents;
     }
@@ -279,15 +279,15 @@ public partial class ComponentListViewModel : InspectorViewModel
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
-            var getComponentResult = _entityService.GetComponentInfo(Resource, i);
+            var getComponentResult = _entityService.GetComponentTypeInfo(Resource, i);
             if (getComponentResult.IsFailure)
             {
                 _logger.LogError(getComponentResult.Error);
                 return;
             }
-            var componentInfo = getComponentResult.Value;
+            var componentTypeInfo = getComponentResult.Value;
 
-            var componentType = componentInfo.ComponentType;
+            var componentType = componentTypeInfo.ComponentType;
             if (componentType == "Empty")
             {
                 componentType = string.Empty;

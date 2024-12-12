@@ -36,7 +36,7 @@ public class ComponentSchemaRegistry
             {
                 var componentType = kv.Key;
                 var componentSchema = kv.Value;
-                _componentTypes[componentType] = componentSchema.ComponentInfo;
+                _componentTypes[componentType] = componentSchema.ComponentTypeInfo;
             }
 
             return Result.Ok();
