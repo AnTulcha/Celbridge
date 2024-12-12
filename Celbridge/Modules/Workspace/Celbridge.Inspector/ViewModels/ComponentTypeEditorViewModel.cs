@@ -35,7 +35,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
     }
 
     public IRelayCommand<string> ComponentTypeClickedCommand => new RelayCommand<string>(ComponentTypeClickedCommandExecuted);
-    private void ComponentTypeClickedCommandExecuted(string componentType)
+    private void ComponentTypeClickedCommandExecuted(string? componentType)
     {
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
@@ -46,8 +46,10 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
             _logger.LogError(getComponentResult.Error);
             return;
         }
-
         var componentInfo = getComponentResult.Value;
+
+        // Ensure we are dealing with an empty string if componentType is null
+        componentType ??= string.Empty;
 
         if (componentInfo.ComponentType == componentType)
         {
