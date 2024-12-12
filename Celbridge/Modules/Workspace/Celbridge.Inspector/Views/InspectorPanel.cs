@@ -104,10 +104,10 @@ public sealed partial class InspectorPanel : UserControl, IInspectorPanel
         }
 
         // Create the component list view for the selected resource
-        var entityInspectorResult = factory.CreateComponentListView(resource);
-        if (entityInspectorResult.IsSuccess)
+        var componentListResult = factory.CreateComponentListView(resource);
+        if (componentListResult.IsSuccess)
         {
-            var entityInspector = entityInspectorResult.Value as UserControl;
+            var entityInspector = componentListResult.Value as UserControl;
             Guard.IsNotNull(entityInspector);
 
             inspectorElements.Add(entityInspector);

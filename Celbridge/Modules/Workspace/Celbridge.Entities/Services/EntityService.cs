@@ -141,7 +141,7 @@ public class EntityService : IEntityService, IDisposable
         return AddComponent(resource, componentIndex, componentType, 0);
     }
 
-    public Result AddComponent(ResourceKey resource, int componentIndex, string componentType, long undoGroupId)
+    private Result AddComponent(ResourceKey resource, int componentIndex, string componentType, long undoGroupId)
     {
         // Acquire the entity for the specified resource
 
@@ -573,10 +573,10 @@ public class EntityService : IEntityService, IDisposable
         // Pop the next patch summary from the Undo stack and apply it to the entity
         var patchSummary = entity.UndoStack.Pop();
         var reversePatchOperation = patchSummary.ReverseOperation;
-        var undoGroup = patchSummary.UndoGroupId;
+        var undoGroupId = patchSummary.UndoGroupId;
         Guard.IsNotNull(reversePatchOperation);
 
-        var applyResult = ApplyPatchOperation(entity, reversePatchOperation, undoGroup, PatchContext.Undo);
+        var applyResult = ApplyPatchOperation(entity, reversePatchOperation, undoGroupId, PatchContext.Undo);
         if (applyResult.IsFailure)
         {
             return Result<bool>.Fail($"Failed to apply undo patch to resource: {resource}")
@@ -587,7 +587,7 @@ public class EntityService : IEntityService, IDisposable
         // The easiest way to do this is to call UndoEntity recursively.
         if (patchSummary.UndoGroupId != 0 &&
             entity.UndoStack.Count != 0 &&
-            entity.UndoStack.Peek().UndoGroupId == undoGroup)
+            entity.UndoStack.Peek().UndoGroupId == undoGroupId)
         {
             return UndoEntity(resource);
         }
