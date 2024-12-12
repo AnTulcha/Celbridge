@@ -5,6 +5,7 @@ using CommunityToolkit.Diagnostics;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
 using System.Collections.ObjectModel;
+using Uno.Extensions.Specialized;
 using Windows.System;
 using Windows.UI.Core;
 
@@ -77,36 +78,63 @@ public partial class ComponentListView : UserControl, IInspector
 
     private void ComponentList_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (_focusCount != 0 ||
+            ComponentList.SelectedIndex < 0)
+        {
+            // These shortcuts only apply when not editing a component type text box
+            return;
+        }
+
         if (e.Key == VirtualKey.Enter)
         {
-            // Not currently focussed on a component text box
-            if (_focusCount == 0)
+            var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
+            if (shiftDown)
             {
-                var shiftDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift).HasFlag(CoreVirtualKeyStates.Down);
-                if (shiftDown)
+                // Shift + Enter adds a new component after the current component
+                int componentIndex = ComponentList.SelectedIndex;
+                ViewModel.AddComponentCommand.Execute(componentIndex);
+                ViewModel.SelectedIndex = componentIndex + 1;
+                e.Handled = true;
+            }
+            else
+            {
+                var listViewItem = ComponentList.ContainerFromIndex(ComponentList.SelectedIndex) as ListViewItem;
+                if (listViewItem is not null)
                 {
-                    // Shift + Enter adds a new component after the current component
-                    int componentIndex = ComponentList.SelectedIndex;
-                    ViewModel.AddComponentCommand.Execute(componentIndex);
-                    ViewModel.SelectedIndex = componentIndex + 1;
-                    e.Handled = true;
-                }
-                else
-                {
-                    var listViewItem = ComponentList.ContainerFromIndex(ComponentList.SelectedIndex) as ListViewItem;
-                    if (listViewItem is not null)
+                    var textBlock = FindChild<TextBlock>(listViewItem, "DisplayTextBlock");
+                    if (textBlock is not null)
                     {
-                        var textBlock = FindChild<TextBlock>(listViewItem, "DisplayTextBlock");
-                        if (textBlock is not null)
-                        {
-                            SelectDisplayTextBlock(textBlock);
+                        SelectDisplayTextBlock(textBlock);
 
-                            // Mark event as handled. Otherwise, the list view would handle the enter key event and select the list view item,
-                            // causing the text box to lose focus.
-                            e.Handled = true;
-                        }
+                        // Mark event as handled. Otherwise, the list view would handle the enter key event and select the list view item,
+                        // causing the text box to lose focus.
+                        e.Handled = true;
                     }
                 }
+            }
+        }
+        else if (e.Key == VirtualKey.Up || e.Key == VirtualKey.Down)
+        {
+            // Alt + Up/Down moves the selected component up or down
+            var altDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(CoreVirtualKeyStates.Down);
+            if (altDown)
+            {
+                int componentIndex = ComponentList.SelectedIndex;
+                int newComponentIndex = componentIndex + (e.Key == VirtualKey.Up ? -1 : 1);
+
+                if (newComponentIndex < 0 || newComponentIndex >= ViewModel.ComponentItems.Count)
+                {
+                    // New index would be outside the collection bounds, ignore the input.
+                    return;
+                }
+
+                // Update the list view to reflect the new order
+                ViewModel.ComponentItems.Move(componentIndex, newComponentIndex);
+
+                // Update the entity to reflect the new order
+                ViewModel.MoveComponentCommand.Execute((componentIndex, newComponentIndex));
+
+                e.Handled = true;
             }
         }
     }

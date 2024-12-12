@@ -54,6 +54,8 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     {
         PropertyList = string.Empty;
 
+        // Handle invalid resource / component index by clearing the displayed properties
+
         if (resource.IsEmpty)
         {
             ComponentType = string.Empty;
@@ -65,6 +67,22 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             ComponentType = string.Empty;
             return;
         }
+
+        var getCountResult = _entityService.GetComponentCount(resource);
+        if (getCountResult.IsFailure)
+        {
+            _logger.LogError($"Failed to get component count for resource: '{resource}'");
+            return;
+        }
+
+        int componentCount = getCountResult.Value;
+        if (componentIndex >= componentCount)
+        {
+            ComponentType = string.Empty;
+            return;
+        }
+
+        // Resource and component index are valid, so get the component info and display the properties
 
         var getResult = _entityService.GetComponentInfo(resource, componentIndex);
         if (getResult.IsFailure)
@@ -79,7 +97,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         var sb = new StringBuilder();
 
-        sb.AppendLine($"{resource}, {componentIndex}, {componentInfo.ComponentType}");
+        // sb.AppendLine($"{resource}, {componentIndex}, {componentInfo.ComponentType}");
         foreach (var property in componentInfo.Properties)
         {
             var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
