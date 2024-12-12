@@ -27,8 +27,8 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
     {
         _logger = logger;
 
-        messengerService.Register<ComponentTypeInputTextChangedMessage>(this, OnComponentTypeInputTextChangedMessage);
-        messengerService.Register<ComponentTypeEnteredMessage>(this, OnComponentTypeEnteredMessage);
+        messengerService.Register<ComponentTypeTextChangedMessage>(this, OnComponentTypeInputTextChangedMessage);
+        messengerService.Register<ComponentTypeTextEnteredMessage>(this, OnComponentTypeEnteredMessage);
 
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
@@ -65,7 +65,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         }
     }
 
-    private void OnComponentTypeInputTextChangedMessage(object recipient, ComponentTypeInputTextChangedMessage message)
+    private void OnComponentTypeInputTextChangedMessage(object recipient, ComponentTypeTextChangedMessage message)
     {
         var inputText = message.ComponentType;
 
@@ -122,7 +122,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedIndex));
     }
 
-    private void OnComponentTypeEnteredMessage(object recipient, ComponentTypeEnteredMessage message)
+    private void OnComponentTypeEnteredMessage(object recipient, ComponentTypeTextEnteredMessage message)
     {
         if (ComponentTypeList.Count == 0)
         {

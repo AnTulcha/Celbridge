@@ -64,7 +64,7 @@ public class InspectorService : IInspectorService, IDisposable
         InspectedResource = message.Resource;
         InspectedComponentIndex = -1;
 
-        var changedMessage = new InspectorTargetChangedMessage(InspectedResource, InspectedComponentIndex);
+        var changedMessage = new InspectedComponentChangedMessage(InspectedResource, InspectedComponentIndex);
         _messengerService.Send(changedMessage);
     }
 
@@ -72,7 +72,7 @@ public class InspectorService : IInspectorService, IDisposable
     {
         InspectedComponentIndex = message.componentIndex;
 
-        var changedMessage = new InspectorTargetChangedMessage(InspectedResource, InspectedComponentIndex);
+        var changedMessage = new InspectedComponentChangedMessage(InspectedResource, InspectedComponentIndex);
         _messengerService.Send(changedMessage);
     }
 

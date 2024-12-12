@@ -1,14 +1,14 @@
 namespace Celbridge.Inspector;
 
 /// <summary>
-/// A message sent when the selected component in the inspector changes.
+/// A message sent when the user has selected a component in the component list.
 /// </summary>
 public record SelectedComponentChangedMessage(int componentIndex);
 
 /// <summary>
-/// A message sent when the target item in the inspector changes.
+/// A message sent when the inspected component has changed.
 /// </summary>
-public record InspectorTargetChangedMessage(ResourceKey Resource, int ComponentIndex);
+public record InspectedComponentChangedMessage(ResourceKey Resource, int ComponentIndex);
 
 /// <summary>
 /// A message sent when the component panel edit mode changes.
@@ -16,13 +16,13 @@ public record InspectorTargetChangedMessage(ResourceKey Resource, int ComponentI
 public record ComponentPanelModeChangedMessage(ComponentPanelMode EditMode);
 
 /// <summary>
-/// A message sent the the component type input text changes.
-/// This is sent as the user enters text into the component type input box.
+/// A message sent when the component type input text changes.
+/// This message is sent as the user types text into the component type input box.
 /// </summary>
-public record ComponentTypeInputTextChangedMessage(string ComponentType);
+public record ComponentTypeTextChangedMessage(string ComponentType);
 
 /// <summary>
 /// A message sent when the user presses the enter key in the component type input box.
 /// </summary>
-public record ComponentTypeEnteredMessage();
+public record ComponentTypeTextEnteredMessage();
 

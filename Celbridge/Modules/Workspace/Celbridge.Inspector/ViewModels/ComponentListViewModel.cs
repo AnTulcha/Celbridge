@@ -346,18 +346,18 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         var componentType = ComponentItems[SelectedIndex].ComponentType;
 
-        NotifyComponentTypeInputTextChanged(componentType);
+        NotifyComponentTypeTextChanged(componentType);
     }
 
-    public void NotifyComponentTypeInputTextChanged(string inputText)
+    public void NotifyComponentTypeTextChanged(string inputText)
     {
-        var message = new ComponentTypeInputTextChangedMessage(inputText);
+        var message = new ComponentTypeTextChangedMessage(inputText);
         _messengerService.Send(message);
     }
 
-    public void NotifyComponentTypeEntered()
+    public void NotifyComponentTypeTextEntered()
     {
-        var message = new ComponentTypeEnteredMessage();
+        var message = new ComponentTypeTextEnteredMessage();
         _messengerService.Send(message);
     }
 }

@@ -28,11 +28,11 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
 
-        messengerService.Register<InspectorTargetChangedMessage>(this, OnInspectedResourceChangedMessage);
+        messengerService.Register<InspectedComponentChangedMessage>(this, OnInspectedResourceChangedMessage);
         messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
     }
 
-    private void OnInspectedResourceChangedMessage(object recipient, InspectorTargetChangedMessage message)
+    private void OnInspectedResourceChangedMessage(object recipient, InspectedComponentChangedMessage message)
     {
         var (resource, componentIndex) = message;
         PopulatePropertyList(resource, componentIndex);

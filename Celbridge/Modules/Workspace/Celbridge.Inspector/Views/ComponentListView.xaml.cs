@@ -258,7 +258,7 @@ public partial class ComponentListView : UserControl, IInspector
 
         if (e.Key == VirtualKey.Enter)
         {
-            ViewModel.NotifyComponentTypeEntered();
+            ViewModel.NotifyComponentTypeTextEntered();
             selectListItem = true;
         }
         else if (e.Key == VirtualKey.Escape)
@@ -288,7 +288,7 @@ public partial class ComponentListView : UserControl, IInspector
         Guard.IsNotNull(textBox);
 
         var text = textBox.Text;
-        ViewModel.NotifyComponentTypeInputTextChanged(text);
+        ViewModel.NotifyComponentTypeTextChanged(text);
     }
 
     private T? FindChild<T>(DependencyObject parent, string childName) where T : FrameworkElement
