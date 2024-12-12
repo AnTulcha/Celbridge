@@ -216,7 +216,6 @@ public partial class ComponentListView : UserControl, IInspector
             _focusCount--;
 
             ViewModel.IsEditingComponentType = _focusCount > 0;
-
         }
     }
 

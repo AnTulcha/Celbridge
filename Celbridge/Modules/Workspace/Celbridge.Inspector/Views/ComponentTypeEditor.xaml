@@ -23,7 +23,14 @@
     <Grid Grid.Row="1">
       <ListView Margin="6"
                 ItemsSource="{x:Bind ViewModel.ComponentTypeList}"
-                SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=OneWay}"/>
+                SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=OneWay}">
+        <ListView.ItemTemplate>
+          <DataTemplate>
+            <TextBlock Text="{Binding}" 
+                       Tapped="TextBlock_Tapped" />
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
     </Grid>
   </Grid>
   

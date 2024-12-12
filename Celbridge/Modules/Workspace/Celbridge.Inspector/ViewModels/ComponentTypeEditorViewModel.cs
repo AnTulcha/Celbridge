@@ -3,6 +3,7 @@ using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 
 namespace Celbridge.Inspector.ViewModels;
@@ -31,6 +32,35 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
 
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
+    }
+
+    public IRelayCommand<string> ComponentTypeClickedCommand => new RelayCommand<string>(ComponentTypeClickedCommandExecuted);
+    private void ComponentTypeClickedCommandExecuted(string componentType)
+    {
+        var resource = _inspectorService.InspectedResource;
+        var componentIndex = _inspectorService.InspectedComponentIndex;
+
+        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
+        if (getComponentResult.IsFailure)
+        {
+            _logger.LogError(getComponentResult.Error);
+            return;
+        }
+
+        var componentInfo = getComponentResult.Value;
+
+        if (componentInfo.ComponentType == componentType)
+        {
+            // No change required
+            return;
+        }
+
+        var replaceResult = _entityService.ReplaceComponent(resource, componentIndex, componentType);
+        if (replaceResult.IsFailure)
+        {
+            _logger.LogError(replaceResult.Error);
+            return;
+        }
     }
 
     private void OnComponentTypeInputTextChangedMessage(object recipient, ComponentTypeInputTextChangedMessage message)
