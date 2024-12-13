@@ -21,8 +21,8 @@
     </Grid>
 
     <Grid Grid.Row="1">
-      <TextBlock Margin="6"
-                 Text="{x:Bind ViewModel.PropertyList, Mode=OneWay}"/>
+      <StackPanel x:Name="PropertyForms"
+                  Margin="6"/>
     </Grid>
   </Grid>
 

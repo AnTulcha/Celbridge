@@ -16,6 +16,8 @@ public class InspectorService : IInspectorService, IDisposable
 
     public IInspectorFactory InspectorFactory { get; }
 
+    public IFormFactory FormFactory { get; }
+
     public ResourceKey InspectedResource { get; private set; }
 
     public int InspectedComponentIndex {  get; private set; }
@@ -52,6 +54,7 @@ public class InspectorService : IInspectorService, IDisposable
         _messengerService.Register<SelectedComponentChangedMessage>(this, OnSelectedComponentChangedMessage);
 
         InspectorFactory = _serviceProvider.GetRequiredService<IInspectorFactory>();
+        FormFactory = _serviceProvider.GetRequiredService<IFormFactory>();
     }
 
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)

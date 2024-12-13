@@ -3,7 +3,6 @@ using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Text;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -16,8 +15,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _componentType = string.Empty;
 
-    [ObservableProperty]
-    private string _propertyList = string.Empty;
+    public event Action<List<IForm>>? OnFormsCreated;
 
     public ComponentValueEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
@@ -52,7 +50,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
     private void PopulatePropertyList(ResourceKey resource, int componentIndex)
     {
-        PropertyList = string.Empty;
+        //PropertyList = string.Empty;
 
         // Handle invalid resource / component index by clearing the displayed properties
 
@@ -95,22 +93,32 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         ComponentType = componentTypeInfo.ComponentType;
 
-        var sb = new StringBuilder();
-
+        // var sb = new StringBuilder();
         // sb.AppendLine($"{resource}, {componentIndex}, {componentTypeInfo.ComponentType}");
+        //var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
+        //if (getValueResult.IsFailure)
+        //{
+        //    _logger.LogError($"Failed to get value: {property.PropertyName} ({property.PropertyType})");
+        //    continue;
+        //}
+        //var value = getValueResult.Value;
+        //sb.AppendLine($"{property.PropertyName} ({property.PropertyType}): {value}");
+        // PropertyList = sb.ToString();
+
+        List<IForm> propertyForms = new();
         foreach (var property in componentTypeInfo.Properties)
         {
-            var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
-            if (getValueResult.IsFailure)
+            var createResult = _inspectorService.FormFactory.CreatePropertyForm(resource, componentIndex, property.PropertyName);
+            if (createResult.IsFailure)
             {
-                _logger.LogError($"Failed to get value: {property.PropertyName} ({property.PropertyType})");
+                _logger.LogError($"Failed to create form for property '{property.PropertyName}' in resource '{resource}' at component index '{componentIndex}'");
                 continue;
             }
-            var value = getValueResult.Value;
+            var form = createResult.Value;
 
-            sb.AppendLine($"{property.PropertyName} ({property.PropertyType}): {value}");
+            propertyForms.Add(form);
         }
 
-        PropertyList = sb.ToString();
+        OnFormsCreated?.Invoke(propertyForms);
     }
 }

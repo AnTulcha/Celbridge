@@ -14,5 +14,18 @@ public sealed partial class ComponentValueEditor : UserControl
         ViewModel = serviceProvider.GetRequiredService<ComponentValueEditorViewModel>();
 
         DataContext = ViewModel;
+
+        ViewModel.OnFormsCreated += ViewModel_OnFormsCreated;
+    }
+
+    private void ViewModel_OnFormsCreated(List<IForm> forms)
+    {
+        PropertyForms.Children.Clear();
+
+        foreach (var form in forms)
+        {
+            var uiElement = form.FormUIElement as UIElement;
+            PropertyForms.Children.Add(uiElement);
+        }
     }
 }
