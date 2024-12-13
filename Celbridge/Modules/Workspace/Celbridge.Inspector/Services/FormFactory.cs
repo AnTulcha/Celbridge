@@ -1,4 +1,5 @@
 using Celbridge.Inspector.Models;
+using Celbridge.Inspector.Views;
 using Celbridge.Workspace;
 
 namespace Celbridge.Inspector.Services;
@@ -42,23 +43,20 @@ public class FormFactory : IFormFactory
         // Todo: Create a View for that property type
         // Todo: Return the View
 
-        // Todo: Use humaizer to format the property name
+        // Todo: Use humanizer to format the property name
 
         var header = propertyTypeInfo.PropertyName;
         var text = propertyTypeInfo.PropertyType;
 
-        return CreateStringForm(header, text);
+        return CreateStringForm(resource, componentIndex, propertyName);
     }
 
-    private Result<IForm> CreateStringForm(string header, string text)
+    private Result<IForm> CreateStringForm(ResourceKey resource, int componentIndex, string propertyName)
     {
-        var textBlock = new TextBox
-        {
-            Header = header,
-            FontSize = 16
-        };
+        var element = new StringForm();
+        element.ViewModel.Initialize(resource, componentIndex, propertyName);
 
-        var form = new Form(textBlock);
+        var form = new Form(element);
 
         return Result<IForm>.Ok(form);
     }
