@@ -50,19 +50,22 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
     private void PopulatePropertyList(ResourceKey resource, int componentIndex)
     {
-        // Handle invalid resource / component index by clearing the UI and returning
-
         List<IForm> propertyForms = new();
 
         if (resource.IsEmpty || 
             componentIndex < 0)
         {
-            _logger.LogError($"Invalid resource or component index");
+            // Setting the inpected item to an invalid resource or invalid component index
+            // is expected behaviour that indicates no component is currently being inspected.
+            // Clear the UI and return
 
             ComponentType = string.Empty;
             OnFormCreated?.Invoke(propertyForms);
             return;
         }
+
+        // The resource and component index appear to be valid, so we can attempt to get information
+        // about the component. If these queries fail, log the error and clear the UI.
 
         var getCountResult = _entityService.GetComponentCount(resource);
         if (getCountResult.IsFailure)
@@ -84,12 +87,10 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             return;
         }
 
-        // Resource and component index are valid, so get the component info and display the properties
-
         var getResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getResult.IsFailure)
         {
-            _logger.LogError($"Failed to get component info for resource '{resource}' at index '{componentIndex}'");
+            _logger.LogError($"Failed to get component type info for resource '{resource}' at index '{componentIndex}'");
 
             ComponentType = string.Empty;
             OnFormCreated?.Invoke(propertyForms);
@@ -101,7 +102,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         var componentTypeInfo = getResult.Value;
         ComponentType = componentTypeInfo.ComponentType;
 
-        // Populate the property form
+        // Populate the properties form with the properties of the component
 
         foreach (var property in componentTypeInfo.Properties)
         {
