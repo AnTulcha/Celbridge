@@ -14,5 +14,7 @@ public sealed partial class StringForm : UserControl
         ViewModel = serviceProvider.GetRequiredService<StringFormViewModel>();
 
         DataContext = ViewModel;
+
+        Unloaded += (s, e) => ViewModel.OnViewUnloaded();
     }
 }
