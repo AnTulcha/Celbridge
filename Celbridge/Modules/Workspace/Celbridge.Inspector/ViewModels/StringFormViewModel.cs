@@ -46,11 +46,11 @@ public partial class StringFormViewModel : ObservableObject
         // Read property into Value
         ReadProperty();
 
-        // Listening for component property changes
+        // Start listening for component changes and value changes
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+        PropertyChanged += OnPropertyChanged;
 
         // Listen for value changes (i.e. user entered text)
-        PropertyChanged += OnPropertyChanged;
 
         return Result.Ok();
     }
