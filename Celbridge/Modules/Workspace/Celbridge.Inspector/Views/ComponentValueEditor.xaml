@@ -22,7 +22,8 @@
 
     <Grid Grid.Row="1">
       <StackPanel x:Name="PropertyForms"
-                  Margin="6"/>
+                  Margin="6"
+                  Spacing="8"/>
     </Grid>
   </Grid>
 

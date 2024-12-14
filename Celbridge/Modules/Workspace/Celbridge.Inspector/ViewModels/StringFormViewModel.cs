@@ -1,10 +1,11 @@
-using System.ComponentModel;
 using Celbridge.Entities;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Humanizer;
+using System.ComponentModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
@@ -21,7 +22,10 @@ public partial class StringFormViewModel : ObservableObject
     public string PropertyName { get; private set; } = string.Empty;
 
     [ObservableProperty]
-    private string _value = string.Empty;
+    private string _valueText = string.Empty;
+
+    [ObservableProperty]
+    private string _headerText = string.Empty;
 
     private bool _ignoreComponentChangeMessage = false;
     private bool _ignoreValueChange = false;
@@ -45,7 +49,8 @@ public partial class StringFormViewModel : ObservableObject
         ComponentIndex = componentIndex;
         PropertyName = propertyName;
 
-        // Todo: Use humanizer to format the property name header
+        // Format the property name header as "Title Case"
+        HeaderText = propertyName.Humanize(LetterCasing.Title);
 
         // Read property into Value
         ReadProperty();
@@ -83,7 +88,7 @@ public partial class StringFormViewModel : ObservableObject
             return;
         }
 
-        if (e.PropertyName == nameof(Value))
+        if (e.PropertyName == nameof(ValueText))
         {
             // _logger.LogInformation("Value changed");
 
@@ -105,13 +110,13 @@ public partial class StringFormViewModel : ObservableObject
         var stringValue = getResult.Value;
 
         _ignoreValueChange = true;
-        Value = stringValue;
+        ValueText = stringValue;
         _ignoreValueChange = false;
     }
 
     private void WriteProperty()
     {
-        _entityService.SetProperty(Resource, ComponentIndex, PropertyName, Value);
+        _entityService.SetProperty(Resource, ComponentIndex, PropertyName, ValueText);
     }
 
     public void OnViewUnloaded()
