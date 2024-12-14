@@ -38,13 +38,6 @@ public class FormFactory : IFormFactory
         }
         var propertyTypeInfo = propertyTypeInfos[0];
 
-
-        // Todo: Create a ViewModel for that property type, that wraps the property value
-        // Todo: Create a View for that property type
-        // Todo: Return the View
-
-        // Todo: Use humanizer to format the property name
-
         var header = propertyTypeInfo.PropertyName;
         var text = propertyTypeInfo.PropertyType;
 
@@ -55,6 +48,7 @@ public class FormFactory : IFormFactory
     {
         var element = new StringForm();
         element.ViewModel.Initialize(resource, componentIndex, propertyName);
+        element.TabIndex = componentIndex;
 
         var form = new Form(element);
 
