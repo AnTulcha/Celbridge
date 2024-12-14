@@ -8,6 +8,6 @@
 
   <Grid>
     <TextBox Header="{x:Bind ViewModel.PropertyName}"
-             Text="{x:Bind ViewModel.Value, Mode=TwoWay, UpdateSourceTrigger=Default}"/>
+             Text="{x:Bind ViewModel.Value, Mode=TwoWay}"/>
   </Grid>
 </UserControl>

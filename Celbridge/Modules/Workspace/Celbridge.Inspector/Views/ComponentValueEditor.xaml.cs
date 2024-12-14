@@ -15,7 +15,7 @@ public sealed partial class ComponentValueEditor : UserControl
 
         DataContext = ViewModel;
 
-        ViewModel.OnFormsCreated += ViewModel_OnFormsCreated;
+        ViewModel.OnFormCreated += ViewModel_OnFormsCreated;
     }
 
     private void ViewModel_OnFormsCreated(List<IForm> forms)

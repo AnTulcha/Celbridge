@@ -15,7 +15,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _componentType = string.Empty;
 
-    public event Action<List<IForm>>? OnFormsCreated;
+    public event Action<List<IForm>>? OnFormCreated;
 
     public ComponentValueEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
@@ -50,19 +50,17 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
     private void PopulatePropertyList(ResourceKey resource, int componentIndex)
     {
-        //PropertyList = string.Empty;
+        // Handle invalid resource / component index by clearing the UI and returning
 
-        // Handle invalid resource / component index by clearing the displayed properties
+        List<IForm> propertyForms = new();
 
-        if (resource.IsEmpty)
+        if (resource.IsEmpty || 
+            componentIndex < 0)
         {
-            ComponentType = string.Empty;
-            return;
-        }
+            _logger.LogError($"Invalid resource or component index");
 
-        if (componentIndex < 0)
-        {
             ComponentType = string.Empty;
+            OnFormCreated?.Invoke(propertyForms);
             return;
         }
 
@@ -70,13 +68,19 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         if (getCountResult.IsFailure)
         {
             _logger.LogError($"Failed to get component count for resource: '{resource}'");
+
+            ComponentType = string.Empty;
+            OnFormCreated?.Invoke(propertyForms);
             return;
         }
 
         int componentCount = getCountResult.Value;
         if (componentIndex >= componentCount)
         {
+            _logger.LogError($"Component index '{componentIndex}' is out of range for resource '{resource}'");
+
             ComponentType = string.Empty;
+            OnFormCreated?.Invoke(propertyForms);
             return;
         }
 
@@ -85,27 +89,20 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         var getResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getResult.IsFailure)
         {
-            _logger.LogError($"Failed to get component info: {resource}, {componentIndex}");
+            _logger.LogError($"Failed to get component info for resource '{resource}' at index '{componentIndex}'");
+
+            ComponentType = string.Empty;
+            OnFormCreated?.Invoke(propertyForms);
             return;
         }
 
-        var componentTypeInfo = getResult.Value;
+        // Populate the Component Type in the panel header
 
+        var componentTypeInfo = getResult.Value;
         ComponentType = componentTypeInfo.ComponentType;
 
-        // var sb = new StringBuilder();
-        // sb.AppendLine($"{resource}, {componentIndex}, {componentTypeInfo.ComponentType}");
-        //var getValueResult = _entityService.GetPropertyAsJson(resource, componentIndex, $"/{property.PropertyName}");
-        //if (getValueResult.IsFailure)
-        //{
-        //    _logger.LogError($"Failed to get value: {property.PropertyName} ({property.PropertyType})");
-        //    continue;
-        //}
-        //var value = getValueResult.Value;
-        //sb.AppendLine($"{property.PropertyName} ({property.PropertyType}): {value}");
-        // PropertyList = sb.ToString();
+        // Populate the property form
 
-        List<IForm> propertyForms = new();
         foreach (var property in componentTypeInfo.Properties)
         {
             var createResult = _inspectorService.FormFactory.CreatePropertyForm(resource, componentIndex, property.PropertyName);
@@ -119,6 +116,6 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             propertyForms.Add(form);
         }
 
-        OnFormsCreated?.Invoke(propertyForms);
+        OnFormCreated?.Invoke(propertyForms);
     }
 }
