@@ -15,7 +15,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _componentType = string.Empty;
 
-    public event Action<List<IField>>? OnFromCreated;
+    public event Action<List<IField>>? OnFormCreated;
 
     public ComponentValueEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
@@ -64,7 +64,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             // Clear the UI and return
 
             ComponentType = string.Empty;
-            OnFromCreated?.Invoke(propertyFields);
+            OnFormCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -77,7 +77,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Failed to get component count for resource: '{resource}'");
 
             ComponentType = string.Empty;
-            OnFromCreated?.Invoke(propertyFields);
+            OnFormCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -87,7 +87,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Component index '{componentIndex}' is out of range for resource '{resource}'");
 
             ComponentType = string.Empty;
-            OnFromCreated?.Invoke(propertyFields);
+            OnFormCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -97,7 +97,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Failed to get component type info for resource '{resource}' at index '{componentIndex}'");
 
             ComponentType = string.Empty;
-            OnFromCreated?.Invoke(propertyFields);
+            OnFormCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -121,6 +121,6 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             propertyFields.Add(field);
         }
 
-        OnFromCreated?.Invoke(propertyFields);
+        OnFormCreated?.Invoke(propertyFields);
     }
 }
