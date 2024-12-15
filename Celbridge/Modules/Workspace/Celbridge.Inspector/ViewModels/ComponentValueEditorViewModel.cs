@@ -40,10 +40,14 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     {
         var resource = message.Resource;
         var componentIndex = message.ComponentIndex;
+        var propertyPath = message.PropertyPath;
 
         if (_inspectorService.InspectedResource == resource &&
-            _inspectorService.InspectedComponentIndex == componentIndex)
+            propertyPath == "/")
         {
+            // We need to repopulate the property list on all structural changes to the entity,
+            // because we can't assume that we're inspecting the same component as before, even if 
+            // the resource, component index and component type are still the same.
             PopulatePropertyList(resource, componentIndex);
         }
     }
