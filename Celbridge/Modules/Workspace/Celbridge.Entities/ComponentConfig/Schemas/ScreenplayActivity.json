@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "_componentType": {
+      "type": "string",
+      "const": "ScreenplayActivity"
+    },
+    "_componentVersion": {
+      "type": "integer",
+      "const": 1
+    }
+  },
+  "required": [
+    "_componentType",
+    "_componentVersion"
+  ],
+  "attributes": {
+    "allowMultipleComponents": false
+  },
+  "additionalProperties": false
+}
