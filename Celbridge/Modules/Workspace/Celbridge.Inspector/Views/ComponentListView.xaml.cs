@@ -86,6 +86,8 @@ public partial class ComponentListView : UserControl, IInspector
 
         if (e.Key == VirtualKey.D)
         {
+            // Duplicate selected component keyboard shortcut
+
             var controlDown = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control).HasFlag(CoreVirtualKeyStates.Down);
             if (controlDown)
             {

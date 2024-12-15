@@ -23,6 +23,8 @@ public sealed partial class StringField : UserControl
     {
         if (e.Key == VirtualKey.Enter)
         {
+            // Pressing enter moves focus to next property field
+
             var options = new FindNextElementOptions 
             { 
                 SearchRoot = ((UIElement)sender).XamlRoot!.Content 

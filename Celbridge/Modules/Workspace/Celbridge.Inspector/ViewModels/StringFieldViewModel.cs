@@ -59,8 +59,6 @@ public partial class StringFieldViewModel : ObservableObject
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
         PropertyChanged += OnPropertyChanged;
 
-        // Listen for value changes (i.e. user entered text)
-
         return Result.Ok();
     }
 
