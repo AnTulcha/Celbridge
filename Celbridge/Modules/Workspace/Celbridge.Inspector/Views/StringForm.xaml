@@ -9,6 +9,7 @@
   <Grid>
     <TextBox Header="{x:Bind ViewModel.HeaderText}"
              Text="{x:Bind ViewModel.ValueText, Mode=TwoWay}"
-             TextWrapping="Wrap"/>
+             TextWrapping="Wrap"
+             KeyDown="TextBox_KeyDown"/>
   </Grid>
 </UserControl>
