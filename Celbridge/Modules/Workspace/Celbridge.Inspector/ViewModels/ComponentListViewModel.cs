@@ -137,6 +137,17 @@ public partial class ComponentListViewModel : InspectorViewModel
             PopulateComponentList();
             return;
         }
+
+        if (ComponentItems.Count == 0)
+        {
+            // No items available to select
+            SelectedIndex = -1;
+        }
+        else
+        {
+            // Select the next item at the same index, or the last item if the last item was deleted
+            SelectedIndex = Math.Clamp(deleteIndex, 0, ComponentItems.Count - 1);
+        }
     }
 
     public ICommand DuplicateComponentCommand => new RelayCommand<object?>(DuplicateComponent_Executed, CanDuplicateComponent);
