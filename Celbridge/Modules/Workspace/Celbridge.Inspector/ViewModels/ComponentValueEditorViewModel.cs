@@ -15,7 +15,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
     [ObservableProperty]
     private string _componentType = string.Empty;
 
-    public event Action<List<IForm>>? OnFormCreated;
+    public event Action<List<IField>>? OnFromCreated;
 
     public ComponentValueEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
@@ -54,7 +54,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
     private void PopulatePropertyList(ResourceKey resource, int componentIndex)
     {
-        List<IForm> propertyForms = new();
+        List<IField> propertyFields = new();
 
         if (resource.IsEmpty || 
             componentIndex < 0)
@@ -64,7 +64,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             // Clear the UI and return
 
             ComponentType = string.Empty;
-            OnFormCreated?.Invoke(propertyForms);
+            OnFromCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -77,7 +77,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Failed to get component count for resource: '{resource}'");
 
             ComponentType = string.Empty;
-            OnFormCreated?.Invoke(propertyForms);
+            OnFromCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -87,7 +87,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Component index '{componentIndex}' is out of range for resource '{resource}'");
 
             ComponentType = string.Empty;
-            OnFormCreated?.Invoke(propertyForms);
+            OnFromCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -97,7 +97,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             _logger.LogError($"Failed to get component type info for resource '{resource}' at index '{componentIndex}'");
 
             ComponentType = string.Empty;
-            OnFormCreated?.Invoke(propertyForms);
+            OnFromCreated?.Invoke(propertyFields);
             return;
         }
 
@@ -106,21 +106,21 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         var componentTypeInfo = getResult.Value;
         ComponentType = componentTypeInfo.ComponentType;
 
-        // Populate the properties form with the properties of the component
+        // Construct the form by adding property fields one by one.
 
         foreach (var property in componentTypeInfo.Properties)
         {
-            var createResult = _inspectorService.FormFactory.CreatePropertyForm(resource, componentIndex, property.PropertyName);
+            var createResult = _inspectorService.FieldFactory.CreatePropertyField(resource, componentIndex, property.PropertyName);
             if (createResult.IsFailure)
             {
-                _logger.LogError($"Failed to create form for property '{property.PropertyName}' in resource '{resource}' at component index '{componentIndex}'");
+                _logger.LogError($"Failed to create field for property '{property.PropertyName}' in resource '{resource}' at component index '{componentIndex}'");
                 continue;
             }
-            var form = createResult.Value;
+            var field = createResult.Value;
 
-            propertyForms.Add(form);
+            propertyFields.Add(field);
         }
 
-        OnFormCreated?.Invoke(propertyForms);
+        OnFromCreated?.Invoke(propertyFields);
     }
 }

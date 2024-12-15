@@ -32,7 +32,7 @@ public interface IInspectorService
     IInspectorFactory InspectorFactory { get; }
 
     /// <summary>
-    /// A service for creating forms for editing component values.
+    /// A service for creating field UI elements for editing component values.
     /// </summary>
-    IFormFactory FormFactory { get; }
+    IFieldFactory FieldFactory { get; }
 }

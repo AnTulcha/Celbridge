@@ -9,9 +9,9 @@ using System.ComponentModel;
 
 namespace Celbridge.Inspector.ViewModels;
 
-public partial class StringFormViewModel : ObservableObject
+public partial class StringFieldViewModel : ObservableObject
 {
-    private ILogger<StringFormViewModel> _logger;
+    private ILogger<StringFieldViewModel> _logger;
     private IMessengerService _messengerService;
     private IEntityService _entityService;
 
@@ -30,8 +30,8 @@ public partial class StringFormViewModel : ObservableObject
     private bool _ignoreComponentChangeMessage = false;
     private bool _ignoreValueChange = false;
 
-    public StringFormViewModel(
-        ILogger<StringFormViewModel> logger,
+    public StringFieldViewModel(
+        ILogger<StringFieldViewModel> logger,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {

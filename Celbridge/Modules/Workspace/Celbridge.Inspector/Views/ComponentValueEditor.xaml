@@ -21,7 +21,7 @@
     </Grid>
 
     <Grid Grid.Row="1">
-      <StackPanel x:Name="PropertyForms"
+      <StackPanel x:Name="FormPanel"
                   Margin="6"
                   Spacing="8"/>
     </Grid>

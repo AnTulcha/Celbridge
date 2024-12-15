@@ -4,12 +4,12 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Inspector.Services;
 
-public class FormFactory : IFormFactory
+public class FieldFactory : IFieldFactory
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
-    public FormFactory(
+    public FieldFactory(
         IServiceProvider serviceProvider,
         IWorkspaceWrapper workspaceWrapper)
     {
@@ -17,7 +17,7 @@ public class FormFactory : IFormFactory
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public Result<IForm> CreatePropertyForm(ResourceKey resource, int componentIndex, string propertyName)
+    public Result<IField> CreatePropertyField(ResourceKey resource, int componentIndex, string propertyName)
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
@@ -25,7 +25,7 @@ public class FormFactory : IFormFactory
         var getInfoResult = entityService.GetComponentTypeInfo(resource, componentIndex);
         if (getInfoResult.IsFailure)
         {
-            return Result<IForm>.Fail($"Failed to get component type info for resource '{resource}' at component index '{componentIndex}'")
+            return Result<IField>.Fail($"Failed to get component type info for resource '{resource}' at component index '{componentIndex}'")
                 .WithErrors(getInfoResult);
         }
         var componentTypeInfo = getInfoResult.Value;
@@ -34,24 +34,26 @@ public class FormFactory : IFormFactory
         var propertyTypeInfos = componentTypeInfo.Properties.Where(p => p.PropertyName == propertyName).ToList();
         if (propertyTypeInfos.Count != 1)
         {
-            return Result<IForm>.Fail($"Failed to find component property '{propertyName}' for resource '{resource}' at component index '{componentIndex}'");
+            return Result<IField>.Fail($"Failed to find component property '{propertyName}' for resource '{resource}' at component index '{componentIndex}'");
         }
         var propertyTypeInfo = propertyTypeInfos[0];
 
         var header = propertyTypeInfo.PropertyName;
         var text = propertyTypeInfo.PropertyType;
 
-        return CreateStringForm(resource, componentIndex, propertyName);
+        // Todo: Handle other property types
+
+        return CreateStringField(resource, componentIndex, propertyName);
     }
 
-    private Result<IForm> CreateStringForm(ResourceKey resource, int componentIndex, string propertyName)
+    private Result<IField> CreateStringField(ResourceKey resource, int componentIndex, string propertyName)
     {
-        var element = new StringForm();
+        var element = new StringField();
         element.ViewModel.Initialize(resource, componentIndex, propertyName);
         element.TabIndex = componentIndex;
 
-        var form = new Form(element);
+        var field = new Field(element);
 
-        return Result<IForm>.Ok(form);
+        return Result<IField>.Ok(field);
     }
 }

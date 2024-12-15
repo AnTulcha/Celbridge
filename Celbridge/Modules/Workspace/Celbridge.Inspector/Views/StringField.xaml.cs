@@ -3,16 +3,16 @@ using Windows.System;
 
 namespace Celbridge.Inspector.Views;
 
-public sealed partial class StringForm : UserControl
+public sealed partial class StringField : UserControl
 {
-    public StringFormViewModel ViewModel { get; private set; }
+    public StringFieldViewModel ViewModel { get; private set; }
 
-    public StringForm()
+    public StringField()
     {
         this.InitializeComponent();
 
         var serviceProvider = ServiceLocator.ServiceProvider;
-        ViewModel = serviceProvider.GetRequiredService<StringFormViewModel>();
+        ViewModel = serviceProvider.GetRequiredService<StringFieldViewModel>();
 
         DataContext = ViewModel;
 
