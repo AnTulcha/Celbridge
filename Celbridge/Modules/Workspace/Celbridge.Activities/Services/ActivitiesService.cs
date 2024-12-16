@@ -1,14 +1,107 @@
+using System.ComponentModel.DataAnnotations;
+using Celbridge.Explorer;
 using Celbridge.Logging;
+using Celbridge.Messaging;
+using Celbridge.Projects;
+using Celbridge.Workspace;
 
 namespace Celbridge.Activities.Services;
 
 public class ActivitiesService : IActivitiesService, IDisposable
 {
     private ILogger<ActivitiesService> _logger;
+    private IMessengerService _messengerService;
+    private IProjectService _projectService;
+    private IWorkspaceWrapper _workspaceWrapper;
 
-    public ActivitiesService(ILogger<ActivitiesService> logger)
+    private ResourceKey _projectFileResource;
+
+    public ActivitiesService(
+        IMessengerService messengerService,
+        ILogger<ActivitiesService> logger,
+        IProjectService projectService,
+        IWorkspaceWrapper workspaceWrapper)
     {
+        _messengerService = messengerService;
         _logger = logger;
+        _projectService = projectService;
+        _workspaceWrapper = workspaceWrapper;
+
+        _messengerService.Register<ResourceKeyChangedMessage>(this, OnResourceKeyChangedMessage);
+    }
+
+    public async Task<Result> Initialize()
+    {
+        var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+
+        // Get the project resource
+
+        var projectPath = _projectService.CurrentProject!.ProjectFilePath;
+        var getResourceResult = resourceRegistry.GetResourceKey(projectPath);
+        if (getResourceResult.IsFailure)
+        {
+            return Result.Fail("Failed to get the project resource key")
+                .WithErrors(getResourceResult);
+        }
+        _projectFileResource = getResourceResult.Value;
+
+        // Update the list of project activities
+
+        var updateResult = await UpdateActivityList();
+
+        return Result.Ok();
+    }
+
+    private void OnResourceKeyChangedMessage(object recipient, ResourceKeyChangedMessage message)
+    {
+        if (message.SourceResource == _projectFileResource)
+        {
+            // Project file has been renamed or moved
+            _projectFileResource = message.DestResource;
+        }
+    }
+
+    private async Task<Result> UpdateActivityList()
+    {
+        var entityService = _workspaceWrapper.WorkspaceService.EntityService;
+
+        // Get the number of components on the project file resource
+        var getCountResult = entityService.GetComponentCount(_projectFileResource);
+        if (getCountResult.IsFailure)
+        {
+            return Result.Fail($"Failed to get component count for project file resource: '{_projectFileResource}'")
+                .WithErrors(getCountResult);
+        }
+        var componentCount = getCountResult.Value;
+
+        for (int i = 0; i < componentCount; i++)
+        {
+            var getInfoResult = entityService.GetComponentTypeInfo(_projectFileResource, i);
+            if (getInfoResult.IsFailure)
+            {
+                return Result.Fail($"Failed to get component info for component index '{i}' on project file resource: '{_projectFileResource}'")
+                    .WithErrors(getInfoResult);
+            }
+            var componentInfo = getInfoResult.Value;
+
+            bool isActivity = componentInfo.GetBooleanAttribute("isActivityComponent");
+            if (!isActivity)
+            {
+                // Todo: Ignore this for now, but it should not be possible to add non-activity components to the project file
+                continue;
+            }
+
+            var componentType = componentInfo.ComponentType;
+            var componentIndex = i;
+
+            // Todo: Instantiate the activity based on the activity component type: $"Activity.{componentType}"
+
+            _logger.LogInformation("Found activity component '{0}' at index '{1}'", componentType, componentIndex);
+        }
+
+        await Task.CompletedTask;
+
+        return Result.Ok();
     }
 
     private bool _disposed;

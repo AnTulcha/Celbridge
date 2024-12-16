@@ -15,7 +15,8 @@
     "_componentVersion"
   ],
   "attributes": {
-    "allowMultipleComponents": false
+    "allowMultipleComponents": false,
+    "isActivityComponent": true
   },
   "additionalProperties": false
 }

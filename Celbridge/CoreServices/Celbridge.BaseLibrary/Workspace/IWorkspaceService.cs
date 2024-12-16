@@ -1,3 +1,4 @@
+using Celbridge.Activities;
 using Celbridge.Console;
 using Celbridge.DataTransfer;
 using Celbridge.Documents;
@@ -69,6 +70,11 @@ public interface IWorkspaceService
     /// Returns the Generative AI Service associated with the workspace.
     /// </summary>
     IGenerativeAIService GenerativeAIService { get; }
+
+    /// <summary>
+    /// Returns the Activities Service associated with the workspace.
+    /// </summary>
+    IActivitiesService ActivitiesService { get; }
 
     /// <summary>
     /// The most recently focussed workspace panel.

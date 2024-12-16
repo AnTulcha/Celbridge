@@ -130,6 +130,18 @@ public class WorkspaceLoader
         await documentsService.StoreSelectedDocument();
         await documentsService.StoreOpenDocuments();
 
+
+        //
+        // Initialize the activities service
+        //
+        var activitiesService = workspaceService.ActivitiesService;
+        var initActivities = await activitiesService.Initialize();
+        if (initActivities.IsFailure)
+        {
+            return Result.Fail("Failed to initialize activities service")
+                .WithErrors(initActivities);
+        }
+
         //
         // Initialize console scripting support
         //
