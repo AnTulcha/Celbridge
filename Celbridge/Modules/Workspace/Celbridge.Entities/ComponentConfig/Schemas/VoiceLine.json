@@ -27,7 +27,8 @@
     "line"
   ],
   "attributes": {
-    "allowMultipleComponents": true
+    "allowMultipleComponents": true,
+    "activityName": "Screenplay"
   },
   "additionalProperties": false
 }
