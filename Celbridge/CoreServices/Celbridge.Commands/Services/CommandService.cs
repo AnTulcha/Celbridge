@@ -372,7 +372,7 @@ public class CommandService : ICommandService
             return Result.Ok();
         }
 
-        var flushResult = await _workspaceWrapper.WorkspaceService.FlushPendingSaves(deltaTime);
+        var flushResult = await _workspaceWrapper.WorkspaceService.FlushPendingSavesAsync(deltaTime);
         if (flushResult.IsFailure)
         {
             return Result.Fail($"Failed to flush pending saves")

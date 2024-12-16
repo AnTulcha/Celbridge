@@ -112,7 +112,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
         _workspaceStateIsDirty = true;
     }
 
-    public async Task<Result> FlushPendingSaves(double deltaTime)
+    public async Task<Result> FlushPendingSavesAsync(double deltaTime)
     {
         if (_workspaceStateIsDirty)
         {

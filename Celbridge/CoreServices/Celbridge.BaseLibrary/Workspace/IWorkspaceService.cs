@@ -88,5 +88,5 @@ public interface IWorkspaceService
     /// <summary>
     /// Save any pending workspace settings changes to disk.
     /// </summary>
-    Task<Result> FlushPendingSaves(double deltaTime);
+    Task<Result> FlushPendingSavesAsync(double deltaTime);
 }
