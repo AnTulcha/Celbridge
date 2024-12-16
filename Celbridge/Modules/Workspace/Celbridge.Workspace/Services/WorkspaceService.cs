@@ -1,3 +1,4 @@
+using Celbridge.Activities;
 using Celbridge.Console;
 using Celbridge.DataTransfer;
 using Celbridge.Documents;
@@ -32,6 +33,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
     public IDataTransferService DataTransferService { get; }
     public IEntityService EntityService { get; }
     public IGenerativeAIService GenerativeAIService { get; }
+    public IActivitiesService ActivitiesService { get; }
 
     public WorkspacePanel ActivePanel { get; set; }
 
@@ -60,6 +62,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
         DataTransferService = serviceProvider.GetRequiredService<IDataTransferService>();
         EntityService = serviceProvider.GetRequiredService<IEntityService>();
         GenerativeAIService = serviceProvider.GetRequiredService<IGenerativeAIService>();
+        ActivitiesService = serviceProvider.GetRequiredService<IActivitiesService>();
 
         //
         // Let the workspace settings service know where to find the workspace settings database
@@ -185,6 +188,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
                 (DataTransferService as IDisposable)!.Dispose();
                 (EntityService as IDisposable)!.Dispose();
                 (GenerativeAIService as IDisposable)!.Dispose();
+                (ActivitiesService as IDisposable)!.Dispose();
             }
 
             _disposed = true;

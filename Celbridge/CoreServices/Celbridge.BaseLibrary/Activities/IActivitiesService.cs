@@ -1,5 +1,5 @@
 namespace Celbridge.Activities;
 
-public interface IActivity
+public interface IActivitiesService
 {
 }

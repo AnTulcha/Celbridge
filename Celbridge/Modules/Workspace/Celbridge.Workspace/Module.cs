@@ -16,14 +16,15 @@ public class Extension : IModule
         // Register workspace sub-projects
         //
 
+        Activities.ServiceConfiguration.ConfigureServices(config);
         Console.ServiceConfiguration.ConfigureServices(config);
         Documents.ServiceConfiguration.ConfigureServices(config);
-        Explorer.ServiceConfiguration.ConfigureServices(config);
-        Inspector.ServiceConfiguration.ConfigureServices(config);
         Entities.ServiceConfiguration.ConfigureServices(config);
+        Explorer.ServiceConfiguration.ConfigureServices(config);
+        GenerativeAI.ServiceConfiguration.ConfigureServices(config);
+        Inspector.ServiceConfiguration.ConfigureServices(config);
         Scripting.ServiceConfiguration.ConfigureServices(config);
         Status.ServiceConfiguration.ConfigureServices(config);
-        GenerativeAI.ServiceConfiguration.ConfigureServices(config);
 
         //
         // Register services
