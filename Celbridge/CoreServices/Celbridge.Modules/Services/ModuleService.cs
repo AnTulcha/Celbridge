@@ -61,7 +61,7 @@ public class ModuleService : IModuleService
     {
         foreach (var module in _moduleLoader.LoadedModules.Values)
         {
-            if (module.SupportedActivities.Contains(activityName))
+            if (module.SupportsActivity(activityName))
             {
                 return true;
             }
@@ -74,7 +74,7 @@ public class ModuleService : IModuleService
     {
         foreach (var module in _moduleLoader.LoadedModules.Values)
         {
-            if (!module.SupportedActivities.Contains(activityName))
+            if (!module.SupportsActivity(activityName))
             {
                 continue;
             }

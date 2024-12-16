@@ -62,7 +62,7 @@ public class Module : IModule
         return Result.Ok();
     }
 
-    public IList<string> SupportedActivities { get; } = new List<string>();
+    public bool SupportsActivity(string activityName) => false;
 
     public Result<IActivity> CreateActivity(string activityName)
     {

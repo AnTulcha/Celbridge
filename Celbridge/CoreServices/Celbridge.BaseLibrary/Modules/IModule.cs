@@ -18,10 +18,7 @@ public interface IModule
     /// </summary>
     Result Initialize();
 
-    /// <summary>
-    /// Returns a list of activities supported by the module.
-    /// </summary>
-    IList<string> SupportedActivities { get; }
+    bool SupportsActivity(string activityName);
 
     /// <summary>
     /// Creates an instance of a supported activity.
