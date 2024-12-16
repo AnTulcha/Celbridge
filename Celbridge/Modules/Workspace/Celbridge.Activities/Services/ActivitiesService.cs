@@ -1,7 +1,7 @@
-using System.ComponentModel.DataAnnotations;
 using Celbridge.Explorer;
 using Celbridge.Logging;
 using Celbridge.Messaging;
+using Celbridge.Modules;
 using Celbridge.Projects;
 using Celbridge.Workspace;
 
@@ -12,19 +12,22 @@ public class ActivitiesService : IActivitiesService, IDisposable
     private ILogger<ActivitiesService> _logger;
     private IMessengerService _messengerService;
     private IProjectService _projectService;
+    private IModuleService _moduleService;
     private IWorkspaceWrapper _workspaceWrapper;
 
     private ResourceKey _projectFileResource;
 
     public ActivitiesService(
-        IMessengerService messengerService,
         ILogger<ActivitiesService> logger,
+        IMessengerService messengerService,
         IProjectService projectService,
+        IModuleService moduleService,
         IWorkspaceWrapper workspaceWrapper)
     {
-        _messengerService = messengerService;
         _logger = logger;
+        _messengerService = messengerService;
         _projectService = projectService;
+        _moduleService = moduleService;
         _workspaceWrapper = workspaceWrapper;
 
         _messengerService.Register<ResourceKeyChangedMessage>(this, OnResourceKeyChangedMessage);
@@ -94,9 +97,23 @@ public class ActivitiesService : IActivitiesService, IDisposable
             var componentType = componentInfo.ComponentType;
             var componentIndex = i;
 
-            // Todo: Instantiate the activity based on the activity component type: $"Activity.{componentType}"
+            // Instantiate the activity based on the activity component type: $"Activity.{componentType}"
 
-            _logger.LogInformation("Found activity component '{0}' at index '{1}'", componentType, componentIndex);
+            var activityName = componentType.Replace("Activity", string.Empty);
+
+            if (!_moduleService.IsActivitySupported(activityName))
+            {
+                _logger.LogError("Activity '{0}' is not supported by any loaded module.");
+                continue;
+            }
+
+            var createActivityResult = _moduleService.CreateActivity(activityName);
+            if (createActivityResult.IsFailure)
+            {
+                _logger.LogError("Failed to create activity '{0}'.", activityName);
+                continue;
+            }
+            var createdActivity = createActivityResult.Value;
         }
 
         await Task.CompletedTask;

@@ -1,3 +1,4 @@
+using Celbridge.Activities;
 using Celbridge.DataTransfer;
 using Celbridge.Modules;
 using Celbridge.Navigation;
@@ -8,7 +9,7 @@ using Celbridge.Workspace.Views;
 
 namespace Celbridge.Workspace;
 
-public class Extension : IModule
+public class Module : IModule
 {
     public void ConfigureServices(IModuleServiceCollection config)
     {
@@ -59,5 +60,12 @@ public class Extension : IModule
         navigationService.RegisterPage(nameof(WorkspacePage), typeof(WorkspacePage));
 
         return Result.Ok();
+    }
+
+    public IList<string> SupportedActivities { get; } = new List<string>();
+
+    public Result<IActivity> CreateActivity(string activityName)
+    {
+        return Result<IActivity>.Fail();
     }
 }
