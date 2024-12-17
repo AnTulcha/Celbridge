@@ -89,7 +89,7 @@ public class ActivityService : IActivityService, IDisposable
         // Update the inspected entity for each activity in the update list
         foreach (var activity in _pendingInspectorUpdates)
         {
-            var updateResult = await activity.UpdateInspectedEntity();
+            var updateResult = await activity.UpdateInspectedEntityAppearanceAsync();
             if (updateResult.IsFailure)
             {
                 _pendingInspectorUpdates.Clear();
