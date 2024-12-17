@@ -7,9 +7,9 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Activities.Services;
 
-public class ActivitiesService : IActivitiesService, IDisposable
+public class ActivityService : IActivityService, IDisposable
 {
-    private ILogger<ActivitiesService> _logger;
+    private ILogger<ActivityService> _logger;
     private IMessengerService _messengerService;
     private IProjectService _projectService;
     private IModuleService _moduleService;
@@ -17,8 +17,12 @@ public class ActivitiesService : IActivitiesService, IDisposable
 
     private ResourceKey _projectFileResource;
 
-    public ActivitiesService(
-        ILogger<ActivitiesService> logger,
+    private Dictionary<string, IActivity> _activities = new();
+
+    private List<IActivity> _pendingInspectorUpdates = new();
+
+    public ActivityService(
+        ILogger<ActivityService> logger,
         IMessengerService messengerService,
         IProjectService projectService,
         IModuleService moduleService,
@@ -48,9 +52,54 @@ public class ActivitiesService : IActivitiesService, IDisposable
         }
         _projectFileResource = getResourceResult.Value;
 
-        // Update the list of project activities
+        // Populate the list of supported activities
 
-        var updateResult = await UpdateActivityList();
+        var populateResult = await PopulateActivities();
+        if (populateResult.IsFailure)
+        {
+            return Result.Fail("Failed to populate activity list")
+                .WithErrors(populateResult);
+        }
+
+        return Result.Ok();
+    }
+
+    public Result RequestInpectorUpdate(string activityName)
+    {
+        if (!_activities.ContainsKey(activityName))
+        {
+            return Result.Fail($"Activity '{activityName}' does not exist");
+        }
+
+        var activity = _activities[activityName];
+
+        // Request an update on the inspected entity from the specified activity
+
+        if (!_pendingInspectorUpdates.Contains(activity))
+        {
+            // Todo: Sort the activities by priority, in case update order is important.
+            _pendingInspectorUpdates.Add(activity);
+        }
+
+        return Result.Ok();
+    }
+
+    public async Task<Result> UpdateActivities()
+    {
+        // Update the inspected entity for each activity in the update list
+        foreach (var activity in _pendingInspectorUpdates)
+        {
+            var updateResult = await activity.UpdateInspectedEntity();
+            if (updateResult.IsFailure)
+            {
+                _pendingInspectorUpdates.Clear();
+                return Result.Fail($"Failed to update inspected entity for activity '{activity.ActivityName}'")
+                    .WithErrors(updateResult);
+            }
+        }
+
+        // Reset the update list
+        _pendingInspectorUpdates.Clear();
 
         return Result.Ok();
     }
@@ -61,12 +110,17 @@ public class ActivitiesService : IActivitiesService, IDisposable
         {
             // Project file has been renamed or moved
             _projectFileResource = message.DestResource;
+
+            _ = PopulateActivities();
         }
     }
 
-    private async Task<Result> UpdateActivityList()
+    private async Task<Result> PopulateActivities()
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
+
+        // Todo: Call a Stop() method on existing activities to allow them to exit gracefully
+        _activities.Clear();
 
         // Get the number of components on the project file resource
         var getCountResult = entityService.GetComponentCount(_projectFileResource);
@@ -97,7 +151,7 @@ public class ActivitiesService : IActivitiesService, IDisposable
             var componentType = componentInfo.ComponentType;
             var componentIndex = i;
 
-            // Instantiate the activity based on the activity component type: $"Activity.{componentType}"
+            // Instantiate the activity based on the activity component type
 
             var activityName = componentType.Replace("Activity", string.Empty);
 
@@ -114,6 +168,14 @@ public class ActivitiesService : IActivitiesService, IDisposable
                 continue;
             }
             var createdActivity = createActivityResult.Value;
+
+            if (_activities.ContainsKey(activityName))
+            {
+                _logger.LogError($"Activity '{activityName}' already exists");
+                continue;
+            }
+
+            _activities[activityName] = createdActivity;
         }
 
         await Task.CompletedTask;
@@ -142,7 +204,7 @@ public class ActivitiesService : IActivitiesService, IDisposable
         }
     }
 
-    ~ActivitiesService()
+    ~ActivityService()
     {
         Dispose(false);
     }

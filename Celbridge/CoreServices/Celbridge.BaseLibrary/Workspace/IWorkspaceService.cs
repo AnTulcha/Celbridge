@@ -72,9 +72,9 @@ public interface IWorkspaceService
     IGenerativeAIService GenerativeAIService { get; }
 
     /// <summary>
-    /// Returns the Activities Service associated with the workspace.
+    /// Returns the Activity Service associated with the workspace.
     /// </summary>
-    IActivitiesService ActivitiesService { get; }
+    IActivityService ActivityService { get; }
 
     /// <summary>
     /// The most recently focussed workspace panel.

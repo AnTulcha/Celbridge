@@ -1,3 +1,4 @@
+using Celbridge.Activities;
 using Celbridge.Entities;
 using Celbridge.Inspector.Models;
 using Celbridge.Logging;
@@ -17,6 +18,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     private readonly IMessengerService _messengerService;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
+    private readonly IActivityService _activityService;
 
     public ObservableCollection<ComponentItem> ComponentItems { get; } = new();
 
@@ -41,6 +43,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         _messengerService = messengerService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
+        _activityService = workspaceWrapper.WorkspaceService.ActivityService;
 
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
 
@@ -291,6 +294,8 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         int previousIndex = SelectedIndex;
 
+        HashSet<string> activityNames = new();
+
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
@@ -306,6 +311,12 @@ public partial class ComponentListViewModel : InspectorViewModel
             if (componentType == "Empty")
             {
                 componentType = string.Empty;
+            }
+
+            var activityName = componentTypeInfo.GetStringAttribute("activityName");
+            if (!string.IsNullOrEmpty(activityName))
+            {
+                activityNames.Add(activityName);
             }
 
             var componentItem = new ComponentItem
@@ -325,6 +336,12 @@ public partial class ComponentListViewModel : InspectorViewModel
         else
         {
             SelectedIndex = Math.Clamp(previousIndex, 0, count - 1);
+        }
+
+        // Request an inspector update for each activity name referenced by a component
+        foreach (var activityName in activityNames)
+        {
+            _activityService.RequestInpectorUpdate(activityName);
         }
     }
 

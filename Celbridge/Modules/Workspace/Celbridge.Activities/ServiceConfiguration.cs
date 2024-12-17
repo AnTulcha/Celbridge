@@ -10,7 +10,7 @@ public static class ServiceConfiguration
         //
         // Register services
         //
-        config.AddTransient<IActivitiesService, ActivitiesService>();
+        config.AddTransient<IActivityService, ActivityService>();
 
         //
         // Register commands
