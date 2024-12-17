@@ -92,7 +92,7 @@ public interface IWorkspaceService
     void SetWorkspaceStateIsDirty();
 
     /// <summary>
-    /// Save any pending workspace settings changes to disk.
+    /// Update the workspace state, for example by saving any pending workspace or document changes to disk.
     /// </summary>
-    Task<Result> FlushPendingSavesAsync(double deltaTime);
+    Task<Result> UpdateWorkspaceAsync(double deltaTime);
 }
