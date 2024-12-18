@@ -11,12 +11,7 @@ public interface IActivityService
     Task<Result> Initialize();
 
     /// <summary>
-    /// Requests an inspector update on the inspected entity from the specified activity.
-    /// </summary>
-    Result RequestInpectorUpdate(string activityName);
-
-    /// <summary>
     /// Updates the activities in the workspace.
     /// </summary>
-    Task<Result> UpdateActivities();
+    Task<Result> UpdateActivitiesAsync();
 }

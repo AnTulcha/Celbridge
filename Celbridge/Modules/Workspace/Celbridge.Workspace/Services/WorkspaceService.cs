@@ -141,7 +141,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
                 .WithErrors(saveDocumentsResult);
         }
 
-        var updateActivities = await ActivityService.UpdateActivities();
+        var updateActivities = await ActivityService.UpdateActivitiesAsync();
 
         // Todo: Clear save icon on the status bar if there are no pending saves
 

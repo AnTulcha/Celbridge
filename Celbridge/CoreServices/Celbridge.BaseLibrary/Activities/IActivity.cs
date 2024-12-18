@@ -11,7 +11,7 @@ public interface IActivity
     string ActivityName { get; }
 
     /// <summary>
-    /// Updates the meta data for the inspected entity in the inspector.
+    /// Updates the activity.
     /// </summary>
-    Task<Result> UpdateInspectedEntityAppearanceAsync();
+    Task<Result> UpdateAsync();
 }

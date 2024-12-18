@@ -354,12 +354,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             SelectedIndex = Math.Clamp(previousIndex, 0, count - 1);
         }
-
-        // Request an inspector update for each activity name referenced by a component
-        foreach (var activityName in activityNames)
-        {
-            _activityService.RequestInpectorUpdate(activityName);
-        }
     }
 
     private void UpdateEditMode()

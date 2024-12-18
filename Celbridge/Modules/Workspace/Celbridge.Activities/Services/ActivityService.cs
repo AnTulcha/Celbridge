@@ -19,8 +19,6 @@ public class ActivityService : IActivityService, IDisposable
 
     private Dictionary<string, IActivity> _activities = new();
 
-    private List<IActivity> _pendingInspectorUpdates = new();
-
     public ActivityService(
         ILogger<ActivityService> logger,
         IMessengerService messengerService,
@@ -64,42 +62,19 @@ public class ActivityService : IActivityService, IDisposable
         return Result.Ok();
     }
 
-    public Result RequestInpectorUpdate(string activityName)
+    public async Task<Result> UpdateActivitiesAsync()
     {
-        if (!_activities.ContainsKey(activityName))
+        foreach (var kv in _activities)
         {
-            return Result.Fail($"Activity '{activityName}' does not exist");
-        }
+            var activity = kv.Value;
 
-        var activity = _activities[activityName];
-
-        // Request an update on the inspected entity from the specified activity
-
-        if (!_pendingInspectorUpdates.Contains(activity))
-        {
-            // Todo: Sort the activities by priority, in case update order is important.
-            _pendingInspectorUpdates.Add(activity);
-        }
-
-        return Result.Ok();
-    }
-
-    public async Task<Result> UpdateActivities()
-    {
-        // Update the inspected entity for each activity in the update list
-        foreach (var activity in _pendingInspectorUpdates)
-        {
-            var updateResult = await activity.UpdateInspectedEntityAppearanceAsync();
+            var updateResult = await activity.UpdateAsync();
             if (updateResult.IsFailure)
             {
-                _pendingInspectorUpdates.Clear();
-                return Result.Fail($"Failed to update inspected entity for activity '{activity.ActivityName}'")
+                return Result.Fail($"Failed to update activity '{activity.ActivityName}'")
                     .WithErrors(updateResult);
             }
         }
-
-        // Reset the update list
-        _pendingInspectorUpdates.Clear();
 
         return Result.Ok();
     }

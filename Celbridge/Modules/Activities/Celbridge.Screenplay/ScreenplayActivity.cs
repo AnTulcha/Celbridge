@@ -24,8 +24,10 @@ public class ScreenplayActivity : IActivity
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
     }
 
-    public async Task<Result> UpdateInspectedEntityAppearanceAsync()
+    public async Task<Result> UpdateAsync()
     {
+        // Todo: Put this into an UpdateInspectedEntityAsyc
+
         // Get the inspected entity's list of components
 
         var resource = _inspectorService.InspectedResource;
