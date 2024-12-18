@@ -24,6 +24,20 @@ public class ScreenplayActivity : IActivity
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
     }
 
+    public async Task<Result> Start()
+    {
+        await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+
+    public async Task<Result> Stop()
+    {
+        await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+
     public async Task<Result> UpdateAsync()
     {
         // Todo: Put this into an UpdateInspectedEntityAsyc

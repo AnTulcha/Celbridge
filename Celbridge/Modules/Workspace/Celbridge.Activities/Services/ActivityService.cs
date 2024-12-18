@@ -1,3 +1,4 @@
+using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Logging;
 using Celbridge.Messaging;
@@ -33,6 +34,19 @@ public class ActivityService : IActivityService, IDisposable
         _workspaceWrapper = workspaceWrapper;
 
         _messengerService.Register<ResourceKeyChangedMessage>(this, OnResourceKeyChangedMessage);
+        _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+    }
+
+    private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
+    {
+        var resource = message.Resource;
+        var propertyPath = message.PropertyPath;
+
+        if (resource == _projectFileResource &&
+            propertyPath == "/")
+        {
+            _ = PopulateRunningActivities();
+        }
     }
 
     public async Task<Result> Initialize()
@@ -52,7 +66,7 @@ public class ActivityService : IActivityService, IDisposable
 
         // Populate the list of supported activities
 
-        var populateResult = await PopulateActivities();
+        var populateResult = await PopulateRunningActivities();
         if (populateResult.IsFailure)
         {
             return Result.Fail("Failed to populate activity list")
@@ -64,16 +78,24 @@ public class ActivityService : IActivityService, IDisposable
 
     public async Task<Result> UpdateActivitiesAsync()
     {
-        foreach (var kv in _activities)
+        try
         {
-            var activity = kv.Value;
-
-            var updateResult = await activity.UpdateAsync();
-            if (updateResult.IsFailure)
+            foreach (var kv in _activities)
             {
-                return Result.Fail($"Failed to update activity '{activity.ActivityName}'")
-                    .WithErrors(updateResult);
+                var activity = kv.Value;
+
+                var updateResult = await activity.UpdateAsync();
+                if (updateResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to update activity '{activity.ActivityName}'")
+                        .WithErrors(updateResult);
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"An exception occurred while updating activities")
+                .WithException(ex);
         }
 
         return Result.Ok();
@@ -86,18 +108,15 @@ public class ActivityService : IActivityService, IDisposable
             // Project file has been renamed or moved
             _projectFileResource = message.DestResource;
 
-            _ = PopulateActivities();
+            _ = PopulateRunningActivities();
         }
     }
 
-    private async Task<Result> PopulateActivities()
+    private async Task<Result> PopulateRunningActivities()
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        // Todo: Call a Stop() method on existing activities to allow them to exit gracefully
-        _activities.Clear();
-
-        // Get the number of components on the project file resource
+        // Determine the set of required activities based on the project file entity components
         var getCountResult = entityService.GetComponentCount(_projectFileResource);
         if (getCountResult.IsFailure)
         {
@@ -105,6 +124,8 @@ public class ActivityService : IActivityService, IDisposable
                 .WithErrors(getCountResult);
         }
         var componentCount = getCountResult.Value;
+
+        var requiredActivityNames = new HashSet<string>();
 
         for (int i = 0; i < componentCount; i++)
         {
@@ -119,41 +140,66 @@ public class ActivityService : IActivityService, IDisposable
             bool isActivity = componentInfo.GetBooleanAttribute("isActivityComponent");
             if (!isActivity)
             {
-                // Todo: Ignore this for now, but it should not be possible to add non-activity components to the project file
-                continue;
+                // Ignore non-activity components
+                continue; 
             }
 
-            var componentType = componentInfo.ComponentType;
-            var componentIndex = i;
+            // Add this activity name to the list of required activities
 
-            // Instantiate the activity based on the activity component type
-
-            var activityName = componentType.Replace("Activity", string.Empty);
-
-            if (!_moduleService.IsActivitySupported(activityName))
-            {
-                _logger.LogError("Activity '{0}' is not supported by any loaded module.");
-                continue;
-            }
-
-            var createActivityResult = _moduleService.CreateActivity(activityName);
-            if (createActivityResult.IsFailure)
-            {
-                _logger.LogError("Failed to create activity '{0}'.", activityName);
-                continue;
-            }
-            var createdActivity = createActivityResult.Value;
-
-            if (_activities.ContainsKey(activityName))
-            {
-                _logger.LogError($"Activity '{activityName}' already exists");
-                continue;
-            }
-
-            _activities[activityName] = createdActivity;
+            var activityName = componentInfo.ComponentType.Replace("Activity", string.Empty);
+            requiredActivityNames.Add(activityName);
         }
 
-        await Task.CompletedTask;
+        // Stop and remove activities that are no longer required.
+        var runningActivityNames = _activities.Keys.ToList(); 
+        foreach (var activityName in runningActivityNames)
+        {
+            if (!requiredActivityNames.Contains(activityName))
+            {
+                if (_activities.TryGetValue(activityName, out var activity))
+                {
+                    var stopResult = await activity.Stop();
+                    if (stopResult.IsFailure)
+                    {
+                        return Result.Fail($"Failed to stop activity: '{activityName}'")
+                            .WithErrors(stopResult);
+                    }
+                    _activities.Remove(activityName);
+                }
+            }
+        }
+
+        // Todo: We probably shouldn't allow any activities to run until the project components are all configured correctly.
+
+        // Start new required activities
+        foreach (var activityName in requiredActivityNames)
+        {
+            if (!_activities.ContainsKey(activityName))
+            {
+                if (!_moduleService.IsActivitySupported(activityName))
+                {
+                    _logger.LogError($"Activity '{activityName}' is not supported by any loaded module.");
+                    continue;
+                }
+
+                var createActivityResult = _moduleService.CreateActivity(activityName);
+                if (createActivityResult.IsFailure)
+                {
+                    _logger.LogError($"Failed to create activity '{activityName}'.");
+                    continue;
+                }
+
+                var createdActivity = createActivityResult.Value;
+                _activities[activityName] = createdActivity;
+
+                var startResult = await createdActivity.Start();
+                if (startResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to start activity '{activityName}'")
+                        .WithErrors(startResult);
+                }
+            }
+        }
 
         return Result.Ok();
     }

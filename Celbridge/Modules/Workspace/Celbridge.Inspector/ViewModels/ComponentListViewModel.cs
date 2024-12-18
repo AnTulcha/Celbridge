@@ -45,17 +45,41 @@ public partial class ComponentListViewModel : InspectorViewModel
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
         _activityService = workspaceWrapper.WorkspaceService.ActivityService;
+    }
 
+    public void OnViewLoaded()
+    {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
         _messengerService.Register<UpdateComponentAppearanceMessage>(this, OnUpdateComponentAppearanceMessage);
 
-        PropertyChanged += EntityInspectorViewModel_PropertyChanged;
+        PropertyChanged += ViewModel_PropertyChanged;
+
+        PopulateComponentList();
+
+        // Send a message to populate the component editor in the inspector
+        OnPropertyChanged(nameof(SelectedIndex)); 
+    }
+
+    public void OnViewUnloaded()
+    {
+        _messengerService.Unregister<ComponentChangedMessage>(this);
+        _messengerService.Unregister<UpdateComponentAppearanceMessage>(this);
+
+        PropertyChanged -= ViewModel_PropertyChanged;
     }
 
     private void OnUpdateComponentAppearanceMessage(object recipient, UpdateComponentAppearanceMessage message)
     {
+        if (message.Resource != Resource)
+        {
+            // This message does not apply to the resource being presented by this ViewModel.
+            // This is probably because the user has just switched to inspecting a different resource and the ViewUnloaded
+            // callback has not yet been received to clean up this view model.
+            return;
+        }
+
         var index = message.ComponentIndex;
-        if (index < 0 && index >= ComponentItems.Count)
+        if (index < 0 || index >= ComponentItems.Count)
         {
             // Component index is out of range
             _logger.LogError($"Component index '{index}' is out of range for resource '{message.Resource}'");
@@ -65,14 +89,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         var description = message.Appearance.Description;
 
         ComponentItems[index].ComponentDescription = description;
-    }
-
-    public void OnViewLoaded()
-    {
-        PopulateComponentList();
-
-        // Send a message to populate the component editor in the inspector
-        OnPropertyChanged(nameof(SelectedIndex)); 
     }
 
     public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
@@ -284,7 +300,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
     }
 
-    private void EntityInspectorViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(SelectedIndex))
         {
