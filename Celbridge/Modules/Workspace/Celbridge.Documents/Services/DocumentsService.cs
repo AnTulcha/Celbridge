@@ -207,6 +207,15 @@ public class DocumentsService : IDocumentsService, IDisposable
         return Result.Ok();
     }
 
+    public Result SetDocumentContent(ResourceKey fileResource, string content)
+    {
+        // Todo: Update the document resource on disk
+        // Todo: Update the document view when the file on disk has been modified
+        // Preserve the current scroll bar position on a reload
+
+        return Result.Ok();
+    }
+
     public async Task<Result> SaveModifiedDocuments(double deltaTime)
     {
         var saveResult = await DocumentsPanel.SaveModifiedDocuments(deltaTime);

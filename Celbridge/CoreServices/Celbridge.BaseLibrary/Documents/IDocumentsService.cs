@@ -59,6 +59,13 @@ public interface IDocumentsService
     Result SelectDocument(ResourceKey fileResource);
 
     /// <summary>
+    /// Writes the content to the specified document.
+    /// If the document is open, the updated content is displayed in the document view.
+    /// The resource on disk will be updated regardless of whether the document is open or not.
+    /// </summary>
+    Result SetDocumentContent(ResourceKey fileResource, string content);
+
+    /// <summary>
     /// Save any modified documents to disk.
     /// This method is called on a timer to save modified documents at regular intervals.
     /// Delta time is the time since this method was last called.
