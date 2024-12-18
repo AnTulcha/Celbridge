@@ -26,17 +26,16 @@ public class ScreenplayActivity : IActivity
 
     public async Task<Result> UpdateInspectedEntityAppearanceAsync()
     {
-        // Get the inspected entity components
+        // Get the inspected entity's list of components
 
-        var inspectedResource = _inspectorService.InspectedResource;
-
-        if (inspectedResource.IsEmpty)
+        var resource = _inspectorService.InspectedResource;
+        if (resource.IsEmpty)
         {
             // Inspected resource has been cleared since the update was requested
             return Result.Ok();
         }
 
-        var getCountResult = _entityService.GetComponentCount(inspectedResource);
+        var getCountResult = _entityService.GetComponentCount(resource);
         if (getCountResult.IsFailure)
         {
             // Inspected resource may have been deleted or moved since the update was requested
@@ -44,14 +43,16 @@ public class ScreenplayActivity : IActivity
         }
         var componentCount = getCountResult.Value;
 
+        // Populate the component appearance for each component associated with this activity
+
         for (int i = 0; i < componentCount; i++)
         {
             // Check if the component's activityName property matches this activity's name
 
-            var getInfoResult = _entityService.GetComponentTypeInfo(inspectedResource, i);
+            var getInfoResult = _entityService.GetComponentTypeInfo(resource, i);
             if (getInfoResult.IsFailure)
             {
-                return Result.Fail(inspectedResource, $"Failed to get component info for component index '{i}' on inspected resource: '{inspectedResource}'")
+                return Result.Fail(resource, $"Failed to get component info for component index '{i}' on inspected resource: '{resource}'")
                     .WithErrors(getInfoResult);
             }
             var componentInfo = getInfoResult.Value;
@@ -60,22 +61,30 @@ public class ScreenplayActivity : IActivity
 
             if (activityName != ActivityName)
             {
-                // This component is not associated with this activity
+                // This component is not associated with this activity so we can ignore it
                 continue;
             }
 
-            if (componentInfo.ComponentType == "Scene")
+            Result<ComponentAppearance> getAppearanceResult = componentInfo.ComponentType switch
             {
-                UpdateSceneComponentAppearance(inspectedResource, i, componentInfo);
-            }
-            else if (componentInfo.ComponentType == "VoiceLine")
-            {
-                UpdateVoiceLineAppearance(inspectedResource, i, componentInfo);
-            }
-            else
+                "Scene" => GetSceneComponentAppearance(resource, i, componentInfo),
+                "VoiceLine" => GetVoiceLineAppearance(resource, i, componentInfo),
+                _ => Result<ComponentAppearance>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{componentInfo.ComponentType}'")
+            };
+
+            if (getAppearanceResult.IsFailure)
             {
                 // Todo: Display an error messsage in the ComponentDisplayProperties
-                _logger.LogError($"Screenplay activity does not support component type '{componentInfo.ComponentType}'");
+                _logger.LogError(getAppearanceResult.Error);
+                continue;
+            }
+            var componentAppearance = getAppearanceResult.Value;
+
+            var setAppearanceResult = _inspectorService.SetComponentAppearance(resource, i, componentAppearance);
+            if (setAppearanceResult.IsFailure)
+            {
+                return Result.Fail($"Failed to set component appearance for component index '{i}' on inspected resource: '{resource}'")
+                    .WithErrors(setAppearanceResult);
             }
         }
 
@@ -84,45 +93,49 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    private Result UpdateSceneComponentAppearance(ResourceKey inspectedResource, int i, ComponentTypeInfo componentInfo)
+    private Result<ComponentAppearance> GetSceneComponentAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getTitleResult = _entityService.GetProperty<String>(inspectedResource, i, "/sceneTitle");
+        var getTitleResult = _entityService.GetProperty<String>(resource, componentIndex, "/sceneTitle");
         if (getTitleResult.IsFailure)
         {
-            return Result.Fail().WithErrors(getTitleResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getTitleResult);
         }
         var sceneTitle = getTitleResult.Value;
 
-        var getDescriptionResult = _entityService.GetProperty<String>(inspectedResource, i, "/sceneDescription");
+        var getDescriptionResult = _entityService.GetProperty<String>(resource, componentIndex, "/sceneDescription");
         if (getDescriptionResult.IsFailure)
         {
-            return Result.Fail().WithErrors(getDescriptionResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getDescriptionResult);
         }
         var sceneDescription = getTitleResult.Value;
 
-        _logger.LogInformation($"Title: {sceneTitle}, Description: {sceneDescription}");
+        var componentDescription = $"{sceneTitle}: {sceneDescription}";
 
-        return Result.Ok();
+        var componentAppearance = new ComponentAppearance(componentDescription);
+
+        return Result<ComponentAppearance>.Ok(componentAppearance);
     }
 
-    private Result UpdateVoiceLineAppearance(ResourceKey inspectedResource, int i, ComponentTypeInfo componentInfo)
+    private Result<ComponentAppearance> GetVoiceLineAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getSpeakerResult = _entityService.GetProperty<String>(inspectedResource, i, "/speaker");
+        var getSpeakerResult = _entityService.GetProperty<String>(resource, componentIndex, "/speaker");
         if (getSpeakerResult.IsFailure)
         {
-            return Result.Fail().WithErrors(getSpeakerResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getSpeakerResult);
         }
         var speaker = getSpeakerResult.Value;
 
-        var getLineResult = _entityService.GetProperty<String>(inspectedResource, i, "/line");
+        var getLineResult = _entityService.GetProperty<String>(resource, componentIndex, "/line");
         if (getLineResult.IsFailure)
         {
-            return Result.Fail().WithErrors(getLineResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getLineResult);
         }
         var line = getLineResult.Value;
 
-        _logger.LogInformation($"Speaker: {speaker}, Line: {line}");
+        var componentDescription = $"Speaker: {speaker}, Line: {line}";
 
-        return Result.Ok();
+        var componentAppearance = new ComponentAppearance(componentDescription);
+
+        return Result<ComponentAppearance>.Ok(componentAppearance);
     }
 }

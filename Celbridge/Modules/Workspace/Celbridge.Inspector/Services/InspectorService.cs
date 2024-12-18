@@ -57,6 +57,15 @@ public class InspectorService : IInspectorService, IDisposable
         FieldFactory = _serviceProvider.GetRequiredService<IFieldFactory>();
     }
 
+    public Result SetComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance)
+    {
+        // Todo: Call SetComponentAppearance on the ComponentListViewModel
+
+        _logger.LogInformation($"{inspectedResource}, {componentIndex}, {appearance}");
+
+        return Result.Ok();
+    }
+
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)
     {
         _inspectorPanel = _serviceProvider.GetRequiredService<IInspectorPanel>();

@@ -35,4 +35,9 @@ public interface IInspectorService
     /// A service for creating field UI elements for editing component values.
     /// </summary>
     IFieldFactory FieldFactory { get; }
+
+    /// <summary>
+    /// Sets the appearance information (description, color, index, etc.) for a component in the inspector.
+    /// </summary>
+    Result SetComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance);
 }
