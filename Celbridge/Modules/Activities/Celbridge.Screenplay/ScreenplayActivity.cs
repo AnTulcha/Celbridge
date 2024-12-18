@@ -83,8 +83,8 @@ public class ScreenplayActivity : IActivity
 
             Result<ComponentAppearance> getAppearanceResult = componentInfo.ComponentType switch
             {
-                "Scene" => GetSceneComponentAppearance(resource, i, componentInfo),
-                "VoiceLine" => GetVoiceLineAppearance(resource, i, componentInfo),
+                "Scene" => GetSceneAppearance(resource, i, componentInfo),
+                "Line" => GetLineAppearance(resource, i, componentInfo),
                 _ => Result<ComponentAppearance>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{componentInfo.ComponentType}'")
             };
 
@@ -109,7 +109,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    private Result<ComponentAppearance> GetSceneComponentAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAppearance> GetSceneAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
         var getTitleResult = _entityService.GetProperty<String>(resource, componentIndex, "/sceneTitle");
         if (getTitleResult.IsFailure)
@@ -133,7 +133,7 @@ public class ScreenplayActivity : IActivity
         return Result<ComponentAppearance>.Ok(componentAppearance);
     }
 
-    private Result<ComponentAppearance> GetVoiceLineAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAppearance> GetLineAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
         var getSpeakerResult = _entityService.GetProperty<String>(resource, componentIndex, "/speaker");
         if (getSpeakerResult.IsFailure)
