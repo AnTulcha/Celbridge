@@ -113,6 +113,10 @@
               </Button>
             </Grid>
 
+            <Grid Grid.Column="1"
+                  Margin="6 0 0 0">
+              <TextBlock Text="{x:Bind ComponentDescription,Mode=OneWay}" />
+            </Grid>
           </Grid>
         </DataTemplate>
       </ListView.ItemTemplate>

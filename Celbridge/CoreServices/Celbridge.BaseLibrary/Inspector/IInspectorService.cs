@@ -39,5 +39,5 @@ public interface IInspectorService
     /// <summary>
     /// Sets the appearance information (description, color, index, etc.) for a component in the inspector.
     /// </summary>
-    Result SetComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance);
+    Result UpdateComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance);
 }

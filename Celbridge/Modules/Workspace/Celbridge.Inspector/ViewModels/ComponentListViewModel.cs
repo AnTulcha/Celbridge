@@ -1,6 +1,7 @@
 using Celbridge.Activities;
 using Celbridge.Entities;
 using Celbridge.Inspector.Models;
+using Celbridge.Inspector.Services;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -46,8 +47,24 @@ public partial class ComponentListViewModel : InspectorViewModel
         _activityService = workspaceWrapper.WorkspaceService.ActivityService;
 
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+        _messengerService.Register<UpdateComponentAppearanceMessage>(this, OnUpdateComponentAppearanceMessage);
 
         PropertyChanged += EntityInspectorViewModel_PropertyChanged;
+    }
+
+    private void OnUpdateComponentAppearanceMessage(object recipient, UpdateComponentAppearanceMessage message)
+    {
+        var index = message.ComponentIndex;
+        if (index < 0 && index >= ComponentItems.Count)
+        {
+            // Component index is out of range
+            _logger.LogError($"Component index '{index}' is out of range for resource '{message.Resource}'");
+            return;
+        }
+
+        var description = message.Appearance.Description;
+
+        ComponentItems[index].ComponentDescription = description;
     }
 
     public void OnViewLoaded()

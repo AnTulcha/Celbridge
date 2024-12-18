@@ -80,7 +80,7 @@ public class ScreenplayActivity : IActivity
             }
             var componentAppearance = getAppearanceResult.Value;
 
-            var setAppearanceResult = _inspectorService.SetComponentAppearance(resource, i, componentAppearance);
+            var setAppearanceResult = _inspectorService.UpdateComponentAppearance(resource, i, componentAppearance);
             if (setAppearanceResult.IsFailure)
             {
                 return Result.Fail($"Failed to set component appearance for component index '{i}' on inspected resource: '{resource}'")
@@ -107,8 +107,9 @@ public class ScreenplayActivity : IActivity
         {
             return Result<ComponentAppearance>.Fail().WithErrors(getDescriptionResult);
         }
-        var sceneDescription = getTitleResult.Value;
+        var sceneDescription = getDescriptionResult.Value;
 
+        // Todo: Use a localized string to format this
         var componentDescription = $"{sceneTitle}: {sceneDescription}";
 
         var componentAppearance = new ComponentAppearance(componentDescription);
@@ -132,7 +133,8 @@ public class ScreenplayActivity : IActivity
         }
         var line = getLineResult.Value;
 
-        var componentDescription = $"Speaker: {speaker}, Line: {line}";
+        // Todo: Use a localized string to format this
+        var componentDescription = $"{speaker}: {line}";
 
         var componentAppearance = new ComponentAppearance(componentDescription);
 

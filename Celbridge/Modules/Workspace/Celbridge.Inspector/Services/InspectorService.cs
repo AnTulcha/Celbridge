@@ -5,6 +5,8 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Inspector.Services;
 
+public record UpdateComponentAppearanceMessage(ResourceKey Resource, int ComponentIndex, ComponentAppearance Appearance);
+
 public class InspectorService : IInspectorService, IDisposable
 {
     private readonly ILogger<InspectorService> _logger;
@@ -57,11 +59,13 @@ public class InspectorService : IInspectorService, IDisposable
         FieldFactory = _serviceProvider.GetRequiredService<IFieldFactory>();
     }
 
-    public Result SetComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance)
+    public Result UpdateComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance)
     {
-        // Todo: Call SetComponentAppearance on the ComponentListViewModel
+        // _logger.LogInformation($"{inspectedResource}, {componentIndex}, {appearance}");
 
-        _logger.LogInformation($"{inspectedResource}, {componentIndex}, {appearance}");
+        // Update the component appearance in the ComponentListViewModel
+        var message = new UpdateComponentAppearanceMessage(inspectedResource, componentIndex, appearance);
+        _messengerService.Send(message);
 
         return Result.Ok();
     }
