@@ -125,7 +125,7 @@ public class ScreenplayActivity : IActivity
             var markdown = generateResult.Value;
 
             // Set the contents of the document to the generated markdown
-            var setContentResult = _documentService.SetDocumentContent(resource, markdown);
+            var setContentResult = _documentService.SetTextDocumentContent(resource, markdown);
             if (setContentResult.IsFailure)
             {
                 return Result.Fail($"Failed to set document content")
@@ -164,24 +164,24 @@ public class ScreenplayActivity : IActivity
 
     private Result<ComponentAppearance> GetLineAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getSpeakerResult = _entityService.GetProperty<String>(resource, componentIndex, "/speaker");
-        if (getSpeakerResult.IsFailure)
+        var getCharacterResult = _entityService.GetProperty<String>(resource, componentIndex, "/character");
+        if (getCharacterResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getSpeakerResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getCharacterResult);
         }
-        var speaker = getSpeakerResult.Value;
+        var character = getCharacterResult.Value;
 
-        var getLineResult = _entityService.GetProperty<String>(resource, componentIndex, "/line");
-        if (getLineResult.IsFailure)
+        var getSourceTextResult = _entityService.GetProperty<String>(resource, componentIndex, "/sourceText");
+        if (getSourceTextResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getLineResult);
+            return Result<ComponentAppearance>.Fail().WithErrors(getSourceTextResult);
         }
-        var line = getLineResult.Value;
+        var sourceText = getSourceTextResult.Value;
 
         // Todo: Use a localized string to format this
-        var componentDescription = $"{speaker}: {line}";
+        var description = $"{character}: {sourceText}";
 
-        var componentAppearance = new ComponentAppearance(componentDescription);
+        var componentAppearance = new ComponentAppearance(description);
 
         return Result<ComponentAppearance>.Ok(componentAppearance);
     }
@@ -215,9 +215,9 @@ public class ScreenplayActivity : IActivity
         if (getDescriptionResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get scene description")
-                .WithErrors(getTitleResult);
+                .WithErrors(getDescriptionResult);
         }
-        var sceneDescription = getTitleResult.Value;
+        var sceneDescription = getDescriptionResult.Value;
 
         var sb = new StringBuilder();
 
@@ -236,23 +236,29 @@ public class ScreenplayActivity : IActivity
 
         foreach (var lineComponentIndex in lineComponentIndices)
         {
-            var getSpeakerResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/speaker");
-            if (getSpeakerResult.IsFailure)
+            var getCharacterResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/character");
+            if (getCharacterResult.IsFailure)
             {
-                return Result<string>.Fail($"Failed to get speaker")
-                    .WithErrors(getSpeakerResult);
+                return Result<string>.Fail($"Failed to get character")
+                    .WithErrors(getCharacterResult);
             }
-            var speaker = getSpeakerResult.Value;
+            var character = getCharacterResult.Value;
 
-            var getLineResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/line");
-            if (getLineResult.IsFailure)
+            var getSourceTextResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/sourceText");
+            if (getSourceTextResult.IsFailure)
             {
-                return Result<string>.Fail($"Failed to get line")
-                    .WithErrors(getLineResult);
+                return Result<string>.Fail($"Failed to get source text")
+                    .WithErrors(getSourceTextResult);
             }
-            var line = getLineResult.Value;
+            var sourceText = getSourceTextResult.Value;
 
-            sb.AppendLine($"**{speaker}** {line}");
+            if (string.IsNullOrWhiteSpace(character) || string.IsNullOrWhiteSpace(sourceText))
+            {
+                continue;
+            }
+
+            sb.AppendLine($"**{character}**: {sourceText}");
+            sb.AppendLine();
         }
 
         var markdown = sb.ToString();

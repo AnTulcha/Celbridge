@@ -63,7 +63,7 @@ public interface IDocumentsService
     /// If the document is open, the updated content is displayed in the document view.
     /// The resource on disk will be updated regardless of whether the document is open or not.
     /// </summary>
-    Result SetDocumentContent(ResourceKey fileResource, string content);
+    Result SetTextDocumentContent(ResourceKey fileResource, string content);
 
     /// <summary>
     /// Save any modified documents to disk.

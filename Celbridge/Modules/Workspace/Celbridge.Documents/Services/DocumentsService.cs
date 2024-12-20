@@ -11,6 +11,8 @@ namespace Celbridge.Documents.Services;
 
 using IDocumentsLogger = Logging.ILogger<DocumentsService>;
 
+public record SetTextDocumentContentMessage(ResourceKey Resource, string Content);
+
 public class DocumentsService : IDocumentsService, IDisposable
 {
     private const string PreviousOpenDocumentsKey = "PreviousOpenDocuments";
@@ -207,11 +209,10 @@ public class DocumentsService : IDocumentsService, IDisposable
         return Result.Ok();
     }
 
-    public Result SetDocumentContent(ResourceKey fileResource, string content)
+    public Result SetTextDocumentContent(ResourceKey fileResource, string content)
     {
-        // Todo: Update the document resource on disk
-        // Todo: Update the document view when the file on disk has been modified
-        // Preserve the current scroll bar position on a reload
+        var message = new SetTextDocumentContentMessage(fileResource, content);
+        _messengerService.Send(message);
 
         return Result.Ok();
     }
