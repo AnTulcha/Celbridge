@@ -1,7 +1,15 @@
 {
   "_componentType": "Line",
   "_componentVersion": 1,
-  "speaker": "",
+  "dialogueKey": "",
+  "character": "",
+  "sourceText": "",
+  "contextNotes": "",
+  "linePriority": "",
   "speakingTo": "",
-  "line": ""
+  "gameArea": "",
+  "timeConstraint": "",
+  "direction": "",
+  "platform": "",
+  "productionStatus": ""
 }
