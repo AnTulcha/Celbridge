@@ -1,12 +1,12 @@
-using System.Text;
 using Celbridge.Activities;
 using Celbridge.Documents;
 using Celbridge.Entities;
 using Celbridge.Inspector;
 using Celbridge.Logging;
 using Celbridge.Workspace;
+using System.Text;
 
-namespace Celbridge.Screenplay;
+namespace Celbridge.Screenplay.Services;
 
 public class ScreenplayActivity : IActivity
 {
@@ -15,7 +15,7 @@ public class ScreenplayActivity : IActivity
     private readonly IInspectorService _inspectorService;
     private readonly IDocumentsService _documentService;
 
-    public string ActivityName => "Screenplay";
+    public string ActivityName => ScreenplayConstants.ScreenplayActivityName;
 
     public ScreenplayActivity(
         ILogger<ScreenplayActivity> logger,
@@ -63,7 +63,7 @@ public class ScreenplayActivity : IActivity
         }
         var componentCount = getCountResult.Value;
 
-        // Populate the component appearance for each component associated with this activity
+        // Populate the annotation data for each component associated with this activity
 
         bool hasScreenplayComponents = false;
 
@@ -89,26 +89,26 @@ public class ScreenplayActivity : IActivity
 
             hasScreenplayComponents = true;
 
-            Result<ComponentAppearance> getAppearanceResult = componentInfo.ComponentType switch
+            Result<ComponentAnnotation> getAnnotationResult = componentInfo.ComponentType switch
             {
-                "Scene" => GetSceneAppearance(resource, i, componentInfo),
-                "Line" => GetLineAppearance(resource, i, componentInfo),
-                _ => Result<ComponentAppearance>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{componentInfo.ComponentType}'")
+                ScreenplayConstants.SceneComponentType => GetSceneAnnotation(resource, i, componentInfo),
+                ScreenplayConstants.LineComponentType => GetLineAnnotation(resource, i, componentInfo),
+                _ => Result<ComponentAnnotation>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{componentInfo.ComponentType}'")
             };
 
-            if (getAppearanceResult.IsFailure)
+            if (getAnnotationResult.IsFailure)
             {
-                // Todo: Display an error messsage in the ComponentDisplayProperties
-                _logger.LogError(getAppearanceResult.Error);
+                // Todo: Display a user-facing error messsage via the annotation data instead of returning here
+                _logger.LogError(getAnnotationResult.Error);
                 continue;
             }
-            var componentAppearance = getAppearanceResult.Value;
+            var annotation = getAnnotationResult.Value;
 
-            var setAppearanceResult = _inspectorService.UpdateComponentAppearance(resource, i, componentAppearance);
-            if (setAppearanceResult.IsFailure)
+            var setAnnotationResult = _inspectorService.UpdateComponentAnnotation(resource, i, annotation);
+            if (setAnnotationResult.IsFailure)
             {
-                return Result.Fail($"Failed to set component appearance for component index '{i}' on inspected resource: '{resource}'")
-                    .WithErrors(setAppearanceResult);
+                return Result.Fail($"Failed to set annotation for component index '{i}' on inspected resource: '{resource}'")
+                    .WithErrors(setAnnotationResult);
             }
         }
 
@@ -138,57 +138,57 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    private Result<ComponentAppearance> GetSceneAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getTitleResult = _entityService.GetProperty<String>(resource, componentIndex, "/sceneTitle");
+        var getTitleResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.SceneComponentProperty_SceneTitle);
         if (getTitleResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getTitleResult);
+            return Result<ComponentAnnotation>.Fail().WithErrors(getTitleResult);
         }
         var sceneTitle = getTitleResult.Value;
 
-        var getDescriptionResult = _entityService.GetProperty<String>(resource, componentIndex, "/sceneDescription");
+        var getDescriptionResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.SceneComponentProperty_SceneDescription);
         if (getDescriptionResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getDescriptionResult);
+            return Result<ComponentAnnotation>.Fail().WithErrors(getDescriptionResult);
         }
         var sceneDescription = getDescriptionResult.Value;
 
         // Todo: Use a localized string to format this
         var componentDescription = $"{sceneTitle}: {sceneDescription}";
 
-        var componentAppearance = new ComponentAppearance(componentDescription);
+        var annotation = new ComponentAnnotation(componentDescription);
 
-        return Result<ComponentAppearance>.Ok(componentAppearance);
+        return Result<ComponentAnnotation>.Ok(annotation);
     }
 
-    private Result<ComponentAppearance> GetLineAppearance(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getCharacterResult = _entityService.GetProperty<String>(resource, componentIndex, "/character");
+        var getCharacterResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.LineComponentProperty_Character);
         if (getCharacterResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getCharacterResult);
+            return Result<ComponentAnnotation>.Fail().WithErrors(getCharacterResult);
         }
         var character = getCharacterResult.Value;
 
-        var getSourceTextResult = _entityService.GetProperty<String>(resource, componentIndex, "/sourceText");
+        var getSourceTextResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.LineComponentProperty_SourceText);
         if (getSourceTextResult.IsFailure)
         {
-            return Result<ComponentAppearance>.Fail().WithErrors(getSourceTextResult);
+            return Result<ComponentAnnotation>.Fail().WithErrors(getSourceTextResult);
         }
         var sourceText = getSourceTextResult.Value;
 
         // Todo: Use a localized string to format this
         var description = $"{character}: {sourceText}";
 
-        var componentAppearance = new ComponentAppearance(description);
+        var annotation = new ComponentAnnotation(description);
 
-        return Result<ComponentAppearance>.Ok(componentAppearance);
+        return Result<ComponentAnnotation>.Ok(annotation);
     }
 
     private Result<string> GenerateScreenplayMarkdown(ResourceKey resource)
     {
-        var getSceneResult = _entityService.GetComponentsOfType(resource, "Scene");
+        var getSceneResult = _entityService.GetComponentsOfType(resource, ScreenplayConstants.SceneComponentType);
         if (getSceneResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get Scene component")
@@ -203,7 +203,7 @@ public class ScreenplayActivity : IActivity
 
         var sceneComponentIndex = sceneIndices[0];
 
-        var getTitleResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, "/sceneTitle");
+        var getTitleResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, ScreenplayConstants.SceneComponentProperty_SceneTitle);
         if (getTitleResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get scene title")
@@ -211,7 +211,7 @@ public class ScreenplayActivity : IActivity
         }
         var sceneTitle = getTitleResult.Value;
 
-        var getDescriptionResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, "/sceneDescription");
+        var getDescriptionResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, ScreenplayConstants.SceneComponentProperty_SceneDescription);
         if (getDescriptionResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get scene description")
@@ -226,7 +226,7 @@ public class ScreenplayActivity : IActivity
         sb.AppendLine($"{sceneDescription}");
         sb.AppendLine();
 
-        var getLinesResult = _entityService.GetComponentsOfType(resource, "Line");
+        var getLinesResult = _entityService.GetComponentsOfType(resource, ScreenplayConstants.LineComponentType);
         if (getLinesResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get Line components")
@@ -236,7 +236,7 @@ public class ScreenplayActivity : IActivity
 
         foreach (var lineComponentIndex in lineComponentIndices)
         {
-            var getCharacterResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/character");
+            var getCharacterResult = _entityService.GetProperty<string>(resource, lineComponentIndex, ScreenplayConstants.LineComponentProperty_Character);
             if (getCharacterResult.IsFailure)
             {
                 return Result<string>.Fail($"Failed to get character")
@@ -244,7 +244,7 @@ public class ScreenplayActivity : IActivity
             }
             var character = getCharacterResult.Value;
 
-            var getSourceTextResult = _entityService.GetProperty<string>(resource, lineComponentIndex, "/sourceText");
+            var getSourceTextResult = _entityService.GetProperty<string>(resource, lineComponentIndex, ScreenplayConstants.LineComponentProperty_SourceText);
             if (getSourceTextResult.IsFailure)
             {
                 return Result<string>.Fail($"Failed to get source text")

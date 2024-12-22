@@ -1,6 +1,6 @@
 using Celbridge.Activities;
 using Celbridge.Modules;
-using Celbridge.Screenplay;
+using Celbridge.Screenplay.Services;
 
 namespace Celbridge.Workspace;
 

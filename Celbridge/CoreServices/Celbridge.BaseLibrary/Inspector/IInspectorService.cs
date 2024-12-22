@@ -37,7 +37,7 @@ public interface IInspectorService
     IFieldFactory FieldFactory { get; }
 
     /// <summary>
-    /// Sets the appearance information (description, color, index, etc.) for a component in the inspector.
+    /// Sets the annotation data for a component in the inspector.
     /// </summary>
-    Result UpdateComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance);
+    Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation);
 }

@@ -5,7 +5,7 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Inspector.Services;
 
-public record UpdateComponentAppearanceMessage(ResourceKey Resource, int ComponentIndex, ComponentAppearance Appearance);
+public record UpdateComponentAppearanceMessage(ResourceKey Resource, int ComponentIndex, ComponentAnnotation Appearance);
 
 public class InspectorService : IInspectorService, IDisposable
 {
@@ -59,7 +59,7 @@ public class InspectorService : IInspectorService, IDisposable
         FieldFactory = _serviceProvider.GetRequiredService<IFieldFactory>();
     }
 
-    public Result UpdateComponentAppearance(ResourceKey inspectedResource, int componentIndex, ComponentAppearance appearance)
+    public Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation appearance)
     {
         // _logger.LogInformation($"{inspectedResource}, {componentIndex}, {appearance}");
 
