@@ -234,6 +234,13 @@ public partial class ComponentListView : UserControl, IInspector
         {
             var parentGrid = (Grid)textBox.Parent;
 
+            if (parentGrid is null)
+            {
+                // Get a null parent here when the parent list view is destroyed while the text box has focus.
+                // This happens when switching the inspector to another resource while editing the component type text.
+                return;
+            }
+
             var textBlock = parentGrid.Children.OfType<TextBlock>().FirstOrDefault();
             if (textBlock != null)
             {
