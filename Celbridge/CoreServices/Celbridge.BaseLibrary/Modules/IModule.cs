@@ -18,6 +18,9 @@ public interface IModule
     /// </summary>
     Result Initialize();
 
+    /// <summary>
+    /// Returns true if the module supports the specified activity.
+    /// </summary>
     bool SupportsActivity(string activityName);
 
     /// <summary>

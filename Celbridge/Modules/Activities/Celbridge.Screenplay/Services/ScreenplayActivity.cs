@@ -117,7 +117,7 @@ public class ScreenplayActivity : IActivity
             }
             var annotation = getAnnotationResult.Value;
 
-            var setAnnotationResult = _inspectorService.UpdateComponentAnnotation(resource, i, annotation);
+            var setAnnotationResult = _inspectorService.SetComponentAnnotation(resource, i, annotation);
             if (setAnnotationResult.IsFailure)
             {
                 return Result.Fail($"Failed to set annotation for component index '{i}' on inspected resource: '{resource}'")

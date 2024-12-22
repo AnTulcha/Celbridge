@@ -39,5 +39,5 @@ public interface IInspectorService
     /// <summary>
     /// Sets the annotation data for a component in the inspector.
     /// </summary>
-    Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation);
+    Result SetComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation);
 }

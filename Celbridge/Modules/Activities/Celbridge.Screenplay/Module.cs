@@ -6,8 +6,6 @@ namespace Celbridge.Workspace;
 
 public class Module : IModule
 {
-    private const string ScreenplayActivityName = "Screenplay";
-
     public void ConfigureServices(IModuleServiceCollection config)
     {
         //
@@ -22,13 +20,13 @@ public class Module : IModule
         return Result.Ok();
     }
 
-    public bool SupportsActivity(string activityName) => activityName == ScreenplayActivityName;
+    public bool SupportsActivity(string activityName) => activityName == ScreenplayConstants.ScreenplayActivityName;
 
     public Result<IActivity> CreateActivity(string activityName)
     {
         var serviceProvider = ServiceLocator.ServiceProvider;
 
-        if (activityName == ScreenplayActivityName)
+        if (activityName == ScreenplayConstants.ScreenplayActivityName)
         {
             var activity = serviceProvider.GetRequiredService<ScreenplayActivity>();
             return Result<IActivity>.Ok(activity);

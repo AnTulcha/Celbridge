@@ -59,7 +59,7 @@ public class InspectorService : IInspectorService, IDisposable
         FieldFactory = _serviceProvider.GetRequiredService<IFieldFactory>();
     }
 
-    public Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation appearance)
+    public Result SetComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation appearance)
     {
         // _logger.LogInformation($"{inspectedResource}, {componentIndex}, {appearance}");
 
