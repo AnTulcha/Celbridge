@@ -113,7 +113,6 @@ public partial class App : Application
                     { 
                         "Celbridge.Workspace",
                         "Celbridge.Screenplay",
-                        //"Celbridge.Markdown" 
                     };
                     ModuleService.LoadModules(modules, services);
                 })
