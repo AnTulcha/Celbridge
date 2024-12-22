@@ -1,7 +1,7 @@
 namespace Celbridge.Activities;
 
 /// <summary>
-/// Represents a long running activity that can be performed in the workspace.
+/// Represents a long running activity that runs in the workspace.
 /// </summary>
 public interface IActivity
 {

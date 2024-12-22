@@ -59,9 +59,9 @@ public interface IDocumentsService
     Result SelectDocument(ResourceKey fileResource);
 
     /// <summary>
-    /// Writes the content to the specified document.
-    /// If the document is open, the updated content is displayed in the document view.
-    /// The resource on disk will be updated regardless of whether the document is open or not.
+    /// Writes text content to the specified file resource.
+    /// If the document is open for editing, the updated content is displayed in the document view.
+    /// The file on disk is updated regardless of whether the document is open for editing or not.
     /// </summary>
     Result SetTextDocumentContent(ResourceKey fileResource, string content);
 

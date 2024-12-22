@@ -1,7 +1,7 @@
 namespace Celbridge.Activities;
 
 /// <summary>
-/// Provides methods for managing long-running activities in the loaded workspace.
+/// A service that manages long-running activities in a workspace.
 /// </summary>
 public interface IActivityService
 {
