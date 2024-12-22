@@ -3,6 +3,7 @@ using Celbridge.Documents;
 using Celbridge.Entities;
 using Celbridge.Inspector;
 using Celbridge.Logging;
+using Celbridge.Messaging;
 using Celbridge.Workspace;
 using System.Text;
 
@@ -19,6 +20,7 @@ public class ScreenplayActivity : IActivity
 
     public ScreenplayActivity(
         ILogger<ScreenplayActivity> logger,
+        IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
@@ -26,6 +28,8 @@ public class ScreenplayActivity : IActivity
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _documentService = workspaceWrapper.WorkspaceService.DocumentsService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
+
+        messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
     }
 
     public async Task<Result> Start()
@@ -42,10 +46,19 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
+    private ResourceKey _cachedFileResource;
+
+    private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
+    {
+        if (message.Resource == _cachedFileResource)
+        {
+            // Regenerate the screenplay markdown on any property change to the inspected resource.
+            _cachedFileResource = ResourceKey.Empty;
+        }
+    }
+
     public async Task<Result> UpdateAsync()
     {
-        // Todo: Put this into an UpdateInspectedEntityAsyc
-
         // Get the inspected entity's list of components
 
         var resource = _inspectorService.InspectedResource;
@@ -114,7 +127,12 @@ public class ScreenplayActivity : IActivity
 
         if (hasScreenplayComponents)
         {
-            // Todo: Cache the generated markdown so that we only regenerate it when the component properties change
+            // Early out if the screenplay markdown is already up to date.
+            if (_cachedFileResource == resource)
+            {
+                return Result.Ok();
+            }
+            _cachedFileResource = ResourceKey.Empty;
 
             var generateResult = GenerateScreenplayMarkdown(resource);
             if (generateResult.IsFailure)
@@ -131,6 +149,8 @@ public class ScreenplayActivity : IActivity
                 return Result.Fail($"Failed to set document content")
                     .WithErrors(setContentResult);
             }
+
+            _cachedFileResource = resource;
         }
 
         await Task.CompletedTask;
