@@ -1,6 +1,8 @@
 using Celbridge.Entities.Models;
 using System.Text.Json.Nodes;
 
+using Path = System.IO.Path;
+
 namespace Celbridge.Entities.Services;
 
 public class ComponentPrototypeRegistry
@@ -20,17 +22,19 @@ public class ComponentPrototypeRegistry
             var prototypeFiles = await prototypesFolder.GetFilesAsync();
             foreach (var prototypeFile in prototypeFiles)
             {
-                var prototypeJson = await FileIO.ReadTextAsync(prototypeFile);
-
                 // Get the component schema specified in the protype JSON
 
-                var getResult = componentSchemaRegistry.GetComponentSchemaFromJson(prototypeJson);
+                var componentType = Path.GetFileNameWithoutExtension(prototypeFile.Path);
+
+                var getResult = componentSchemaRegistry.GetSchemaForComponentType(componentType);
                 if (getResult.IsFailure)
                 {
                     return Result.Fail($"Failed to get component schema for component prototype: {prototypeFile.DisplayName}")
                         .WithErrors(getResult);
                 }
                 var componentSchema = getResult.Value;
+
+                var prototypeJson = await FileIO.ReadTextAsync(prototypeFile);
 
                 // Validate the prototype JSON against the schema
 
@@ -45,16 +49,6 @@ public class ComponentPrototypeRegistry
                 if (prototypeJsonNode is not JsonObject prototypeJsonObject)
                 {
                     return Result.Fail("Failed to parse component prototype as a JSON object");
-                }
-
-                // Get the component type
-
-                var componentTypeValue = prototypeJsonNode["_componentType"] as JsonValue;
-                if (componentTypeValue is null ||
-                    !componentTypeValue.TryGetValue(out string? componentType) ||
-                    string.IsNullOrEmpty(componentType))
-                {
-                    return Result.Fail("Component type is missing or empty");
                 }
 
                 // Create and register the prototype

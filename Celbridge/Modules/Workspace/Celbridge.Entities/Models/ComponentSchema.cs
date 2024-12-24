@@ -1,4 +1,3 @@
-using Json.More;
 using Json.Pointer;
 using Json.Schema;
 using System.Text.Json;
@@ -107,7 +106,7 @@ public class ComponentSchema
                 }
             }
 
-            var componentTypeInfo = new ComponentTypeInfo(componentType, componentAttributes, componentProperties);
+            var componentTypeInfo = new ComponentTypeInfo(componentType, componentVersion, componentAttributes, componentProperties);
 
             // Create the JsonSchema object
 
