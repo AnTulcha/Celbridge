@@ -394,7 +394,16 @@ public class EntityService : IEntityService, IDisposable
             return Result<ComponentTypeInfo>.Fail($"Failed to get component type for component at index '{componentIndex}' for resource: {resource}")
                 .WithErrors(getTypeResult);
         }
-        var componentType = getTypeResult.Value;
+        var typeAndVersion = getTypeResult.Value;
+
+        var parseResult = EntityUtils.ParseComponentTypeAndVersion(typeAndVersion);
+        if (parseResult.IsFailure)
+        {
+            return Result<ComponentTypeInfo>.Fail($"Failed to parse component type and version: {typeAndVersion}")
+                .WithErrors(parseResult);
+        }
+
+        var (componentType, _) = parseResult.Value;
 
         // Get the component schema
 

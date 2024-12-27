@@ -1,3 +1,4 @@
+using Celbridge.Entities.Services;
 using Json.Pointer;
 using Json.Schema;
 using System.Text.Json;
@@ -8,7 +9,6 @@ namespace Celbridge.Entities.Models;
 public class ComponentSchema
 {
     private const string ComponentTypeConstKey = "/properties/_componentType/const";
-    private const string ComponentVersionConstKey = "/properties/_componentVersion/const";
     private const string AttributesKey = "attributes";
     private const string PropertiesKey = "properties";
     private const string TypeKey = "type";
@@ -39,7 +39,7 @@ public class ComponentSchema
                 return Result<ComponentSchema>.Fail("Failed to parse schema JSON as an object");
             }
 
-            // Get component type
+            // Get component type and version
 
             var componentTypePointer = JsonPointer.Parse(ComponentTypeConstKey);
             var componentTypeElement = componentTypePointer.Evaluate(root);
@@ -50,23 +50,19 @@ public class ComponentSchema
                 return Result<ComponentSchema>.Fail("Component type element is not valid");
             }
 
-            var componentType = componentTypeElement.Value.GetString();
-            if (string.IsNullOrEmpty(componentType))
+            var typeAndVersion = componentTypeElement.Value.GetString();
+            if (string.IsNullOrEmpty(typeAndVersion))
             {
                 return Result<ComponentSchema>.Fail("Component type is empty");
             }
 
-            // Get component version 
-            
-            var componentVersionPointer = JsonPointer.Parse(ComponentVersionConstKey);
-            var componentVersionElement = componentVersionPointer.Evaluate(root);
-
-            if (componentVersionElement is null ||
-                componentVersionElement.Value.ValueKind != JsonValueKind.Number)
+            var parseResult = EntityUtils.ParseComponentTypeAndVersion(typeAndVersion);
+            if (parseResult.IsFailure)
             {
-                return Result<ComponentSchema>.Fail("Component version element is not valid");
+                return Result<ComponentSchema>.Fail($"Failed to parse component type and version: {typeAndVersion}");
             }
-            var componentVersion = componentVersionElement.Value.GetInt32();
+
+            var (componentType, componentVersion) = parseResult.Value;
 
             // Populate the component info
 

@@ -3,11 +3,7 @@
   "properties": {
     "_componentType": {
       "type": "string",
-      "const": "Scene"
-    },
-    "_componentVersion": {
-      "type": "integer",
-      "const": 1
+      "const": "Scene#1"
     },
     "sceneTitle": {
       "type": "string"
@@ -18,7 +14,6 @@
   },
   "required": [
     "_componentType",
-    "_componentVersion",
     "sceneTitle",
     "sceneDescription"
   ],
