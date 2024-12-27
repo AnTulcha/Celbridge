@@ -14,5 +14,9 @@
     "_componentType",
     "editorMode"
   ],
+  "prototype":
+  {
+    "editorMode": "EditorAndPreview"
+  },
   "additionalProperties": false
 }

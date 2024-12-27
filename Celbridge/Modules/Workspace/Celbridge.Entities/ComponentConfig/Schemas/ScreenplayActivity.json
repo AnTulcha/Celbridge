@@ -9,6 +9,7 @@
   "required": [
     "_componentType"
   ],
+  "prototype": {},
   "attributes": {
     "allowMultipleComponents": false,
     "isActivityComponent": true

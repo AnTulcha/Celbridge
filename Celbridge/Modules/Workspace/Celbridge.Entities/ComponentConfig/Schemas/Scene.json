@@ -17,6 +17,10 @@
     "sceneTitle",
     "sceneDescription"
   ],
+  "prototype": {
+    "sceneTitle": "",
+    "sceneDescription": ""
+  },
   "attributes": {
     "activityName": "Screenplay"
   },

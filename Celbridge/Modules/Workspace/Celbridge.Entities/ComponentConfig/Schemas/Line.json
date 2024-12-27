@@ -53,6 +53,19 @@
     "platform",
     "productionStatus"
   ],
+  "prototype": {
+    "dialogueKey": "",
+    "character": "",
+    "sourceText": "",
+    "contextNotes": "",
+    "linePriority": "",
+    "speakingTo": "",
+    "gameArea": "",
+    "timeConstraint": "",
+    "direction": "",
+    "platform": "",
+    "productionStatus": ""
+  },
   "attributes": {
     "allowMultipleComponents": true,
     "activityName": "Screenplay"
