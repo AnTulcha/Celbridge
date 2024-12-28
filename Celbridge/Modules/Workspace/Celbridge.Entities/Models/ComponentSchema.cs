@@ -63,9 +63,9 @@ public class ComponentSchema
             var parseResult = EntityUtils.ParseComponentTypeAndVersion(typeAndVersion);
             if (parseResult.IsFailure)
             {
-                return Result<ComponentSchema>.Fail($"Failed to parse component type and version: {typeAndVersion}");
+                return Result<ComponentSchema>.Fail($"Failed to parse component type and version: {typeAndVersion}")
+                    .WithErrors(parseResult);
             }
-
             var (componentType, componentVersion) = parseResult.Value;
 
             // Populate the component info
