@@ -327,8 +327,6 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         int previousIndex = SelectedIndex;
 
-        HashSet<string> activityNames = new();
-
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
@@ -344,12 +342,6 @@ public partial class ComponentListViewModel : InspectorViewModel
             if (componentType == "Empty")
             {
                 componentType = string.Empty;
-            }
-
-            var activityName = componentTypeInfo.GetStringAttribute("activityName");
-            if (!string.IsNullOrEmpty(activityName))
-            {
-                activityNames.Add(activityName);
             }
 
             var componentItem = new ComponentItem
