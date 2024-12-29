@@ -163,6 +163,7 @@ public class EntityData
             // The patched component has passed validation, so we can now update the entity.
             EntityJsonObject = patchedJsonObject;
 
+            // Update the entity tags if the component structure has changed
             if (componentChange.PropertyPath == "/")
             {
                 var getTagsResult = EntityUtils.GetAllComponentTags(EntityJsonObject, schemaRegistry);
