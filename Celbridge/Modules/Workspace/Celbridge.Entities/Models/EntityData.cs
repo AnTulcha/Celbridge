@@ -163,6 +163,17 @@ public class EntityData
             // The patched component has passed validation, so we can now update the entity.
             EntityJsonObject = patchedJsonObject;
 
+            if (componentChange.PropertyPath == "/")
+            {
+                var getTagsResult = EntityUtils.GetAllComponentTags(EntityJsonObject, schemaRegistry);
+                if (getTagsResult.IsFailure)
+                {
+                    return Result<PatchSummary>.Fail($"Failed to get component tags for entity: {resource}")
+                        .WithErrors(getTagsResult);
+                }
+                Tags.ReplaceWith(getTagsResult.Value);
+            }
+
             var patchSummary = new PatchSummary(operation, reverseOperation, componentChange, undoGroupId);
             return Result<PatchSummary>.Ok(patchSummary);
         }
