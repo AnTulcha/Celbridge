@@ -370,6 +370,11 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             SelectedIndex = Math.Clamp(previousIndex, 0, count - 1);
         }
+
+        // Notify running activities that the component list has been populated, so that
+        // they may add annotations to present component information in the inspector. 
+        var message = new PopulatedComponentListMessage(Resource);
+        _messengerService.Send(message);
     }
 
     private void UpdateEditMode()
