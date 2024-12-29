@@ -66,6 +66,7 @@
     "platform": "",
     "productionStatus": ""
   },
+  "tags": [ "Screenplay" ],
   "attributes": {
     "allowMultipleComponents": true,
     "activityName": "Screenplay"

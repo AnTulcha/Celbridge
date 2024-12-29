@@ -12,16 +12,18 @@ public class EntityData
 {
     public JsonObject EntityJsonObject { get; private set; }
     public JsonSchema EntitySchema { get; }
+    public HashSet<string> Tags { get; }
 
-    private EntityData(JsonObject jsonObject, JsonSchema entitySchema)
+    private EntityData(JsonObject jsonObject, JsonSchema entitySchema, HashSet<string> tags)
     {
         EntityJsonObject = jsonObject;
         EntitySchema = entitySchema;
+        Tags = tags;
     }
 
-    public static EntityData Create(JsonObject jsonObject, JsonSchema entitySchema)
+    public static EntityData Create(JsonObject jsonObject, JsonSchema entitySchema, HashSet<string> tags)
     {
-        return new EntityData(jsonObject, entitySchema);
+        return new EntityData(jsonObject, entitySchema, tags);
     }
 
     public Result<T> GetProperty<T>(JsonPointer propertyPointer)
@@ -128,7 +130,7 @@ public class EntityData
             bool isAddComponentOperation = operation.Path.Count == 2 && operation.Op == OperationType.Add;
             if (isAddComponentOperation)
             {
-                var checkMultipleResult = EntityUtils.CheckMultipleComponents(patchedJsonObject, componentChange.ComponentType, schemaRegistry);
+                var checkMultipleResult = EntityUtils.ValidateMultipleComponents(patchedJsonObject, componentChange.ComponentType, schemaRegistry);
                 if (checkMultipleResult.IsFailure)
                 {
                     return Result<PatchSummary>.Fail($"Component type does not allow multiple components: '{componentChange.ComponentType}'")
@@ -141,7 +143,7 @@ public class EntityData
             bool isRemoveComponentOperation = operation.Path.Count == 2 && operation.Op == OperationType.Remove;
             if (!isRemoveComponentOperation)
             {
-                var checkSchemaResult = EntityUtils.CheckComponentSchema(patchedJsonObject, componentChange.ComponentIndex, schemaRegistry);
+                var checkSchemaResult = EntityUtils.ValidateComponentSchema(patchedJsonObject, componentChange.ComponentIndex, schemaRegistry);
                 if (checkSchemaResult.IsFailure)
                 {
                     return Result<PatchSummary>.Fail($"Failed to validate component at index '{componentChange.ComponentIndex}' against schema for component type '{componentChange.ComponentType}'")
