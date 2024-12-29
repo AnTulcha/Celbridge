@@ -3,6 +3,8 @@ namespace Celbridge.Screenplay.Services;
 public static class ScreenplayConstants
 {
     public const string ScreenplayActivityName = "Screenplay";
+    public const string ScreenplayTag = "Screenplay";
+
     public const string SceneComponentType = "Scene";
     public const string LineComponentType = "Line";
 

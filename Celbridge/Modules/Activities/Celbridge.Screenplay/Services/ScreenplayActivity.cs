@@ -40,8 +40,9 @@ public class ScreenplayActivity : IActivity
     {
         var resource = message.Resource;
 
-        // Todo: Check for "Screenplay" entity tag instead
-        if (resource.ToString().EndsWith(".md"))
+        bool hasScreenplayTag = _entityService.HasTag(resource, ScreenplayConstants.ScreenplayTag);
+
+        if (hasScreenplayTag)
         {
             _pendingEntityUpdates.Add(resource);
         }
@@ -49,9 +50,10 @@ public class ScreenplayActivity : IActivity
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
-        // Todo: Check for "Screenplay" entity tag instead
-        if (message.ComponentType == ScreenplayConstants.SceneComponentType ||
-            message.ComponentType == ScreenplayConstants.LineComponentType)
+        var resource = message.Resource;
+        bool hasScreenplayTag = _entityService.HasTag(resource, ScreenplayConstants.ScreenplayTag);
+
+        if (hasScreenplayTag)
         {
             // Regenerate the screenplay markdown on any property change to the inspected resource.
             _pendingEntityUpdates.Add(message.Resource);
@@ -74,10 +76,16 @@ public class ScreenplayActivity : IActivity
 
     public async Task<Result> UpdateAsync()
     {
-        // Get the inspected entity's list of components
         bool hasError = true;
         foreach (var fileResource in _pendingEntityUpdates)
         {
+            bool hasScreenplayTag = _entityService.HasTag(fileResource, ScreenplayConstants.ScreenplayTag);
+            if (!hasScreenplayTag)
+            {
+                // The Screenplay tag has been removed since the entity update was requested
+                continue;
+            }
+
             var updateResult = await UpdateEntity(fileResource);
             if (updateResult.IsFailure)
             {
