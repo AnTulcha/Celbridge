@@ -27,6 +27,11 @@ public abstract class CommandBase : IExecutableCommand
     public string ExecutionSource { get; set; } = string.Empty;
 
     /// <summary>
+    /// A callback action called when the command is executed.
+    /// </summary>
+    public Action<Result>? OnExecute { get; set; } = null;
+
+    /// <summary>
     /// Execute the command.
     /// </summary>
     public abstract Task<Result> ExecuteAsync();

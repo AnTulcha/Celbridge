@@ -9,6 +9,7 @@ public interface ICommandService
 {
     /// <summary>
     /// Create and enqueue a command that does not require configuration.
+    /// May be used to execute commands with CommandFlags.Undoable enabled.
     /// </summary>
     Result Execute<T>(
         [CallerFilePath] string filePath = "",
@@ -23,6 +24,15 @@ public interface ICommandService
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0
     ) where T : IExecutableCommand;
+
+    /// <summary>
+    /// Create and asynchronously execute a command that does not require configuration.
+    /// The call completes when the command has been executed.
+    /// This method does not support executing undoable commands.
+    /// </summary>
+    Task<Result> ExecuteAsync<T>(
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand;
 
     /// <summary>
     /// Create, configure and enqueue a command.
@@ -42,6 +52,16 @@ public interface ICommandService
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0
     ) where T : IExecutableCommand;
+
+    /// <summary>
+    /// Create, configure and asynchronously execute a command.
+    /// The call completes when the command has been executed.
+    /// This method does not support executing undoable commands.
+    /// </summary>
+    Task<Result> ExecuteAsync<T>(
+        Action<T> configure,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand;
 
     /// <summary>
     /// Create a new command via the dependency injection system.

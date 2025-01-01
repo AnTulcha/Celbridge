@@ -27,6 +27,12 @@ public interface IExecutableCommand
     string ExecutionSource { get; set; }
 
     /// <summary>
+    /// Called when the command is executed.
+    /// Used internally by the ExecuteAsync() method.
+    /// </summary>
+    Action<Result>? OnExecute { get; set; }
+
+    /// <summary>
     /// Execute the command.
     /// </summary>
     Task<Result> ExecuteAsync();
