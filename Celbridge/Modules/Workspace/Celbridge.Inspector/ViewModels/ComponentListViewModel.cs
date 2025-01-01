@@ -148,8 +148,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
     }
 
-    public ICommand DeleteComponentCommand => new RelayCommand<object?>(DeleteComponent_Executed);
-    private void DeleteComponent_Executed(object? parameter)
+    public ICommand DeleteComponentCommand => new AsyncRelayCommand<object?>(DeleteComponent_Executed);
+    private async Task DeleteComponent_Executed(object? parameter)
     {
         var deleteIndex = -1;
 
@@ -174,11 +174,17 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Supress the refresh
         _supressRefreshCount = 1;
 
-        var deleteResult = _entityService.RemoveComponent(Resource, deleteIndex);
-        if (deleteResult.IsFailure)
+
+        var executeResult = await _commandService.ExecuteAsync<IRemoveComponentCommand>(command =>
+        {
+            command.Resource = Resource;
+            command.ComponentIndex = deleteIndex;
+        });
+
+        if (executeResult.IsFailure)
         {
             // Log the error and refresh the list to attempt to recover
-            _logger.LogError(deleteResult.Error);
+            _logger.LogError(executeResult.Error);
             _supressRefreshCount = 0;
             PopulateComponentList();
             return;
