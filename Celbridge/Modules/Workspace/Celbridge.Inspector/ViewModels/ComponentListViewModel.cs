@@ -202,8 +202,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
     }
 
-    public ICommand DuplicateComponentCommand => new RelayCommand<object?>(DuplicateComponent_Executed, CanDuplicateComponent);
-    private void DuplicateComponent_Executed(object? parameter)
+    public ICommand DuplicateComponentCommand => new AsyncRelayCommand<object?>(DuplicateComponent_Executed, CanDuplicateComponent);
+    private async Task DuplicateComponent_Executed(object? parameter)
     {
         var componentItem = parameter as ComponentItem;
         if (componentItem is null)
@@ -226,11 +226,17 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Supress the refresh
         _supressRefreshCount = 1;
 
-        var copyResult = _entityService.CopyComponent(Resource, sourceIndex, destIndex);
-        if (copyResult.IsFailure)
+        var executeResult = await _commandService.ExecuteAsync<ICopyComponentCommand>(command =>
+        {
+            command.Resource = Resource;
+            command.SourceComponentIndex = sourceIndex;
+            command.DestComponentIndex = destIndex;
+        });
+
+        if (executeResult.IsFailure)
         {
             // Log the error and refresh the list to attempt to recover
-            _logger.LogError(copyResult.Error);
+            _logger.LogError(executeResult.Error);
             _supressRefreshCount = 0;
             PopulateComponentList();
             return;
@@ -269,8 +275,8 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private int _supressRefreshCount;
 
-    public ICommand MoveComponentCommand => new RelayCommand<object?>(MoveComponent_Executed);
-    private void MoveComponent_Executed(object? parameter)
+    public ICommand MoveComponentCommand => new AsyncRelayCommand<object?>(MoveComponent_Executed);
+    private async Task MoveComponent_Executed(object? parameter)
     {
         if (parameter is not (int oldIndex, int newIndex))
         {
@@ -285,11 +291,17 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         // A move consists of both a remove and add operation, so we need to supress the refresh twice
         _supressRefreshCount = 2;
-        var moveResult = _entityService.MoveComponent(Resource, oldIndex, newIndex);
-        if (moveResult.IsFailure)
+
+        var executeResult = await _commandService.ExecuteAsync<IMoveComponentCommand>(command => { 
+            command.Resource = Resource;
+            command.SourceComponentIndex = oldIndex;
+            command.DestComponentIndex = newIndex;
+        });
+
+        if (executeResult.IsFailure)
         {
             // Log the error and refresh the list to attempt to recover
-            _logger.LogError(moveResult.Error);
+            _logger.LogError(executeResult.Error);
             _supressRefreshCount = 0;
             PopulateComponentList();
             return;
