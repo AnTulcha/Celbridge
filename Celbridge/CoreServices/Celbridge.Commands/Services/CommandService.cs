@@ -368,7 +368,6 @@ public class CommandService : ICommandService
                             //
 
                             var undoResult = await command.UndoAsync();
-                            await Task.Delay(1); // Workaround for a bug in the colored console logger
 
                             if (undoResult.IsSuccess)
                             {
@@ -387,7 +386,6 @@ public class CommandService : ICommandService
                             //
 
                             var executeResult = await command.ExecuteAsync();
-                            await Task.Delay(1); // Workaround for a bug in the colored console logger
 
                             if (executeResult.IsSuccess)
                             {
