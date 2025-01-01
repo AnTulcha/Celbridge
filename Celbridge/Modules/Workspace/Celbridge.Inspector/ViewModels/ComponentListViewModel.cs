@@ -1,4 +1,5 @@
 using Celbridge.Activities;
+using Celbridge.Commands;
 using Celbridge.Entities;
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.Services;
@@ -17,6 +18,7 @@ public partial class ComponentListViewModel : InspectorViewModel
 {
     private readonly ILogger<MarkdownInspectorViewModel> _logger;
     private readonly IMessengerService _messengerService;
+    private readonly ICommandService _commandService;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
     private readonly IActivityService _activityService;
@@ -38,10 +40,12 @@ public partial class ComponentListViewModel : InspectorViewModel
     public ComponentListViewModel(
         ILogger<MarkdownInspectorViewModel> logger,
         IMessengerService messengerService,
+        ICommandService commandService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
         _messengerService = messengerService;
+        _commandService = commandService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
         _activityService = workspaceWrapper.WorkspaceService.ActivityService;
@@ -91,8 +95,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         ComponentItems[index].ComponentDescription = description;
     }
 
-    public ICommand AddComponentCommand => new RelayCommand<object?>(AddComponent_Executed);
-    private void AddComponent_Executed(object? parameter)
+    public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);
+    private async Task AddComponent_Executed(object? parameter)
     {
         int addIndex = -1;
         switch (parameter)
@@ -127,11 +131,17 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Supress the refresh
         _supressRefreshCount = 1;
 
-        var addResult = _entityService.AddComponent(Resource, addIndex, "Empty");
-        if (addResult.IsFailure)
+        var executeResult = await _commandService.ExecuteAsync<IAddComponentCommand>(command => 
+        {
+            command.Resource = Resource;
+            command.ComponentIndex = addIndex;
+            command.ComponentType = "Empty";
+        });
+
+        if (executeResult.IsFailure)
         {
             // Log the error and refresh the list to attempt to recover
-            _logger.LogError(addResult.Error);
+            _logger.LogError(executeResult.Error);
             _supressRefreshCount = 0;
             PopulateComponentList();
             return;
