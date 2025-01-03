@@ -100,7 +100,8 @@
 
             <Grid Grid.Column="1"
                   Margin="6 0 0 0">
-              <StackPanel Orientation="Horizontal">
+              <StackPanel Orientation="Horizontal"
+                          ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
                
                 <FontIcon FontFamily="Segoe MDL2 Assets"
                           Glyph="&#xE783;"
@@ -114,7 +115,7 @@
                           Foreground="{ThemeResource WarningTextColor}"
                           Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
                 
-                <TextBlock Text="{x:Bind ComponentDescription, Mode=OneWay}"
+                <TextBlock Text="{x:Bind Description, Mode=OneWay}"
                            VerticalAlignment="Center"
                            Margin="6 0 0 0"/>
               </StackPanel>

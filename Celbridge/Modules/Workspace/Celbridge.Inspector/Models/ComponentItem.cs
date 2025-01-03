@@ -11,10 +11,13 @@ public partial class ComponentItem : ObservableObject
     private string _componentType = string.Empty;
 
     [ObservableProperty]
-    private string _componentDescription = string.Empty;
+    private string _description = string.Empty;
 
     [ObservableProperty]
-    private ComponentStatus _componentStatus;
+    private string _tooltip = string.Empty;
+
+    [ObservableProperty]
+    private ComponentStatus _status;
 
     [ObservableProperty]
     private Visibility _showErrorIcon = Visibility.Collapsed;
@@ -31,7 +34,7 @@ public partial class ComponentItem : ObservableObject
     {
         if (e.PropertyName == nameof(ComponentStatus))
         {
-            switch (this.ComponentStatus)
+            switch (this.Status)
             {
                 case ComponentStatus.Valid:
                     ShowErrorIcon = Visibility.Collapsed;
@@ -49,14 +52,5 @@ public partial class ComponentItem : ObservableObject
                     break;
             }
         }
-    }
-
-    public ComponentItem DeepClone()
-    {
-        return new ComponentItem
-        {
-            ComponentType = ComponentType,
-            ComponentDescription = ComponentDescription
-        };
     }
 }

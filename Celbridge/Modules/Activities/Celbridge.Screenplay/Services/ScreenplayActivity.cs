@@ -195,7 +195,7 @@ public class ScreenplayActivity : IActivity
         // Todo: Use a localized string to format this
         var componentDescription = $"{sceneTitle}: {sceneDescription}";
 
-        var annotation = new ComponentAnnotation(ComponentStatus.Valid, componentDescription);
+        var annotation = new ComponentAnnotation(ComponentStatus.Valid, componentDescription, componentDescription);
 
         return Result<ComponentAnnotation>.Ok(annotation);
     }
@@ -219,7 +219,7 @@ public class ScreenplayActivity : IActivity
         // Todo: Use a localized string to format this
         var description = $"{character}: {sourceText}";
 
-        var annotation = new ComponentAnnotation(ComponentStatus.Valid, description);
+        var annotation = new ComponentAnnotation(ComponentStatus.Valid, description, description);
 
         return Result<ComponentAnnotation>.Ok(annotation);
     }

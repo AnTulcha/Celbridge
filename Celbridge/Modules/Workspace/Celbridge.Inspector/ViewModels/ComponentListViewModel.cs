@@ -93,8 +93,9 @@ public partial class ComponentListViewModel : InspectorViewModel
         var annotation = message.Annotation;
         var componentItem = ComponentItems[index];
 
-        componentItem.ComponentDescription = annotation.Description;
-        componentItem.ComponentStatus = annotation.Status;
+        componentItem.Description = annotation.Description;
+        componentItem.Status = annotation.Status;
+        componentItem.Tooltip = annotation.Tooltip;
     }
 
     public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);
@@ -222,10 +223,12 @@ public partial class ComponentListViewModel : InspectorViewModel
         int destIndex = sourceIndex + 1;
 
         // Update the list view
-        var item = ComponentItems[sourceIndex];
-        var clone = item.DeepClone();
+        var newItem = new ComponentItem()
+        {
+            ComponentType = componentItem.ComponentType
+        };
 
-        ComponentItems.Insert(destIndex, clone);
+        ComponentItems.Insert(destIndex, newItem);
 
         // Supress the refresh
         _supressRefreshCount = 1;
