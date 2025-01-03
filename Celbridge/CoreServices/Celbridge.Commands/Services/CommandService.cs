@@ -58,7 +58,7 @@ public class CommandService : ICommandService
         return EnqueueCommand(command, CommandExecutionMode.Execute);
     }
 
-    public async Task<Result> ExecuteNow<T>(
+    public async Task<Result> ExecuteImmediate<T>(
         Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand

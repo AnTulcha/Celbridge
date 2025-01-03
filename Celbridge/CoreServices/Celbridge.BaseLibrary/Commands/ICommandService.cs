@@ -20,7 +20,7 @@ public interface ICommandService
     /// Create, configure and immediately execute a command.
     /// Note that immediately executed commands do not support command flags or undo/redo.
     /// </summary>
-    Task<Result> ExecuteNow<T>(
+    Task<Result> ExecuteImmediate<T>(
         Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0
