@@ -45,86 +45,29 @@ public class CommandService : ICommandService
     }
 
     public Result Execute<T>(
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
     {
         var command = CreateCommand<T>();
         command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
+
+        // Configure the command if the caller provided a configuration action
+        configure?.Invoke(command);
 
         return EnqueueCommand(command, CommandExecutionMode.Execute);
     }
 
     public async Task<Result> ExecuteNow<T>(
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
     {
         var command = CreateCommand<T>();
         command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
 
-        return await command.ExecuteAsync();
-    }
-
-    public async Task<Result> ExecuteAsync<T>(
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
-    {
-        var command = CreateCommand<T>();
-        command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
-
-        // Ensure that the command does not support undo
-        if (command.CommandFlags.HasFlag(CommandFlags.Undoable))
-        {
-            return Result.Fail("ExecuteAsync does not support undoable commands");
-        }
-
-        var tcs = new TaskCompletionSource();
-
-        // Set a callback that will get called when the command executes
-        Result executionResult = Result.Fail();
-        command.OnExecute = (result) =>
-        {
-            executionResult = result;
-            tcs.TrySetResult();
-        };
-
-        var enqueueResult = EnqueueCommand(command, CommandExecutionMode.Execute);
-        if (enqueueResult.IsFailure)
-        {
-            return Result.Fail($"Failed to enqueue command")
-                .WithErrors(enqueueResult);
-        }
-
-        await tcs.Task;
-
-        if (executionResult.IsFailure)
-        {
-            return Result.Fail($"Command execution failed")
-                .WithErrors(executionResult);
-        }
-
-        return Result.Ok();
-    }
-
-    public Result Execute<T>(
-        Action<T> configure,
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
-    {
-        var command = CreateCommand<T>();
-        command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
-        configure.Invoke(command);
-
-        return EnqueueCommand(command, CommandExecutionMode.Execute);
-    }
-
-    public async Task<Result> ExecuteNow<T>(
-        Action<T> configure,
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
-    {
-        var command = CreateCommand<T>();
-        command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
-        configure.Invoke(command);
+        // Configure the command if the caller provided a configuration action
+        configure?.Invoke(command);
 
         // Ensure that the command does not support undo
         if (command.CommandFlags.HasFlag(CommandFlags.Undoable))
@@ -136,13 +79,15 @@ public class CommandService : ICommandService
     }
 
     public async Task<Result> ExecuteAsync<T>(
-        Action<T> configure,
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand
     {
         var command = CreateCommand<T>();
         command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
-        configure.Invoke(command);
+
+        // Configure the command if the caller provided a configuration action
+        configure?.Invoke(command);
 
         // Ensure that the command does not support undo
         if (command.CommandFlags.HasFlag(CommandFlags.Undoable))

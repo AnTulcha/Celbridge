@@ -8,37 +8,10 @@ namespace Celbridge.Commands;
 public interface ICommandService
 {
     /// <summary>
-    /// Create and enqueue a command that does not require configuration.
-    /// May be used to execute commands with CommandFlags.Undoable enabled.
-    /// </summary>
-    Result Execute<T>(
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0
-    ) where T : IExecutableCommand;
-
-    /// <summary>
-    /// Create and immediately execute a command that does not require configuration.
-    /// Note that immediately executed commands do not support command flags or undo/redo.
-    /// </summary>
-    Task<Result> ExecuteNow<T>(
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0
-    ) where T : IExecutableCommand;
-
-    /// <summary>
-    /// Create and asynchronously execute a command that does not require configuration.
-    /// The call completes when the command has been executed.
-    /// This method does not support executing undoable commands.
-    /// </summary>
-    Task<Result> ExecuteAsync<T>(
-        [CallerFilePath] string filePath = "",
-        [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand;
-
-    /// <summary>
     /// Create, configure and enqueue a command.
     /// </summary>
     Result Execute<T> (
-        Action<T> configure,
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0
     ) where T : IExecutableCommand;
@@ -48,7 +21,7 @@ public interface ICommandService
     /// Note that immediately executed commands do not support command flags or undo/redo.
     /// </summary>
     Task<Result> ExecuteNow<T>(
-        Action<T> configure,
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0
     ) where T : IExecutableCommand;
@@ -59,7 +32,7 @@ public interface ICommandService
     /// This method does not support executing undoable commands.
     /// </summary>
     Task<Result> ExecuteAsync<T>(
-        Action<T> configure,
+        Action<T>? configure = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand;
 
