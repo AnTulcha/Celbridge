@@ -178,19 +178,8 @@ public class ScreenplayActivity : IActivity
 
     private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getTitleResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.SceneComponentProperty_SceneTitle);
-        if (getTitleResult.IsFailure)
-        {
-            return Result<ComponentAnnotation>.Fail().WithErrors(getTitleResult);
-        }
-        var sceneTitle = getTitleResult.Value;
-
-        var getDescriptionResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.SceneComponentProperty_SceneDescription);
-        if (getDescriptionResult.IsFailure)
-        {
-            return Result<ComponentAnnotation>.Fail().WithErrors(getDescriptionResult);
-        }
-        var sceneDescription = getDescriptionResult.Value;
+        var sceneTitle = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneTitle);
+        var sceneDescription = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneDescription);
 
         // Todo: Use a localized string to format this
         var componentDescription = $"{sceneTitle}: {sceneDescription}";
@@ -202,19 +191,8 @@ public class ScreenplayActivity : IActivity
 
     private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
     {
-        var getCharacterResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.LineComponentProperty_Character);
-        if (getCharacterResult.IsFailure)
-        {
-            return Result<ComponentAnnotation>.Fail().WithErrors(getCharacterResult);
-        }
-        var character = getCharacterResult.Value;
-
-        var getSourceTextResult = _entityService.GetProperty<string>(resource, componentIndex, ScreenplayConstants.LineComponentProperty_SourceText);
-        if (getSourceTextResult.IsFailure)
-        {
-            return Result<ComponentAnnotation>.Fail().WithErrors(getSourceTextResult);
-        }
-        var sourceText = getSourceTextResult.Value;
+        var character = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_Character);
+        var sourceText = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_SourceText);
 
         // Todo: Use a localized string to format this
         var description = $"{character}: {sourceText}";
@@ -241,21 +219,8 @@ public class ScreenplayActivity : IActivity
 
         var sceneComponentIndex = sceneIndices[0];
 
-        var getTitleResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, ScreenplayConstants.SceneComponentProperty_SceneTitle);
-        if (getTitleResult.IsFailure)
-        {
-            return Result<string>.Fail($"Failed to get scene title")
-                .WithErrors(getTitleResult);
-        }
-        var sceneTitle = getTitleResult.Value;
-
-        var getDescriptionResult = _entityService.GetProperty<string>(resource, sceneComponentIndex, ScreenplayConstants.SceneComponentProperty_SceneDescription);
-        if (getDescriptionResult.IsFailure)
-        {
-            return Result<string>.Fail($"Failed to get scene description")
-                .WithErrors(getDescriptionResult);
-        }
-        var sceneDescription = getDescriptionResult.Value;
+        var sceneTitle = _entityService.GetString(resource, sceneComponentIndex, ScreenplayConstants.SceneComponent_SceneTitle);
+        var sceneDescription = _entityService.GetString(resource, sceneComponentIndex, ScreenplayConstants.SceneComponent_SceneDescription);
 
         var sb = new StringBuilder();
 
@@ -274,21 +239,8 @@ public class ScreenplayActivity : IActivity
 
         foreach (var lineComponentIndex in lineComponentIndices)
         {
-            var getCharacterResult = _entityService.GetProperty<string>(resource, lineComponentIndex, ScreenplayConstants.LineComponentProperty_Character);
-            if (getCharacterResult.IsFailure)
-            {
-                return Result<string>.Fail($"Failed to get character")
-                    .WithErrors(getCharacterResult);
-            }
-            var character = getCharacterResult.Value;
-
-            var getSourceTextResult = _entityService.GetProperty<string>(resource, lineComponentIndex, ScreenplayConstants.LineComponentProperty_SourceText);
-            if (getSourceTextResult.IsFailure)
-            {
-                return Result<string>.Fail($"Failed to get source text")
-                    .WithErrors(getSourceTextResult);
-            }
-            var sourceText = getSourceTextResult.Value;
+            var character = _entityService.GetString(resource, lineComponentIndex, ScreenplayConstants.LineComponent_Character);
+            var sourceText = _entityService.GetString(resource, lineComponentIndex, ScreenplayConstants.LineComponent_SourceText);
 
             if (string.IsNullOrWhiteSpace(character) || string.IsNullOrWhiteSpace(sourceText))
             {

@@ -491,6 +491,19 @@ public class EntityService : IEntityService, IDisposable
         return Result<string>.Ok(jsonString);
     }
 
+    public string GetString(ResourceKey resource, int componentIndex, string propertyPath, string defaultValue = "")
+    {
+        Guard.IsNotNull(defaultValue);
+
+        var getResult = GetProperty<string>(resource, componentIndex, propertyPath);
+        if (getResult.IsFailure)
+        {
+            return defaultValue;
+        }
+
+        return getResult.Value;
+    }
+
     public Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue, bool insert) where T : notnull
     {
         var acquireResult = _entityRegistry.AcquireEntity(resource);

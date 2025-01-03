@@ -110,6 +110,11 @@ public interface IEntityService
     Result<string> GetPropertyAsJson(ResourceKey resource, int componentIndex, string propertyPath);
 
     /// <summary>
+    /// Convenience method to get a string property from a component with minimal boilerplate.
+    /// </summary>
+    string GetString(ResourceKey resource, int componentIndex, string propertyPath, string defaultValue = "");
+
+    /// <summary>
     /// Replaces the value of an existing entity property for a component.
     /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
     /// propertyPath is a JSON Pointer (RFC 6901).
