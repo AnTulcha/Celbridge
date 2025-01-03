@@ -11,5 +11,6 @@ public static class ServiceConfiguration
         // Register services
         //
         config.AddTransient<IActivityService, ActivityService>();
+        config.AddTransient<ActivityRegistry>();
     }
 }
