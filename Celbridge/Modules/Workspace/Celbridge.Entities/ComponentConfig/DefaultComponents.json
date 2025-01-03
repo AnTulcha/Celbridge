@@ -1,3 +1,4 @@
 {
-  ".md": [ "Markdown" ]
+  ".md": [ "Markdown" ],
+  ".scene": [ "Scene" ]
 }
