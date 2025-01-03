@@ -115,7 +115,23 @@
 
             <Grid Grid.Column="1"
                   Margin="6 0 0 0">
-              <TextBlock Text="{x:Bind ComponentDescription,Mode=OneWay}" />
+              <StackPanel Orientation="Horizontal">
+               
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE783;"
+                          FontSize="22"
+                          Foreground="{ThemeResource ErrorTextColor}"
+                          Visibility="{x:Bind ShowErrorIcon, Mode=OneWay}"/>
+                
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE7BA;"
+                          FontSize="22"
+                          Foreground="{ThemeResource WarningTextColor}"
+                          Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
+                
+                <TextBlock Text="{x:Bind ComponentDescription, Mode=OneWay}"
+                           Margin="6 0 0 0"/>
+              </StackPanel>
             </Grid>
           </Grid>
         </DataTemplate>

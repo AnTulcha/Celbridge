@@ -54,7 +54,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     public void OnViewLoaded()
     {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
-        _messengerService.Register<ComponentAnnotationUpdatedMessage>(this, OnUpdateComponentAppearanceMessage);
+        _messengerService.Register<ComponentAnnotationUpdatedMessage>(this, OnComponentAnnotationUpdatedMessage);
 
         PropertyChanged += ViewModel_PropertyChanged;
 
@@ -72,7 +72,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         PropertyChanged -= ViewModel_PropertyChanged;
     }
 
-    private void OnUpdateComponentAppearanceMessage(object recipient, ComponentAnnotationUpdatedMessage message)
+    private void OnComponentAnnotationUpdatedMessage(object recipient, ComponentAnnotationUpdatedMessage message)
     {
         if (message.Resource != Resource)
         {
@@ -90,9 +90,11 @@ public partial class ComponentListViewModel : InspectorViewModel
             return;
         }
 
-        var description = message.Appearance.Description;
+        var annotation = message.Annotation;
+        var componentItem = ComponentItems[index];
 
-        ComponentItems[index].ComponentDescription = description;
+        componentItem.ComponentDescription = annotation.Description;
+        componentItem.ComponentStatus = annotation.Status;
     }
 
     public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);
