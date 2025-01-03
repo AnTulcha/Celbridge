@@ -28,7 +28,7 @@ public interface IExecutableCommand
 
     /// <summary>
     /// Called when the command is executed.
-    /// Used internally by the ExecuteAsync() method.
+    /// This is used internally by the ExecuteAsync() method and should not be used directly.
     /// </summary>
     Action<Result>? OnExecute { get; set; }
 
