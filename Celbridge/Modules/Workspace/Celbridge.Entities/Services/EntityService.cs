@@ -25,7 +25,6 @@ public class EntityService : IEntityService, IDisposable
     private ComponentSchemaRegistry _schemaRegistry;
     private EntityRegistry _entityRegistry;
 
-    private readonly Dictionary<string, List<string>> _defaultComponents = new();
     private JsonSchema? _entitySchema;
 
     private static long _undoGroupId;

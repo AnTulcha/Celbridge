@@ -16,7 +16,7 @@ namespace Celbridge.Entities.Services;
 
 public class EntityRegistry
 {
-    private const string DefaultComponentsFile = "DefaultComponents.json";
+    private const string PrimaryComponentsFile = "PrimaryComponents.json";
 
     private readonly ILogger<EntityRegistry> _logger;
     private readonly IProjectService _projectService;
@@ -24,7 +24,7 @@ public class EntityRegistry
 
     private readonly ConcurrentDictionary<ResourceKey, Entity> _entityCache = new(); // Cache for entity objects
     private readonly ConcurrentDictionary<ResourceKey, bool> _modifiedEntities = new(); // Track modified entities
-    private readonly Dictionary<string, List<string>> _defaultComponents = new();
+    private readonly Dictionary<string, List<string>> _primaryComponents = new();
 
     private JsonSchema? _entitySchema;
     private ComponentSchemaRegistry? _schemaRegistry;
@@ -44,7 +44,7 @@ public class EntityRegistry
         _entitySchema = entitySchema;
         _schemaRegistry = schemaRegistry;
 
-        return await LoadDefaultComponentsAsync();
+        return await LoadPrimaryComponentsAsync();
     }
 
     public string GetEntityDataPath(ResourceKey resource)
@@ -371,12 +371,12 @@ public class EntityRegistry
         return path;
     }
 
-    private async Task<Result> LoadDefaultComponentsAsync()
+    private async Task<Result> LoadPrimaryComponentsAsync()
     {
         try
         {
             var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConstants.ComponentConfigFolder);
-            var jsonFile = await configFolder.GetFileAsync(DefaultComponentsFile);
+            var jsonFile = await configFolder.GetFileAsync(PrimaryComponentsFile);
 
             var content = await FileIO.ReadTextAsync(jsonFile);
 
@@ -400,7 +400,7 @@ public class EntityRegistry
                     list.Add(item.GetString()!);
                 }
 
-                _defaultComponents[property.Name] = list;
+                _primaryComponents[property.Name] = list;
             }
 
             return Result.Ok();
@@ -414,7 +414,7 @@ public class EntityRegistry
 
     private Result<EntityData> CreateEntityData(ResourceKey resource)
     {
-        Guard.IsNotNull(_defaultComponents);
+        Guard.IsNotNull(_primaryComponents);
         Guard.IsNotNull(_schemaRegistry);
         Guard.IsNotNull(_entitySchema);
 
@@ -431,9 +431,9 @@ public class EntityRegistry
         var hasExtension = !string.IsNullOrEmpty(fileExtension);
 
         if (hasExtension &&
-            _defaultComponents.TryGetValue(fileExtension, out var defaultComponents))
+            _primaryComponents.TryGetValue(fileExtension, out var primaryComponents))
         {
-            foreach (var componentType in defaultComponents)
+            foreach (var componentType in primaryComponents)
             {
                 var getSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
                 if (getSchemaResult.IsFailure)
