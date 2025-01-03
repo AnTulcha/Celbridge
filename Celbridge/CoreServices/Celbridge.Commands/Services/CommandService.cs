@@ -11,6 +11,7 @@ using Path = System.IO.Path;
 
 public class CommandService : ICommandService
 {
+    private readonly IServiceProvider _serviceProvider;
     private readonly ICommandLogger _logger;
     private readonly ILogSerializer _logSerializer;
     private readonly IMessengerService _messengerService;
@@ -30,11 +31,13 @@ public class CommandService : ICommandService
     private UndoStack _undoStack = new ();
 
     public CommandService(
+        IServiceProvider serviceProvider,
         ICommandLogger logger,
         ILogSerializer logSerializer,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {
+        _serviceProvider = serviceProvider;
         _logger = logger;
         _logSerializer = logSerializer;
         _messengerService = messengerService;
@@ -47,7 +50,8 @@ public class CommandService : ICommandService
     {
         var command = CreateCommand<T>();
         command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
-        return EnqueueCommand(command);
+
+        return EnqueueCommand(command, CommandExecutionMode.Execute);
     }
 
     public async Task<Result> ExecuteNow<T>(
@@ -83,7 +87,7 @@ public class CommandService : ICommandService
             tcs.TrySetResult();
         };
 
-        var enqueueResult = EnqueueCommand(command);
+        var enqueueResult = EnqueueCommand(command, CommandExecutionMode.Execute);
         if (enqueueResult.IsFailure)
         {
             return Result.Fail($"Failed to enqueue command")
@@ -109,7 +113,8 @@ public class CommandService : ICommandService
         var command = CreateCommand<T>();
         command.ExecutionSource = $"{Path.GetFileName(filePath)}:{lineNumber}";
         configure.Invoke(command);
-        return EnqueueCommand(command);
+
+        return EnqueueCommand(command, CommandExecutionMode.Execute);
     }
 
     public async Task<Result> ExecuteNow<T>(
@@ -155,11 +160,11 @@ public class CommandService : ICommandService
             tcs.TrySetResult();
         };
 
-        var enqueResult = EnqueueCommand(command);
-        if (enqueResult.IsFailure)
+        var enqueueResult = EnqueueCommand(command, CommandExecutionMode.Execute);
+        if (enqueueResult.IsFailure)
         {
             return Result.Fail($"Failed to enqueue command")
-                .WithErrors(enqueResult);
+                .WithErrors(enqueueResult);
         }
 
         await tcs.Task;
@@ -168,37 +173,6 @@ public class CommandService : ICommandService
         {
             return Result.Fail($"Command execution failed")
                 .WithErrors(executionResult);
-        }
-
-        return Result.Ok();
-    }
-
-    public T CreateCommand<T>() where T : IExecutableCommand
-    {
-        var serviceProvider = ServiceLocator.ServiceProvider;
-        T command = serviceProvider.GetRequiredService<T>();
-
-        return command;
-    }
-
-    public Result EnqueueCommand(IExecutableCommand command)
-    {
-        // Executing a regular command (as opposed to an undo or redo) clears the redo stack.
-        _undoStack.ClearRedoCommands();
-
-        return EnqueueCommandInternal(command, CommandExecutionMode.Execute);
-    }
-
-    private Result EnqueueCommandInternal(IExecutableCommand command, CommandExecutionMode ExecutionMode)
-    {
-        lock (_lock)
-        {
-            if (_commandQueue.Any((item) => item.Command.CommandId == command.CommandId))
-            {
-                return Result.Fail($"Command '{command.CommandId}' is already in the execution queue");
-            }
-
-            _commandQueue.Add(new QueuedCommand(command, ExecutionMode));
         }
 
         return Result.Ok();
@@ -258,7 +232,7 @@ public class CommandService : ICommandService
             foreach (var command in commandList)
             {
                 // Enqueue this command as an undo. 
-                var enqueueResult = EnqueueCommandInternal(command, CommandExecutionMode.Undo);
+                var enqueueResult = EnqueueCommand(command, CommandExecutionMode.Undo);
                 if (enqueueResult.IsFailure)
                 {
                     return Result.Fail("Failed to enqueue popped undo command")
@@ -292,7 +266,7 @@ public class CommandService : ICommandService
             foreach (var command in commandList)
             {
                 // Enqueue this command as a redo (same as a normal execution).
-                var enqueueResult = EnqueueCommandInternal(command, CommandExecutionMode.Redo);
+                var enqueueResult = EnqueueCommand(command, CommandExecutionMode.Redo);
                 if (enqueueResult.IsFailure)
                 {
                     return Result.Fail("Failed to enqueue popped undo command")
@@ -307,6 +281,11 @@ public class CommandService : ICommandService
     public void StartExecution()
     {
         _ = StartExecutionAsync();
+    }
+
+    public void StopExecution()
+    {
+        _stopped = true;
     }
 
     private async Task StartExecutionAsync()
@@ -404,6 +383,7 @@ public class CommandService : ICommandService
                             // Call the OnExecute callback if it is set.
                             // This is used by the ExecuteAsync() methods to notify the caller about the execution.
                             command.OnExecute?.Invoke(executeResult);
+                            command.OnExecute = null;
                         }
 
                         // Update the resource registry if the command requires it.
@@ -437,9 +417,32 @@ public class CommandService : ICommandService
         }
     }
 
-    public void StopExecution()
+    private T CreateCommand<T>() where T : IExecutableCommand
     {
-        _stopped = true;
+        T command = _serviceProvider.GetRequiredService<T>();
+
+        return command;
+    }
+
+    private Result EnqueueCommand(IExecutableCommand command, CommandExecutionMode executionMode)
+    {
+        lock (_lock)
+        {
+            if (executionMode == CommandExecutionMode.Execute)
+            {
+                // Executing a regular command (as opposed to an undo or redo) clears the redo stack.
+                _undoStack.ClearRedoCommands();
+            }
+
+            if (_commandQueue.Any((item) => item.Command.CommandId == command.CommandId))
+            {
+                return Result.Fail($"Command '{command.CommandId}' is already in the execution queue");
+            }
+
+            _commandQueue.Add(new QueuedCommand(command, executionMode));
+        }
+
+        return Result.Ok();
     }
 
     /// <summary>

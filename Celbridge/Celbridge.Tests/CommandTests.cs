@@ -61,6 +61,7 @@ public class CommandTests
         services.AddSingleton<IMessengerService, MessengerService>();
         services.AddSingleton<ICommandService, CommandService>();
         services.AddSingleton<IWorkspaceWrapper, WorkspaceWrapper>();
+        services.AddTransient<TestCommand>();
 
         _serviceProvider = services.BuildServiceProvider();
         _commandService = _serviceProvider.GetRequiredService<ICommandService>();
@@ -88,8 +89,12 @@ public class CommandTests
     {
         Guard.IsNotNull(_commandService);
 
-        var testCommand = new TestCommand();
-        _commandService.EnqueueCommand(testCommand);
+        TestCommand? testCommand = null;
+        _commandService.Execute<TestCommand>(command =>
+        {
+            testCommand = command;
+        });
+        Guard.IsNotNull(testCommand);
 
         // Wait for command to execute
         for (int i = 0; i < 10; i++)
@@ -116,8 +121,12 @@ public class CommandTests
         // The undo stack is currently empty
         _commandService.GetUndoCount().Should().Be(0);
 
-        var testCommand = new TestCommand();
-        _commandService.EnqueueCommand(testCommand);
+        TestCommand? testCommand = null;
+        _commandService.Execute<TestCommand>(command =>
+        {
+            testCommand = command;
+        });
+        Guard.IsNotNull(testCommand);
 
         // Wait for command to execute
         for (int i = 0; i < 10; i++)

@@ -64,17 +64,6 @@ public interface ICommandService
         [CallerLineNumber] int lineNumber = 0) where T : IExecutableCommand;
 
     /// <summary>
-    /// Create a new command via the dependency injection system.
-    /// </summary>
-    T CreateCommand<T>() where T : IExecutableCommand;
-
-    /// <summary>
-    /// Add the command to the queue.
-    /// It will be executed when it reaches the front of the queue.
-    /// </summary>
-    Result EnqueueCommand(IExecutableCommand command);
-
-    /// <summary>
     /// Returns true if a command of the given type is in the queue.
     /// </summary>
     bool ContainsCommandsOfType<T>() where T : notnull;
