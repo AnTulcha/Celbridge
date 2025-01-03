@@ -220,36 +220,37 @@ public class CommandService : ICommandService
         }
     }
 
-    public bool IsUndoStackEmpty()
+    public int GetUndoCount()
     {
         lock (_lock)
         {
-            return _undoStack.GetUndoCount() == 0;
+            return _undoStack.GetUndoCount();
         }
     }
 
-    public bool IsRedoStackEmpty()
+    public int GetRedoCount()
     {
         lock (_lock)
         {
-            return _undoStack.GetRedoCount() == 0;
+            return _undoStack.GetRedoCount();
         }
     }
 
-    public Result<bool> Undo()
+    public Result Undo()
     {
         lock (_lock)
         {
-            if (IsUndoStackEmpty())
+            if (GetUndoCount() == 0)
             {
-                return Result<bool>.Ok(false);
+                // Noop
+                return Result.Ok();
             }
 
             // Pop next command(s) from the undo queue
             var popResult = _undoStack.PopCommands(UndoStackOperation.Undo);
             if (popResult.IsFailure)
             {
-                return Result<bool>.Fail("Failed to pop command from undo stack")
+                return Result.Fail("Failed to pop command from undo stack")
                     .WithErrors(popResult);
             }
             var commandList = popResult.Value;
@@ -260,29 +261,30 @@ public class CommandService : ICommandService
                 var enqueueResult = EnqueueCommandInternal(command, CommandExecutionMode.Undo);
                 if (enqueueResult.IsFailure)
                 {
-                    return Result<bool>.Fail("Failed to enqueue popped undo command")
+                    return Result.Fail("Failed to enqueue popped undo command")
                         .WithErrors(enqueueResult);
                 }
             }
         }
 
-        return Result<bool>.Ok(true);
+        return Result.Ok();
     }
 
-    public Result<bool> Redo()
+    public Result Redo()
     {
         lock (_lock)
         {
-            if (IsRedoStackEmpty())
+            if (GetRedoCount() == 0)
             {
-                return Result<bool>.Ok(false);
+                // Noop
+                return Result.Ok();
             }
 
             // Pop next command(s) from the redo queue
             var popResult = _undoStack.PopCommands(UndoStackOperation.Redo);
             if (popResult.IsFailure)
             {
-                return Result<bool>.Fail("Failed to pop command from redo stack")
+                return Result.Fail("Failed to pop command from redo stack")
                     .WithErrors(popResult);
             }
             var commandList = popResult.Value;
@@ -293,13 +295,13 @@ public class CommandService : ICommandService
                 var enqueueResult = EnqueueCommandInternal(command, CommandExecutionMode.Redo);
                 if (enqueueResult.IsFailure)
                 {
-                    return Result<bool>.Fail("Failed to enqueue popped undo command")
+                    return Result.Fail("Failed to enqueue popped undo command")
                         .WithErrors(enqueueResult);
                 }
             }
         }
 
-        return Result<bool>.Ok(true);
+        return Result.Ok();
     }
 
     public void StartExecution()

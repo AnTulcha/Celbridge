@@ -85,26 +85,22 @@ public interface ICommandService
     void RemoveCommandsOfType<T>() where T : notnull;
 
     /// <summary>
-    /// Returns true if the undo stack is empty.
+    /// Returns the number of available undo operations.
     /// </summary>
-    bool IsUndoStackEmpty();
+    int GetUndoCount();
 
     /// <summary>
-    /// Returns true if the redo stack is empty.
+    /// Returns the number of available redo operations.
     /// </summary>
-    bool IsRedoStackEmpty();
+    int GetRedoCount();
 
     /// <summary>
     /// Attempt to pop the most recent undo command from the undo stack and execute it.
-    /// The call will succeed whether an undo is performed or not (e.g. if the undo stack is empty).
-    /// The boolean return value indicates whether an undo operation was actually performed.
     /// </summary>
-    Result<bool> Undo();
+    Result Undo();
 
     /// <summary>
     /// Attempts to pop the most recently undone command from the redo stack and execute it.
-    /// The call will succeed whether a redo is performed or not (e.g. if the redo stack is empty).
-    /// The boolean return value indicates whether a redo operation was actually performed.
     /// </summary>
-    Result<bool> Redo();
+    Result Redo();
 }
