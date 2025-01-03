@@ -69,12 +69,6 @@ public class CommandService : ICommandService
         // Configure the command if the caller provided a configuration action
         configure?.Invoke(command);
 
-        // Ensure that the command does not support undo
-        if (command.CommandFlags.HasFlag(CommandFlags.Undoable))
-        {
-            return Result.Fail("Immediately executed commands do not support undo/redo");
-        }
-
         return await command.ExecuteAsync();
     }
 
@@ -89,15 +83,9 @@ public class CommandService : ICommandService
         // Configure the command if the caller provided a configuration action
         configure?.Invoke(command);
 
-        // Ensure that the command does not support undo
-        if (command.CommandFlags.HasFlag(CommandFlags.Undoable))
-        {
-            return Result.Fail("ExecuteAsync does not support undoable commands");
-        }
-
         var tcs = new TaskCompletionSource();
 
-        // Set a callback that will get called when the command executes
+        // Set a callback for when the command is executed
         Result executionResult = Result.Fail();
         command.OnExecute = (result) =>
         {
@@ -112,7 +100,11 @@ public class CommandService : ICommandService
                 .WithErrors(enqueueResult);
         }
 
+        // Wait for the command to execute
         await tcs.Task;
+
+        // Clear the callback to avoid it being called again via undo/redo.
+        command.OnExecute = null;
 
         if (executionResult.IsFailure)
         {
@@ -328,7 +320,6 @@ public class CommandService : ICommandService
                             // Call the OnExecute callback if it is set.
                             // This is used by the ExecuteAsync() methods to notify the caller about the execution.
                             command.OnExecute?.Invoke(executeResult);
-                            command.OnExecute = null;
                         }
 
                         // Update the resource registry if the command requires it.

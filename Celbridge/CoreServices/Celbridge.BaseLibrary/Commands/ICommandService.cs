@@ -8,7 +8,9 @@ namespace Celbridge.Commands;
 public interface ICommandService
 {
     /// <summary>
-    /// Create, configure and enqueue a command.
+    /// Enqueues a command for later execution.
+    /// Enqueued commands are executed in sequential order.
+    /// Succeeds if the command was enqueued successfully.
     /// </summary>
     Result Execute<T> (
         Action<T>? configure = null,
@@ -17,8 +19,9 @@ public interface ICommandService
     ) where T : IExecutableCommand;
 
     /// <summary>
-    /// Create, configure and immediately execute a command.
-    /// Note that immediately executed commands do not support command flags or undo/redo.
+    /// Executes a command immediately without enqueuing it.
+    /// When you use this method, bear in mind that an enqueued command could execute at the same time.
+    /// Command flags have no effect when you use this method.
     /// </summary>
     Task<Result> ExecuteImmediate<T>(
         Action<T>? configure = null,
@@ -27,9 +30,8 @@ public interface ICommandService
     ) where T : IExecutableCommand;
 
     /// <summary>
-    /// Create, configure and asynchronously execute a command.
-    /// The call completes when the command has been executed.
-    /// This method does not support executing undoable commands.
+    /// Enqueue a command for execution, and then wait for it to execute.
+    /// Returns the command execution result.
     /// </summary>
     Task<Result> ExecuteAsync<T>(
         Action<T>? configure = null,
