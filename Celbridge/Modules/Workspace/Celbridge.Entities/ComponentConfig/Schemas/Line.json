@@ -1,5 +1,12 @@
 {
   "type": "object",
+  "additionalProperties": false,
+
+  "tags": [ "Screenplay" ],
+  "attributes": {
+    "allowMultipleComponents": true
+  },
+
   "properties": {
     "_componentType": {
       "type": "string",
@@ -39,6 +46,7 @@
       "type": "string"
     }
   },
+
   "required": [
     "_componentType",
     "dialogueKey",
@@ -53,6 +61,7 @@
     "platform",
     "productionStatus"
   ],
+
   "prototype": {
     "dialogueKey": "",
     "character": "",
@@ -65,10 +74,5 @@
     "direction": "",
     "platform": "",
     "productionStatus": ""
-  },
-  "tags": [ "Screenplay" ],
-  "attributes": {
-    "allowMultipleComponents": true
-  },
-  "additionalProperties": false
+  }
 }

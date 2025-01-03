@@ -1,16 +1,21 @@
 {
   "type": "object",
+  "additionalProperties": false,
+
+  "attributes": {
+    "allowMultipleComponents": true
+  },
+
   "properties": {
     "_componentType": {
       "type": "string",
       "const": "Empty#1"
     }
   },
+
   "required": [
     "_componentType"
   ],
-  "prototype": {},
-  "attributes": {
-    "allowMultipleComponents": true
-  }
+
+  "prototype": {}
 }

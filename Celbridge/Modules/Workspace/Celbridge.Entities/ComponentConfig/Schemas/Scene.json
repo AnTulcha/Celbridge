@@ -1,5 +1,12 @@
 {
   "type": "object",
+  "additionalProperties": false,
+
+  "tags": [ "Screenplay" ],
+  "attributes": {
+    "isPrimaryComponent": true
+  },
+
   "properties": {
     "_componentType": {
       "type": "string",
@@ -12,16 +19,15 @@
       "type": "string"
     }
   },
+
   "required": [
     "_componentType",
     "sceneTitle",
     "sceneDescription"
   ],
+
   "prototype": {
     "sceneTitle": "",
     "sceneDescription": ""
-  },
-  "tags": [ "Screenplay" ],
-  "attributes": {},
-  "additionalProperties": false
+  }
 }
