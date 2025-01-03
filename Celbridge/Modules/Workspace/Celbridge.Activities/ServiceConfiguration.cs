@@ -12,5 +12,6 @@ public static class ServiceConfiguration
         //
         config.AddTransient<IActivityService, ActivityService>();
         config.AddTransient<ActivityRegistry>();
+        config.AddTransient<ActivityDispatcher>();
     }
 }

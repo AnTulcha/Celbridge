@@ -8,6 +8,7 @@ public class ActivityService : IActivityService, IDisposable
     private ILogger<ActivityService> _logger;
 
     private ActivityRegistry? _activityRegistry;
+    private ActivityDispatcher? _activityDispatcher;
 
     public ActivityService(
         IServiceProvider serviceProvider,
@@ -20,39 +21,34 @@ public class ActivityService : IActivityService, IDisposable
     public async Task<Result> Initialize()
     {
         _activityRegistry = _serviceProvider.GetRequiredService<ActivityRegistry>();
+        _activityDispatcher = _serviceProvider.GetRequiredService<ActivityDispatcher>();
 
-        return await _activityRegistry.Initialize();
+        var registryResult = await _activityRegistry.Initialize();
+        if (registryResult.IsFailure)
+        {
+            return Result.Fail("Failed to initialize the activity registry")
+                .WithErrors(registryResult);
+        }
+
+        var dispatcherResult = await _activityDispatcher.Initialize(_activityRegistry);
+        if (dispatcherResult.IsFailure)
+        {
+            return Result.Fail("Failed to initialize the activity dispatcher")
+                .WithErrors(dispatcherResult);
+        }
+
+        return Result.Ok();
     }
 
-    public async Task<Result> UpdateActivitiesAsync()
+    public async Task<Result> UpdateAsync()
     {
-        if (_activityRegistry is null)
+        if (_activityDispatcher is null)
         {
             // noop
             return Result.Ok();
         }
 
-        try
-        {
-            foreach (var kv in _activityRegistry.Activities)
-            {
-                var activity = kv.Value;
-
-                var updateResult = await activity.UpdateAsync();
-                if (updateResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to update activity '{activity.GetType()}'")
-                        .WithErrors(updateResult);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An exception occurred while updating activities")
-                .WithException(ex);
-        }
-
-        return Result.Ok();
+        return await _activityDispatcher.UpdateAsync();
     }
 
     private bool _disposed;

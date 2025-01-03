@@ -19,5 +19,5 @@ public interface IActivity
     /// <summary>
     /// Updates the activity.
     /// </summary>
-    Task<Result> UpdateAsync();
+    Task<Result> UpdateResourceAsync(ResourceKey resource);
 }

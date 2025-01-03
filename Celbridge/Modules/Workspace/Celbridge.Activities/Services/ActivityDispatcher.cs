@@ -1,0 +1,136 @@
+using Celbridge.Entities;
+using Celbridge.Explorer;
+using Celbridge.Inspector;
+using Celbridge.Logging;
+using Celbridge.Messaging;
+using Celbridge.Workspace;
+using CommunityToolkit.Diagnostics;
+
+namespace Celbridge.Activities.Services;
+
+public class ActivityDispatcher
+{
+    private readonly ILogger<ActivityDispatcher> _logger;
+    private readonly IMessengerService _messengerService;
+    private readonly IEntityService _entityService;
+
+    private ActivityRegistry? _activityRegistry;
+
+    private HashSet<ResourceKey> _pendingEntityUpdates = new();
+
+    public ActivityDispatcher(
+        ILogger<ActivityDispatcher> logger,
+        IMessengerService messengerService,
+        IWorkspaceWrapper workspaceWrapper)
+    {
+        _logger = logger;
+
+        _messengerService = messengerService;
+        _entityService = workspaceWrapper.WorkspaceService.EntityService;
+    }
+
+    public async Task<Result> Initialize(ActivityRegistry activityRegistry)
+    {
+        _activityRegistry = activityRegistry;
+
+        _messengerService.Register<SelectedResourceChangedMessage>(this, (s, e) => HandleMessage(e.Resource));
+        _messengerService.Register<ComponentChangedMessage>(this, (s, e) => HandleMessage(e.Resource));
+        _messengerService.Register<PopulatedComponentListMessage>(this, (s, e) => HandleMessage(e.Resource));
+
+        void HandleMessage(ResourceKey resource)
+        {
+            _pendingEntityUpdates.Add(resource);
+        }
+
+        await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+
+    public void Uninitialize()
+    {
+        _messengerService.Unregister<SelectedResourceChangedMessage>(this);
+        _messengerService.Unregister<ComponentChangedMessage>(this);
+        _messengerService.Unregister<PopulatedComponentListMessage>(this);
+    }
+
+    public async Task<Result> UpdateAsync()
+    {
+        Guard.IsNotNull(_activityRegistry);
+
+        bool hasError = true;
+        foreach (var fileResource in _pendingEntityUpdates)
+        {
+            bool hasPrimaryComponent = _entityService.HasTag(fileResource, "PrimaryComponent");
+
+            if (!hasPrimaryComponent)
+            {
+                // Todo: Annotate any components with an error message
+                continue;
+            }
+
+            // Check that there is at least one component (there has to be for the entity tag to be present)
+
+            var getCountResult = _entityService.GetComponentCount(fileResource);
+            if (getCountResult.IsFailure)
+            {
+                return Result.Fail($"Failed to get component count for resource :{fileResource}");
+            }
+            var componentCount = getCountResult.Value;
+
+            if (componentCount == 0)
+            {
+                return Result.Fail($"Component count is zero for resource: {fileResource}");
+            }
+
+            // Attempt to get the component info for the primary component
+
+            var getComponentResult = _entityService.GetComponentTypeInfo(fileResource, 0);
+            if (getComponentResult.IsFailure)
+            {
+                return Result.Fail($"Failed to get component info for resource: {fileResource}")
+                    .WithErrors(getComponentResult);
+            }   
+            var componentInfo = getComponentResult.Value;
+
+            if (!componentInfo.HasTag("PrimaryComponent"))
+            {
+                // Todo: Annotate the component with an error message
+                continue;
+            }
+
+            // Get the activity name for this Primary Component
+
+            var activityName = componentInfo.GetStringAttribute("activityName");
+            if (string.IsNullOrEmpty(activityName))
+            {
+                return Result.Fail($"Activity name is empty for Primary Component on resource: {fileResource}");
+            }
+
+            if (!_activityRegistry.Activities.TryGetValue(activityName, out var activity))
+            {
+                // Todo: Annotate the component with an error message
+                continue;
+            }
+
+            // Use the activity to update the resource
+
+            var updateResult = await activity.UpdateResourceAsync(fileResource);
+            if (updateResult.IsFailure)
+            {
+                return Result.Fail($"Failed to update resource: {fileResource}")
+                    .WithErrors(updateResult);
+            }
+        }
+        _pendingEntityUpdates.Clear();
+
+        if (hasError)
+        {
+            return Result.Fail("Failed to update a modified entity");
+        }
+
+        await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+}

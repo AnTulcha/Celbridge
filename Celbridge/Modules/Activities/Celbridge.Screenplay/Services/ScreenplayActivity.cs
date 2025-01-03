@@ -65,36 +65,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateAsync()
-    {
-        bool hasError = true;
-        foreach (var fileResource in _pendingEntityUpdates)
-        {
-            bool hasScreenplayTag = _entityService.HasTag(fileResource, ScreenplayConstants.ScreenplayTag);
-            if (!hasScreenplayTag)
-            {
-                // The Screenplay tag has been removed since the entity update was requested
-                continue;
-            }
-
-            var updateResult = await UpdateEntity(fileResource);
-            if (updateResult.IsFailure)
-            {
-                _logger.LogError(updateResult.Error);
-                continue;
-            }
-        }
-        _pendingEntityUpdates.Clear();
-
-        if (hasError)
-        {
-            return Result.Fail("Failed to update a modified entity");
-        }
-
-        return Result.Ok();
-    }
-
-    public async Task<Result> UpdateEntity(ResourceKey fileResource)
+    public async Task<Result> UpdateResourceAsync(ResourceKey fileResource)
     {
         var getCountResult = _entityService.GetComponentCount(fileResource);
         if (getCountResult.IsFailure)

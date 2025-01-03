@@ -3,8 +3,8 @@
   "additionalProperties": false,
 
   "attributes": {
-    "tags": [ "Screenplay" ],
-    "isPrimaryComponent": true
+    "tags": [ "PrimaryComponent", "Screenplay" ],
+    "activityName": "Screenplay"
   },
 
   "properties": {

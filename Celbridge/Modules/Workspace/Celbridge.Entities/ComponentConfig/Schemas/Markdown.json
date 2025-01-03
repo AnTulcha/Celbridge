@@ -3,8 +3,8 @@
   "additionalProperties": false,
 
   "attributes": {
-    "tags": [ "Markdown" ],
-    "isPrimaryComponent": true
+    "tags": [ "PrimaryComponent", "Markdown" ],
+    "activityName": "Markdown"
   },
 
   "properties": {
