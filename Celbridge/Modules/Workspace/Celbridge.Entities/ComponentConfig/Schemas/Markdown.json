@@ -2,8 +2,8 @@
   "type": "object",
   "additionalProperties": false,
 
-  "tags": [ "Markdown" ],
   "attributes": {
+    "tags": [ "Markdown" ],
     "isPrimaryComponent": true
   },
 

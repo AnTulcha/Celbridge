@@ -69,30 +69,33 @@ public class ComponentSchema
             }
             var (componentType, componentVersion) = parseResult.Value;
 
-            // Get the component tags
-
-            var componentTags = new HashSet<string>();
-            if (root.TryGetProperty(TagsKey, out JsonElement tagsElement))
-            {
-                foreach (var tag in tagsElement.EnumerateArray())
-                {
-                    if (tag.ValueKind != JsonValueKind.String)
-                    {
-                        return Result<ComponentSchema>.Fail("Tag value is not a string");
-                    }
-
-                    componentTags.Add(tag.ToString());
-                }
-            }
-
             // Get the component attributes
 
+            var componentTags = new HashSet<string>();
             var componentAttributes = new Dictionary<string, string>();
+
             if (root.TryGetProperty(AttributesKey, out JsonElement attributesElement))
             {
                 foreach (var attribute in attributesElement.EnumerateObject())
                 {
-                    componentAttributes[attribute.Name] = attribute.Value.ToString();
+                    if (attribute.Name == "tags")
+                    {
+                        // Tags are treated specially to support fast querying
+
+                        foreach (var tag in attribute.Value.EnumerateArray())
+                        {
+                            if (tag.ValueKind != JsonValueKind.String)
+                            {
+                                return Result<ComponentSchema>.Fail("Tag value is not a string");
+                            }
+
+                            componentTags.Add(tag.ToString());
+                        }
+                    }
+                    else
+                    {
+                        componentAttributes[attribute.Name] = attribute.Value.ToString();                    
+                    }
                 }
             }
 

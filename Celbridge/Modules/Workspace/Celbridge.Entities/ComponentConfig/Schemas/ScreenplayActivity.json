@@ -3,6 +3,7 @@
   "additionalProperties": false,
 
   "attributes": {
+    "tags": [ "Screenplay" ],
     "isActivityComponent": true
   },
 
