@@ -32,7 +32,7 @@ public partial class ComponentItem : ObservableObject
 
     private void ComponentItem_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ComponentStatus))
+        if (e.PropertyName == nameof(Status))
         {
             switch (this.Status)
             {

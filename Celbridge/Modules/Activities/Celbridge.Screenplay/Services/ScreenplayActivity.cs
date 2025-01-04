@@ -77,12 +77,8 @@ public class ScreenplayActivity : IActivity
 
         // Populate the annotation data for each component associated with this activity
 
-        bool hasScreenplayComponents = false;
-
         for (int i = 0; i < componentCount; i++)
         {
-            // Check if the component's activityName property matches this activity's name
-
             var getInfoResult = _entityService.GetComponentTypeInfo(fileResource, i);
             if (getInfoResult.IsFailure)
             {
@@ -91,13 +87,24 @@ public class ScreenplayActivity : IActivity
             }
             var componentInfo = getInfoResult.Value;
 
-            if (!componentInfo.HasTag(ScreenplayConstants.ScreenplayTag))
+            if (componentInfo.ComponentType == "Empty")
             {
-                // Not a Screenplay component, so ignore it
+                // Ignore comments
                 continue;
             }
 
-            hasScreenplayComponents = true;
+            if (!componentInfo.HasTag(ScreenplayConstants.ScreenplayTag))
+            {
+                // Not a Screenplay component
+
+                var errorAnnotation = new ComponentAnnotation(
+                    ComponentStatus.Error, 
+                    "Not a scene component", 
+                    "This component may not be used with the 'Scene' primary component");
+
+                _entityService.UpdateComponentAnnotation(fileResource, i, errorAnnotation);
+                continue;
+            }
 
             Result<ComponentAnnotation> getAnnotationResult = componentInfo.ComponentType switch
             {
@@ -122,24 +129,21 @@ public class ScreenplayActivity : IActivity
             }
         }
 
-        if (hasScreenplayComponents)
+        var generateResult = GenerateScreenplayMarkdown(fileResource);
+        if (generateResult.IsFailure)
         {
-            var generateResult = GenerateScreenplayMarkdown(fileResource);
-            if (generateResult.IsFailure)
-            {
-                return Result.Fail($"Failed to generate screenplay markdown").
-                    WithErrors(generateResult);
-            }
+            return Result.Fail($"Failed to generate screenplay markdown").
+                WithErrors(generateResult);
+        }
 
-            var markdown = generateResult.Value;
+        var markdown = generateResult.Value;
 
-            // Set the contents of the document to the generated markdown
-            var setContentResult = _documentService.SetTextDocumentContent(fileResource, markdown);
-            if (setContentResult.IsFailure)
-            {
-                return Result.Fail($"Failed to set document content")
-                    .WithErrors(setContentResult);
-            }
+        // Set the contents of the document to the generated markdown
+        var setContentResult = _documentService.SetTextDocumentContent(fileResource, markdown);
+        if (setContentResult.IsFailure)
+        {
+            return Result.Fail($"Failed to set document content")
+                .WithErrors(setContentResult);
         }
 
         await Task.CompletedTask;

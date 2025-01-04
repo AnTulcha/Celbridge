@@ -58,14 +58,23 @@ public class ActivityDispatcher
     {
         Guard.IsNotNull(_activityRegistry);
 
-        bool hasError = true;
         foreach (var fileResource in _pendingEntityUpdates)
         {
-            bool hasPrimaryComponent = _entityService.HasTag(fileResource, "PrimaryComponent");
+            // Annotate empty components
 
+            var annotateResult = AnnotateEmptyComponents(fileResource);
+            if (annotateResult.IsFailure)
+            {
+                return Result.Fail($"Failed to annotate empty components for resource: {fileResource}")
+                    .WithErrors(annotateResult);
+            }
+
+            // Check that the entity has a Primary Component
+
+            bool hasPrimaryComponent = _entityService.HasTag(fileResource, "PrimaryComponent");
             if (!hasPrimaryComponent)
             {
-                // Todo: Annotate any components with an error message
+                // Todo: Annotate the entity and all components with an error message
                 continue;
             }
 
@@ -113,7 +122,9 @@ public class ActivityDispatcher
                 continue;
             }
 
-            // Use the activity to update the resource
+            // Todo: Check that the Primary Component is allowed for this resource type
+
+            // Use the activity to update the other components in the entity
 
             var updateResult = await activity.UpdateResourceAsync(fileResource);
             if (updateResult.IsFailure)
@@ -122,14 +133,45 @@ public class ActivityDispatcher
                     .WithErrors(updateResult);
             }
         }
+
         _pendingEntityUpdates.Clear();
 
-        if (hasError)
-        {
-            return Result.Fail("Failed to update a modified entity");
-        }
-
         await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+
+    private Result AnnotateEmptyComponents(ResourceKey resource)
+    {
+        var getCountResult = _entityService.GetComponentCount(resource);
+        if (getCountResult.IsFailure)
+        {
+            return Result.Ok();
+        }
+        var componentCount = getCountResult.Value;
+
+        for (int i = 0; i < componentCount; i++)
+        {
+            var getInfoResult = _entityService.GetComponentTypeInfo(resource, i);
+            if (getInfoResult.IsFailure)
+            {
+                return Result.Fail(resource, $"Failed to get component type info for component index '{i}' on resource: '{resource}'")
+                    .WithErrors(getInfoResult);
+            }
+            var componentInfo = getInfoResult.Value;
+
+            if (componentInfo.ComponentType != "Empty")
+            {
+                continue;
+            }
+
+            var annotation = new ComponentAnnotation(
+                ComponentStatus.Valid,
+                string.Empty,
+                "An empty component");
+
+            _entityService.UpdateComponentAnnotation(resource, i, annotation);
+        }
 
         return Result.Ok();
     }
