@@ -11,11 +11,6 @@ public interface IEntityService
     Task<Result> InitializeAsync();
 
     /// <summary>
-    /// Returns the component type information for all registered component types.
-    /// </summary>
-    IReadOnlyDictionary<string, ComponentInfo> ComponentTypes { get; }
-
-    /// <summary>
     /// Returns the absolute path of the Entity Data file for a resource.
     /// A path will be generated regardless of whether the resource or Entity Data file actually exist.
     /// </summary>
@@ -162,4 +157,9 @@ public interface IEntityService
     /// Updates the annotation data for a component in the inspector.
     /// </summary>
     Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation);
+
+    /// <summary>
+    /// Return the list of all available component types.
+    /// </summary>
+    List<string> GetAllComponentTypes();
 }

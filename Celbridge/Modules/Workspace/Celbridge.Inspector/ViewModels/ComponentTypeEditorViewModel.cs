@@ -70,8 +70,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var inputText = message.ComponentType;
 
         // Get list of available component types
-        var componentTypes = _entityService.ComponentTypes.Keys.ToList();
-        componentTypes.Sort();
+        var componentTypes = _entityService.GetAllComponentTypes();
 
         var filteredList = new List<string>();
 

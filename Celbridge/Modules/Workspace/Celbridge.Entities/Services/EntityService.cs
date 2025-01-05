@@ -23,6 +23,7 @@ public class EntityService : IEntityService, IDisposable
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
     private ComponentSchemaRegistry _schemaRegistry;
+    private ComponentProxyService _componentProxyService;
     private EntityRegistry _entityRegistry;
 
     private JsonSchema? _entitySchema;
@@ -37,7 +38,7 @@ public class EntityService : IEntityService, IDisposable
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public IReadOnlyDictionary<string, ComponentInfo> ComponentTypes => _schemaRegistry.ComponentTypes;
+    public IReadOnlyDictionary<string, ComponentSchema> ComponentSchemas => _schemaRegistry.ComponentSchemas;
 
     public EntityService(
         IServiceProvider serviceProvider,
@@ -53,6 +54,7 @@ public class EntityService : IEntityService, IDisposable
 
         _schemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
         _entityRegistry = serviceProvider.GetRequiredService<EntityRegistry>();
+        _componentProxyService = serviceProvider.GetRequiredService<ComponentProxyService>();
 
         _messengerService.Register<ResourceRegistryUpdatedMessage>(this, OnResourceRegistryUpdatedMessage);
     }
@@ -78,6 +80,14 @@ public class EntityService : IEntityService, IDisposable
             _entitySchema = builder.Build();
             Guard.IsNotNull(_entitySchema);
 
+            // Initialize the component proxy service
+            var initProxyResult = _componentProxyService.Initialize();
+            if (initProxyResult.IsFailure)
+            {
+                return Result.Fail("Failed to initialize component proxy service")
+                    .WithErrors(initProxyResult);
+            }
+
             var loadSchemasResult = await _schemaRegistry.LoadComponentSchemasAsync();
             if (loadSchemasResult.IsFailure)
             {
@@ -88,7 +98,7 @@ public class EntityService : IEntityService, IDisposable
             var initEntitiesResult = await _entityRegistry.Initialize(_entitySchema, _schemaRegistry);
             if (initEntitiesResult.IsFailure)
             {
-                return Result.Fail("Failed to load file default components")
+                return Result.Fail("Failed to initialize entity registry")
                     .WithErrors(initEntitiesResult);
             }
 
@@ -716,6 +726,13 @@ public class EntityService : IEntityService, IDisposable
         _messengerService.Send(message);
 
         return Result.Ok();
+    }
+
+    public List<string> GetAllComponentTypes()
+    {
+        var componentTypes = _schemaRegistry.ComponentSchemas.Keys.ToList();
+        componentTypes.Sort();
+        return componentTypes;
     }
 
     private static JsonPointer GetPropertyPointer(int componentIndex, string propertyPath)

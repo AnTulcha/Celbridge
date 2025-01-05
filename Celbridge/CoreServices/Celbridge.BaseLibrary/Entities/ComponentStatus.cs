@@ -4,6 +4,11 @@
 public enum ComponentStatus
 {
     /// <summary>
+    /// Component is in an unknown state.
+    /// </summary>
+    Unknown,
+
+    /// <summary>
     /// Component is in a valid state.
     /// </summary>
     Valid,
