@@ -358,7 +358,7 @@ public class EntityService : IEntityService, IDisposable
         return entity.EntityData.GetComponentCount();
     }
 
-    public Result<ComponentTypeInfo> GetComponentTypeInfo(ResourceKey resource, int componentIndex)
+    public Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex)
     {
         // Acquire the entity for the specified resource
 
@@ -403,6 +403,33 @@ public class EntityService : IEntityService, IDisposable
         // Return the component info
 
         return Result<ComponentTypeInfo>.Ok(componentSchema.ComponentTypeInfo);
+    }
+
+    public List<ComponentTypeInfo> GetComponentInfoList(ResourceKey resource)
+    {
+        var componentInfoList = new List<ComponentTypeInfo>();
+
+        var getCountResult = GetComponentCount(resource);
+        if (getCountResult.IsFailure)
+        {
+            return componentInfoList;
+        }
+        var count = getCountResult.Value;
+
+        for (int i = 0; i < count; i++)
+        {
+            var getInfoResult = GetComponentInfo(resource, i);
+            if (getInfoResult.IsFailure)
+            {
+                _logger.LogError($"Failed to get component info for component index '{i}' on resource '{resource}': {getInfoResult.Error}");
+                componentInfoList.Clear();
+                return componentInfoList;
+            }
+            var componentInfo = getInfoResult.Value;
+            componentInfoList.Add(componentInfo);
+        }
+
+        return componentInfoList;
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull

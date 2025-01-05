@@ -10,12 +10,18 @@
     "_componentType": {
       "type": "string",
       "const": "Empty#1"
+    },
+    "comment": {
+      "type": "string"
     }
   },
 
   "required": [
-    "_componentType"
+    "_componentType",
+    "comment"
   ],
 
-  "prototype": {}
+  "prototype": {
+    "comment": ""
+  }
 }

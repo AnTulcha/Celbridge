@@ -92,7 +92,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             return;
         }
 
-        var getResult = _entityService.GetComponentTypeInfo(resource, inspectedComponentIndex);
+        var getResult = _entityService.GetComponentInfo(resource, inspectedComponentIndex);
         if (getResult.IsFailure)
         {
             _logger.LogError($"Failed to get component type info for resource '{resource}' at index '{inspectedComponentIndex}'");

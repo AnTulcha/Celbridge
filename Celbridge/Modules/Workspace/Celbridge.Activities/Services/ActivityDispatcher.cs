@@ -60,13 +60,23 @@ public class ActivityDispatcher
 
         foreach (var fileResource in _pendingEntityUpdates)
         {
+            var componentInfoList = _entityService.GetComponentInfoList(fileResource);
+
+            var unprocessedComponents = new List<int>();
+
             // Annotate empty components
 
-            var annotateResult = AnnotateEmptyComponents(fileResource);
-            if (annotateResult.IsFailure)
+            for (int i = 0; i < componentInfoList.Count; i++)
             {
-                return Result.Fail($"Failed to annotate empty components for resource: {fileResource}")
-                    .WithErrors(annotateResult);
+                var componentInfo = componentInfoList[i];
+
+                if (componentInfo.ComponentType != "Empty")
+                {
+                    unprocessedComponents.Add(i);
+                    continue;
+                }
+
+                AnnotateEmptyComponent(fileResource, i);
             }
 
             // Check that the entity has a Primary Component
@@ -75,10 +85,17 @@ public class ActivityDispatcher
             if (!hasPrimaryComponent)
             {
                 // Todo: Annotate the entity and all components with an error message
+                foreach (var componentIndex in unprocessedComponents)
+                {
+                    AnnotateNoPrimaryComponentError(fileResource, componentIndex);
+                }
+
+                // Move onto next modified file resource
                 continue;
             }
 
-            // Check that there is at least one component (there has to be for the entity tag to be present)
+            // Check that there is at least one component.
+            // There must be if the PrimaryComponent tag is present.
 
             var getCountResult = _entityService.GetComponentCount(fileResource);
             if (getCountResult.IsFailure)
@@ -92,25 +109,70 @@ public class ActivityDispatcher
                 return Result.Fail($"Component count is zero for resource: {fileResource}");
             }
 
-            // Attempt to get the component info for the primary component
+            // Get the component info for the Primary Component
 
-            var getComponentResult = _entityService.GetComponentTypeInfo(fileResource, 0);
-            if (getComponentResult.IsFailure)
-            {
-                return Result.Fail($"Failed to get component info for resource: {fileResource}")
-                    .WithErrors(getComponentResult);
-            }   
-            var componentInfo = getComponentResult.Value;
+            ComponentTypeInfo? primaryComponentInfo = null;
 
-            if (!componentInfo.HasTag("PrimaryComponent"))
+            bool syntaxError = false;
+
+            foreach (var componentIndex in unprocessedComponents)
             {
-                // Todo: Annotate the component with an error message
+                var componentInfo = componentInfoList[componentIndex];
+
+                if (componentInfo.ComponentType == "Empty")
+                {
+                    // Ignore comments
+                    continue;
+                }
+
+                if (componentInfo.HasTag("PrimaryComponent"))
+                {
+                    if (primaryComponentInfo is not null)
+                    {
+                        // Todo: Annotate the component with an error message
+                        // Multiple Primary Components detected
+                        continue;
+                    }
+
+                    // Found the Primary Component
+                    primaryComponentInfo = componentInfo;
+                }
+                else
+                {
+                    if (primaryComponentInfo is null)
+                    {
+                        var annotation = new ComponentAnnotation(
+                            ComponentStatus.Error, 
+                            "Invalid component position", 
+                            "This component must be placed after the Primary Component");
+
+                        _entityService.UpdateComponentAnnotation(fileResource, componentIndex, annotation);
+
+                        syntaxError = true;
+
+                        continue;
+                    }
+                }
+            }
+        
+            if (primaryComponentInfo is null)
+            {
+                syntaxError = true;
+                continue;
+            }
+
+            if (syntaxError) 
+            {
+                // Todo: Annotate all components with an error message
+                // Invalid component
+                // No Primary Component defined
+
                 continue;
             }
 
             // Get the activity name for this Primary Component
 
-            var activityName = componentInfo.GetStringAttribute("activityName");
+            var activityName = primaryComponentInfo.GetStringAttribute("activityName");
             if (string.IsNullOrEmpty(activityName))
             {
                 return Result.Fail($"Activity name is empty for Primary Component on resource: {fileResource}");
@@ -124,7 +186,7 @@ public class ActivityDispatcher
 
             // Todo: Check that the Primary Component is allowed for this resource type
 
-            // Use the activity to update the other components in the entity
+            // Use the activity to annotate all components in the entity
 
             var updateResult = await activity.UpdateResourceAsync(fileResource);
             if (updateResult.IsFailure)
@@ -141,38 +203,27 @@ public class ActivityDispatcher
         return Result.Ok();
     }
 
-    private Result AnnotateEmptyComponents(ResourceKey resource)
+    private Result AnnotateEmptyComponent(ResourceKey resource, int componentIndex)
     {
-        var getCountResult = _entityService.GetComponentCount(resource);
-        if (getCountResult.IsFailure)
-        {
-            return Result.Ok();
-        }
-        var componentCount = getCountResult.Value;
+        var comment = _entityService.GetString(resource, componentIndex, "/comment");
 
-        for (int i = 0; i < componentCount; i++)
-        {
-            var getInfoResult = _entityService.GetComponentTypeInfo(resource, i);
-            if (getInfoResult.IsFailure)
-            {
-                return Result.Fail(resource, $"Failed to get component type info for component index '{i}' on resource: '{resource}'")
-                    .WithErrors(getInfoResult);
-            }
-            var componentInfo = getInfoResult.Value;
+        var annotation = new ComponentAnnotation(
+            ComponentStatus.Valid,
+            comment,
+            comment);
 
-            if (componentInfo.ComponentType != "Empty")
-            {
-                continue;
-            }
+        return _entityService.UpdateComponentAnnotation(resource, componentIndex, annotation);
+    }
 
-            var annotation = new ComponentAnnotation(
-                ComponentStatus.Valid,
-                string.Empty,
-                "An empty component");
+    private void AnnotateNoPrimaryComponentError(ResourceKey fileResource, int componentIndex)
+    {
+        // Todo: Display the activityName property for the component type
 
-            _entityService.UpdateComponentAnnotation(resource, i, annotation);
-        }
+        var annotation = new ComponentAnnotation(
+            ComponentStatus.Error,
+            "No Primary Component",
+            $"This component requires a 'type' Primary Component of type");
 
-        return Result.Ok();
+        _entityService.UpdateComponentAnnotation(fileResource, componentIndex, annotation);
     }
 }

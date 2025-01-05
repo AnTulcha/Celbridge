@@ -79,7 +79,12 @@ public interface IEntityService
     /// <summary>
     /// Returns a ComponentTypeInfo object describing the component at the specified index.
     /// </summary>
-    Result<ComponentTypeInfo> GetComponentTypeInfo(ResourceKey resource, int componentIndex);
+    Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
+
+    /// <summary>
+    /// Returns a list containing the ComponentTypeInfo of every component in the specified entity.
+    /// </summary>
+    List<ComponentTypeInfo> GetComponentInfoList(ResourceKey resource);
 
     /// <summary>
     /// Gets the value of a property from a component.

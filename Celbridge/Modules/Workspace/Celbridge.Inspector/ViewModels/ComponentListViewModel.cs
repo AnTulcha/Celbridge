@@ -266,7 +266,7 @@ public partial class ComponentListViewModel : InspectorViewModel
             return false;
         }
 
-        var getResults = _entityService.GetComponentTypeInfo(Resource, duplicateIndex);
+        var getResults = _entityService.GetComponentInfo(Resource, duplicateIndex);
         if (getResults.IsFailure)
         {
             _logger.LogError(getResults.Error);
@@ -365,7 +365,7 @@ public partial class ComponentListViewModel : InspectorViewModel
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
-            var getComponentResult = _entityService.GetComponentTypeInfo(Resource, i);
+            var getComponentResult = _entityService.GetComponentInfo(Resource, i);
             if (getComponentResult.IsFailure)
             {
                 _logger.LogError(getComponentResult.Error);

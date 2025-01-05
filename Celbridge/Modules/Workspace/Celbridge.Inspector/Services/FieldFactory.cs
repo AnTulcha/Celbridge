@@ -22,7 +22,7 @@ public class FieldFactory : IFieldFactory
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
         // Get the component type info
-        var getInfoResult = entityService.GetComponentTypeInfo(resource, componentIndex);
+        var getInfoResult = entityService.GetComponentInfo(resource, componentIndex);
         if (getInfoResult.IsFailure)
         {
             return Result<IField>.Fail($"Failed to get component type info for resource '{resource}' at component index '{componentIndex}'")

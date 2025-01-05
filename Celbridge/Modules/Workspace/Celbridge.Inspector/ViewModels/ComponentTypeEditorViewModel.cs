@@ -40,7 +40,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
+        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
         if (getComponentResult.IsFailure)
         {
             _logger.LogError(getComponentResult.Error);
@@ -135,7 +135,7 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentTypeInfo(resource, componentIndex);
+        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
         if (getComponentResult.IsFailure)
         {
             _logger.LogError(getComponentResult.Error);

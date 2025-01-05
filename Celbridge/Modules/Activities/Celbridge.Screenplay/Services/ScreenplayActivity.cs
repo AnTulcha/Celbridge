@@ -79,7 +79,7 @@ public class ScreenplayActivity : IActivity
 
         for (int i = 0; i < componentCount; i++)
         {
-            var getInfoResult = _entityService.GetComponentTypeInfo(fileResource, i);
+            var getInfoResult = _entityService.GetComponentInfo(fileResource, i);
             if (getInfoResult.IsFailure)
             {
                 return Result.Fail(fileResource, $"Failed to get component info for component index '{i}' on inspected resource: '{fileResource}'")

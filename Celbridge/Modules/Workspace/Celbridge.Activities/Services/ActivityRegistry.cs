@@ -118,7 +118,7 @@ public class ActivityRegistry
 
         for (int i = 0; i < componentCount; i++)
         {
-            var getInfoResult = _entityService.GetComponentTypeInfo(_projectFileResource, i);
+            var getInfoResult = _entityService.GetComponentInfo(_projectFileResource, i);
             if (getInfoResult.IsFailure)
             {
                 return Result.Fail($"Failed to get component info for component index '{i}' on project file resource: '{_projectFileResource}'")
