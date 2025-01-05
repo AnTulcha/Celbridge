@@ -273,9 +273,9 @@ public partial class ComponentListViewModel : InspectorViewModel
             return false;
         }
 
-        var componentTypeInfo = getResults.Value;
+        var componentInfo = getResults.Value;
 
-        var allowMultipleComponents = componentTypeInfo.GetBooleanAttribute("allowMultipleComponents");
+        var allowMultipleComponents = componentInfo.GetBooleanAttribute("allowMultipleComponents");
 
         return allowMultipleComponents;
     }
@@ -371,9 +371,9 @@ public partial class ComponentListViewModel : InspectorViewModel
                 _logger.LogError(getComponentResult.Error);
                 return;
             }
-            var componentTypeInfo = getComponentResult.Value;
+            var componentInfo = getComponentResult.Value;
 
-            var componentType = componentTypeInfo.ComponentType;
+            var componentType = componentInfo.ComponentType;
             if (componentType == "Empty")
             {
                 componentType = string.Empty;

@@ -5,9 +5,9 @@ namespace Celbridge.Entities.Services;
 public class ComponentSchemaRegistry
 {
     private readonly Dictionary<string, ComponentSchema> _componentSchemas = new();
-    private readonly Dictionary<string, ComponentTypeInfo> _componentTypes = new();
+    private readonly Dictionary<string, ComponentInfo> _componentTypes = new();
 
-    public Dictionary<string, ComponentTypeInfo> ComponentTypes => _componentTypes;
+    public Dictionary<string, ComponentInfo> ComponentTypes => _componentTypes;
 
     public async Task<Result> LoadComponentSchemasAsync()
     {
@@ -40,7 +40,7 @@ public class ComponentSchemaRegistry
             {
                 var componentType = kv.Key;
                 var componentSchema = kv.Value;
-                _componentTypes[componentType] = componentSchema.ComponentTypeInfo;
+                _componentTypes[componentType] = componentSchema.ComponentInfo;
             }
 
             return Result.Ok();

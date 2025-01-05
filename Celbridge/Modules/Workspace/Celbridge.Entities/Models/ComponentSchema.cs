@@ -18,16 +18,16 @@ public class ComponentSchema
 
     public string ComponentType { get; }
     public int ComponentVersion { get; }
-    public ComponentTypeInfo ComponentTypeInfo { get; }
+    public ComponentInfo ComponentInfo { get; }
     public JsonElement Prototype { get; }
 
     private readonly JsonSchema _jsonSchema;
 
-    private ComponentSchema(string componentType, int componentVersion, ComponentTypeInfo componentTypeInfo, JsonElement prototype, JsonSchema jsonSchema)
+    private ComponentSchema(string componentType, int componentVersion, ComponentInfo componentInfo, JsonElement prototype, JsonSchema jsonSchema)
     {
         ComponentType = componentType;
         ComponentVersion = componentVersion;
-        ComponentTypeInfo = componentTypeInfo;
+        ComponentInfo = componentInfo;
         Prototype = prototype;
         _jsonSchema = jsonSchema;
     }
@@ -128,7 +128,7 @@ public class ComponentSchema
                 }
             }
 
-            var componentTypeInfo = new ComponentTypeInfo(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
+            var componentInfo = new ComponentInfo(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
 
             // Construct the prototype element
 
@@ -157,7 +157,7 @@ public class ComponentSchema
                 return Result<ComponentSchema>.Fail($"Prototype validation failed: {componentType}");
             }
 
-            var schema = new ComponentSchema(componentType, componentVersion, componentTypeInfo, prototype, jsonSchema);
+            var schema = new ComponentSchema(componentType, componentVersion, componentInfo, prototype, jsonSchema);
 
             return Result<ComponentSchema>.Ok(schema);
         }

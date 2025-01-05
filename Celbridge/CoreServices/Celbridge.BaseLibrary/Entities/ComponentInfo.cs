@@ -3,7 +3,7 @@ namespace Celbridge.Entities;
 /// <summary>
 /// Describes the attributes and properties of a component type.
 /// </summary>
-public record ComponentTypeInfo(
+public record ComponentInfo(
     string ComponentType, 
     int ComponentVersion, 
     IReadOnlySet<string> Tags,

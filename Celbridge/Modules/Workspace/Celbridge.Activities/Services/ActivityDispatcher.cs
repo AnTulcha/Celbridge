@@ -111,7 +111,7 @@ public class ActivityDispatcher
 
             // Get the component info for the Primary Component
 
-            ComponentTypeInfo? primaryComponentInfo = null;
+            ComponentInfo? primaryComponentInfo = null;
 
             bool syntaxError = false;
 

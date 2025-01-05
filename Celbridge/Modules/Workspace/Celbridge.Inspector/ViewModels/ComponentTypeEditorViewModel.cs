@@ -46,12 +46,12 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
             _logger.LogError(getComponentResult.Error);
             return;
         }
-        var componentTypeInfo = getComponentResult.Value;
+        var componentInfo = getComponentResult.Value;
 
         // Ensure we are dealing with an empty string if componentType is null
         componentType ??= string.Empty;
 
-        if (componentTypeInfo.ComponentType == componentType)
+        if (componentInfo.ComponentType == componentType)
         {
             // No change required
             return;
@@ -142,9 +142,9 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
             return;
         }
 
-        var componentTypeInfo = getComponentResult.Value;
+        var componentInfo = getComponentResult.Value;
 
-        if (componentTypeInfo.ComponentType == newComponentType)
+        if (componentInfo.ComponentType == newComponentType)
         {
             // No change required
             return;

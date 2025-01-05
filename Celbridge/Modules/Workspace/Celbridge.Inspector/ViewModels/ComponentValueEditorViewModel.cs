@@ -104,12 +104,12 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         // Populate the Component Type in the panel header
 
-        var componentTypeInfo = getResult.Value;
-        ComponentType = componentTypeInfo.ComponentType;
+        var componentInfo = getResult.Value;
+        ComponentType = componentInfo.ComponentType;
 
         // Construct the form by adding property fields one by one.
 
-        foreach (var property in componentTypeInfo.Properties)
+        foreach (var property in componentInfo.Properties)
         {
             var createResult = _inspectorService.FieldFactory.CreatePropertyField(resource, inspectedComponentIndex, property.PropertyName);
             if (createResult.IsFailure)

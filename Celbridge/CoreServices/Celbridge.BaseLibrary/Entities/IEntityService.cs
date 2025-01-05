@@ -13,7 +13,7 @@ public interface IEntityService
     /// <summary>
     /// Returns the component type information for all registered component types.
     /// </summary>
-    IReadOnlyDictionary<string, ComponentTypeInfo> ComponentTypes { get; }
+    IReadOnlyDictionary<string, ComponentInfo> ComponentTypes { get; }
 
     /// <summary>
     /// Returns the absolute path of the Entity Data file for a resource.
@@ -77,14 +77,14 @@ public interface IEntityService
     Result<int> GetComponentCount(ResourceKey resource);
 
     /// <summary>
-    /// Returns a ComponentTypeInfo object describing the component at the specified index.
+    /// Returns a ComponentInfo object describing the component at the specified index.
     /// </summary>
-    Result<ComponentTypeInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
+    Result<ComponentInfo> GetComponentInfo(ResourceKey resource, int componentIndex);
 
     /// <summary>
-    /// Returns a list containing the ComponentTypeInfo of every component in the specified entity.
+    /// Returns a list containing the ComponentInfo of every component in the specified entity.
     /// </summary>
-    List<ComponentTypeInfo> GetComponentInfoList(ResourceKey resource);
+    List<ComponentInfo> GetComponentInfoList(ResourceKey resource);
 
     /// <summary>
     /// Gets the value of a property from a component.

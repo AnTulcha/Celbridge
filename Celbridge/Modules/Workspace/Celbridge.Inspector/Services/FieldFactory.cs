@@ -28,10 +28,10 @@ public class FieldFactory : IFieldFactory
             return Result<IField>.Fail($"Failed to get component type info for resource '{resource}' at component index '{componentIndex}'")
                 .WithErrors(getInfoResult);
         }
-        var componentTypeInfo = getInfoResult.Value;
+        var componentInfo = getInfoResult.Value;
 
         // Get the property type info
-        var propertyTypeInfos = componentTypeInfo.Properties.Where(p => p.PropertyName == propertyName).ToList();
+        var propertyTypeInfos = componentInfo.Properties.Where(p => p.PropertyName == propertyName).ToList();
         if (propertyTypeInfos.Count != 1)
         {
             return Result<IField>.Fail($"Failed to find component property '{propertyName}' for resource '{resource}' at component index '{componentIndex}'");

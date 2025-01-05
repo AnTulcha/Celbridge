@@ -151,7 +151,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex, ComponentInfo componentInfo)
     {
         var sceneTitle = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneTitle);
         var sceneDescription = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneDescription);
@@ -164,7 +164,7 @@ public class ScreenplayActivity : IActivity
         return Result<ComponentAnnotation>.Ok(annotation);
     }
 
-    private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex, ComponentTypeInfo componentInfo)
+    private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex, ComponentInfo componentInfo)
     {
         var character = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_Character);
         var sourceText = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_SourceText);
