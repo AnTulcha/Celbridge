@@ -366,14 +366,14 @@ public class EntityService : IEntityService, IDisposable
         return entity.EntityData.GetComponentCount();
     }
 
-    public Result<ComponentInfo> GetComponentInfo(ResourceKey resource, int componentIndex)
+    public Result<ComponentSchema> GetComponentSchema(ResourceKey resource, int componentIndex)
     {
         // Acquire the entity for the specified resource
 
         var acquireResult = _entityRegistry.AcquireEntity(resource);
         if (acquireResult.IsFailure)
         {
-            return Result<ComponentInfo>.Fail($"Failed to acquire entity: {resource}")
+            return Result<ComponentSchema>.Fail($"Failed to acquire entity: {resource}")
                 .WithErrors(acquireResult);
         }
         var entity = acquireResult.Value;
@@ -384,7 +384,7 @@ public class EntityService : IEntityService, IDisposable
         var getTypeResult = entity.EntityData.GetProperty<string>(componentTypePointer);
         if (getTypeResult.IsFailure)
         {
-            return Result<ComponentInfo>.Fail($"Failed to get component type for component at index '{componentIndex}' for resource: {resource}")
+            return Result<ComponentSchema>.Fail($"Failed to get component type for entity '{resource}' at component index {componentIndex}")
                 .WithErrors(getTypeResult);
         }
         var typeAndVersion = getTypeResult.Value;
@@ -392,7 +392,7 @@ public class EntityService : IEntityService, IDisposable
         var parseResult = EntityUtils.ParseComponentTypeAndVersion(typeAndVersion);
         if (parseResult.IsFailure)
         {
-            return Result<ComponentInfo>.Fail($"Failed to parse component type and version: {typeAndVersion}")
+            return Result<ComponentSchema>.Fail($"Failed to parse component type and version: '{typeAndVersion}'")
                 .WithErrors(parseResult);
         }
 
@@ -403,41 +403,41 @@ public class EntityService : IEntityService, IDisposable
         var getConfigResult = _configRegistry.GetComponentConfig(componentType);
         if (getConfigResult.IsFailure)
         {
-            return Result<ComponentInfo>.Fail($"Failed to get component config for component type: {componentType}")
+            return Result<ComponentSchema>.Fail($"Failed to get component config for component type: '{componentType}'")
                 .WithErrors(getConfigResult);
         }
         var componentConfig = getConfigResult.Value;
 
-        // Return the component info
+        // Return the component schema
 
-        return Result<ComponentInfo>.Ok(componentConfig.ComponentInfo);
+        return Result<ComponentSchema>.Ok(componentConfig.ComponentSchema);
     }
 
-    public List<ComponentInfo> GetComponentInfoList(ResourceKey resource)
+    public List<ComponentSchema> GetComponentSchemaList(ResourceKey resource)
     {
-        var componentInfoList = new List<ComponentInfo>();
+        var schemaList = new List<ComponentSchema>();
 
         var getCountResult = GetComponentCount(resource);
         if (getCountResult.IsFailure)
         {
-            return componentInfoList;
+            return schemaList;
         }
         var count = getCountResult.Value;
 
         for (int i = 0; i < count; i++)
         {
-            var getInfoResult = GetComponentInfo(resource, i);
-            if (getInfoResult.IsFailure)
+            var getSchemaResult = GetComponentSchema(resource, i);
+            if (getSchemaResult.IsFailure)
             {
-                _logger.LogError($"Failed to get component info for component index '{i}' on resource '{resource}': {getInfoResult.Error}");
-                componentInfoList.Clear();
-                return componentInfoList;
+                _logger.LogError($"Failed to get component schema for resource '{resource}' at component index {i}. {getSchemaResult.Error}");
+                schemaList.Clear();
+                return schemaList;
             }
-            var componentInfo = getInfoResult.Value;
-            componentInfoList.Add(componentInfo);
+            var schema = getSchemaResult.Value;
+            schemaList.Add(schema);
         }
 
-        return componentInfoList;
+        return schemaList;
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull

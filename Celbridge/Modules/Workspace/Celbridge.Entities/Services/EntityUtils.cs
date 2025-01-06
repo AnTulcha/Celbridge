@@ -163,11 +163,11 @@ public static class EntityUtils
         }
         var config = getConfigResult.Value;
 
-        var componentInfo = config.ComponentInfo;
+        var schema = config.ComponentSchema;
 
         // Check if the component type allows multiple components
 
-        var allowMultiple = componentInfo.GetBooleanAttribute(EntityConstants.AllowMultipleComponentsKey); 
+        var allowMultiple = schema.GetBooleanAttribute(EntityConstants.AllowMultipleComponentsKey); 
         if (!allowMultiple)
         {
             // Check if the entity data already contains a component of the same type
@@ -224,7 +224,7 @@ public static class EntityUtils
         }
         var (componentObject, componentConfig) = getComponentResult.Value;
 
-        return Result<IReadOnlySet<string>>.Ok(componentConfig.ComponentInfo.Tags);
+        return Result<IReadOnlySet<string>>.Ok(componentConfig.ComponentSchema.Tags);
     }
 
     private static Result<(JsonObject, ComponentConfig)> GetComponentAndConfig(JsonObject entityData, int componentIndex, ComponentConfigRegistry configRegistry)

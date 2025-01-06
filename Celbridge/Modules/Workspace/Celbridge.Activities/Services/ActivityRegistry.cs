@@ -118,15 +118,15 @@ public class ActivityRegistry
 
         for (int i = 0; i < componentCount; i++)
         {
-            var getInfoResult = _entityService.GetComponentInfo(_projectFileResource, i);
-            if (getInfoResult.IsFailure)
+            var getSchemaResult = _entityService.GetComponentSchema(_projectFileResource, i);
+            if (getSchemaResult.IsFailure)
             {
-                return Result.Fail($"Failed to get component info for component index '{i}' on project file resource: '{_projectFileResource}'")
-                    .WithErrors(getInfoResult);
+                return Result.Fail($"Failed to get component schema for project file resource '{_projectFileResource}' at component index {i}")
+                    .WithErrors(getSchemaResult);
             }
-            var componentInfo = getInfoResult.Value;
+            var schema = getSchemaResult.Value;
 
-            bool isActivity = componentInfo.GetBooleanAttribute("isActivityComponent");
+            bool isActivity = schema.GetBooleanAttribute("isActivityComponent");
             if (!isActivity)
             {
                 // Ignore non-activity components
@@ -135,7 +135,7 @@ public class ActivityRegistry
 
             // Add this activity name to the list of required activities
 
-            var activityName = componentInfo.ComponentType.Replace("Activity", string.Empty);
+            var activityName = schema.ComponentType.Replace("Activity", string.Empty);
             requiredActivityNames.Add(activityName);
         }
 

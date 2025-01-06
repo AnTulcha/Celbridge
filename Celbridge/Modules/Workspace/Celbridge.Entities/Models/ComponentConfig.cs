@@ -17,7 +17,7 @@ public class ComponentConfig
 
     public string ComponentType { get; }
     public int ComponentVersion { get; }
-    public ComponentInfo ComponentInfo { get; }
+    public ComponentSchema ComponentSchema { get; }
     public JsonElement Prototype { get; }
     public IComponentDescriptor Descriptor { get; }
 
@@ -26,14 +26,14 @@ public class ComponentConfig
     private ComponentConfig(
         string componentType, 
         int componentVersion, 
-        ComponentInfo componentInfo, 
+        ComponentSchema componentSchema, 
         JsonElement prototype,
         IComponentDescriptor descriptor,
         JsonSchema jsonSchema)
     {
         ComponentType = componentType;
         ComponentVersion = componentVersion;
-        ComponentInfo = componentInfo;
+        ComponentSchema = componentSchema;
         Prototype = prototype;
         Descriptor = descriptor;
         _jsonSchema = jsonSchema;
@@ -135,7 +135,7 @@ public class ComponentConfig
                 }
             }
 
-            var componentInfo = new ComponentInfo(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
+            var componentSchema = new ComponentSchema(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
 
             // Construct the prototype element
 
@@ -164,7 +164,7 @@ public class ComponentConfig
                 return Result<ComponentConfig>.Fail($"Prototype failed schema validation: '{componentType}'");
             }
 
-            var config = new ComponentConfig(componentType, componentVersion, componentInfo, prototype, descriptor, jsonSchema);
+            var config = new ComponentConfig(componentType, componentVersion, componentSchema, prototype, descriptor, jsonSchema);
 
             return Result<ComponentConfig>.Ok(config);
         }

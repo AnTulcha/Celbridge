@@ -40,18 +40,18 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
-        if (getComponentResult.IsFailure)
+        var getSchemaResult = _entityService.GetComponentSchema(resource, componentIndex);
+        if (getSchemaResult.IsFailure)
         {
-            _logger.LogError(getComponentResult.Error);
+            _logger.LogError(getSchemaResult.Error);
             return;
         }
-        var componentInfo = getComponentResult.Value;
+        var schema = getSchemaResult.Value;
 
         // Ensure we are dealing with an empty string if componentType is null
         componentType ??= string.Empty;
 
-        if (componentInfo.ComponentType == componentType)
+        if (schema.ComponentType == componentType)
         {
             // No change required
             return;
@@ -134,16 +134,15 @@ public partial class ComponentTypeEditorViewModel : ObservableObject
         var resource = _inspectorService.InspectedResource;
         var componentIndex = _inspectorService.InspectedComponentIndex;
 
-        var getComponentResult = _entityService.GetComponentInfo(resource, componentIndex);
-        if (getComponentResult.IsFailure)
+        var getSchemaResult = _entityService.GetComponentSchema(resource, componentIndex);
+        if (getSchemaResult.IsFailure)
         {
-            _logger.LogError(getComponentResult.Error);
+            _logger.LogError(getSchemaResult.Error);
             return;
         }
+        var schema = getSchemaResult.Value;
 
-        var componentInfo = getComponentResult.Value;
-
-        if (componentInfo.ComponentType == newComponentType)
+        if (schema.ComponentType == newComponentType)
         {
             // No change required
             return;
