@@ -108,7 +108,7 @@ public class ComponentConfig
 
             // Get the component properties
 
-            var componentProperties = new List<ComponentPropertyTypeInfo>();
+            var componentProperties = new List<ComponentPropertyInfo>();
             if (root.TryGetProperty(PropertiesKey, out JsonElement propertiesElement))
             {
                 foreach (var propertyElement in propertiesElement.EnumerateObject())
@@ -130,7 +130,7 @@ public class ComponentConfig
                         }
                     }
 
-                    var propertyInfo = new ComponentPropertyTypeInfo(propertyName, propertyType, propertyAttributes);
+                    var propertyInfo = new ComponentPropertyInfo(propertyName, propertyType, propertyAttributes);
                     componentProperties.Add(propertyInfo);
                 }
             }

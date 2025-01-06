@@ -30,16 +30,16 @@ public class FieldFactory : IFieldFactory
         }
         var schema = getSchemaResult.Value;
 
-        // Get the property type info
-        var propertyTypeInfos = schema.Properties.Where(p => p.PropertyName == propertyName).ToList();
-        if (propertyTypeInfos.Count != 1)
+        // Get the property info
+        var propertyInfos = schema.Properties.Where(p => p.PropertyName == propertyName).ToList();
+        if (propertyInfos.Count != 1)
         {
             return Result<IField>.Fail($"Failed to find component property '{propertyName}' for entity '{resource}' at component index {componentIndex}");
         }
-        var propertyTypeInfo = propertyTypeInfos[0];
+        var propertyInfo = propertyInfos[0];
 
-        var header = propertyTypeInfo.PropertyName;
-        var text = propertyTypeInfo.PropertyType;
+        var header = propertyInfo.PropertyName;
+        var text = propertyInfo.PropertyType;
 
         // Todo: Handle other property types
 
