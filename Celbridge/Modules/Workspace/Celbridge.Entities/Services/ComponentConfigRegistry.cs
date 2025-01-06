@@ -4,19 +4,19 @@ using Path = System.IO.Path;
 
 namespace Celbridge.Entities.Services;
 
-public class ComponentSchemaRegistry
+public class ComponentConfigRegistry
 {
     private readonly IServiceProvider _serviceProvider;
 
-    private readonly Dictionary<string, ComponentSchema> _componentSchemas = new();
-    public IReadOnlyDictionary<string, ComponentSchema> ComponentSchemas => _componentSchemas;
+    private readonly Dictionary<string, ComponentConfig> _componentConfigs = new();
+    public IReadOnlyDictionary<string, ComponentConfig> ComponentConfigs => _componentConfigs;
 
-    public ComponentSchemaRegistry(IServiceProvider serviceProvider)
+    public ComponentConfigRegistry(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<Result> LoadComponentSchemasAsync()
+    public async Task<Result> LoadComponentConfigsAsync()
     {
         try
         {
@@ -37,7 +37,7 @@ public class ComponentSchemaRegistry
                 var componentType = Path.GetFileNameWithoutExtension(jsonFile.Name);
                 var content = await FileIO.ReadTextAsync(jsonFile);
 
-                var addResult = AddComponentSchema(componentType, content, descriptorTypes);
+                var addResult = AddComponentConfig(componentType, content, descriptorTypes);
                 if (addResult.IsFailure)
                 {
                     return Result.Fail($"Failed to load component schema json file: '{jsonFile.Path}'")
@@ -49,70 +49,70 @@ public class ComponentSchemaRegistry
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when loading schemas")
+            return Result.Fail($"An exception occurred when loading schema JSON files")
                 .WithException(ex);
         }
     }
 
-    public Result<ComponentSchema> GetSchemaForComponentType(string componentType)
+    public Result<ComponentConfig> GetComponentConfig(string componentType)
     {
-        if (!_componentSchemas.TryGetValue(componentType, out var entitySchema))
+        if (!_componentConfigs.TryGetValue(componentType, out var config))
         {
-            return Result<ComponentSchema>.Fail($"Component schema '{componentType}' not found");
+            return Result<ComponentConfig>.Fail($"Component config not found: '{componentType}'");
         }
 
-        return Result<ComponentSchema>.Ok(entitySchema);
+        return Result<ComponentConfig>.Ok(config);
     }
 
-    public Result AddComponentSchema(string componentType, string schemaJson, Dictionary<string, Type> descriptorTypes)
+    public Result AddComponentConfig(string componentType, string schemaJson, Dictionary<string, Type> descriptorObjectTypes)
     {
         try
         {
             // Instantiate a descriptor for the component type
 
-            var componentObjectType = $"{componentType}Component";
-            if (!descriptorTypes.TryGetValue(componentObjectType, out var objectType))
+            var descriptorKey = $"{componentType}Component";
+            if (!descriptorObjectTypes.TryGetValue(descriptorKey, out var objectType))
             {
-                return Result.Fail($"Component type '{componentType}' not found in descriptor types");
+                return Result.Fail($"Component type not found in descriptor types: '{componentType}'");
             }
 
             var descriptor = _serviceProvider.GetRequiredService(objectType) as IComponentDescriptor;
             if (descriptor is null)
             {
-                return Result.Fail($"Failed to instantiate decriptor for component type: {componentType}");
+                return Result.Fail($"Failed to instantiate decriptor for component type: '{componentType}'");
             }
 
-            // Create the component schema
+            // Create the component config
 
-            var createResult = ComponentSchema.CreateSchema(descriptor, schemaJson);
+            var createResult = ComponentConfig.CreateConfig(descriptor, schemaJson);
             if (!createResult.IsSuccess)
             {
-                return Result.Fail("Failed to create entity schema from JSON")
+                return Result.Fail("Failed to create component config from JSON")
                     .WithErrors(createResult);
             }
-            var componentSchema = createResult.Value;
+            var config = createResult.Value;
 
             // Perform checks
 
-            if (componentType != componentSchema.ComponentType)
+            if (componentType != config.ComponentType)
             {
-                return Result.Fail($"Component type '{componentType}' does not match type defined in schema");
+                return Result.Fail($"Component type does not match type defined in component config: '{componentType}'");
             }
 
-            if (_componentSchemas.ContainsKey(componentType))
+            if (_componentConfigs.ContainsKey(componentType))
             {
-                return Result.Fail($"Component schema '{componentType}' already exists");
+                return Result.Fail($"Component config already exists: '{componentType}'");
             }
 
-            // Register the schema
+            // Register the config
 
-            _componentSchemas[componentType] = componentSchema;
+            _componentConfigs[componentType] = config;
 
             return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail("An exception occurred when adding the component schema.")
+            return Result.Fail($"An exception occurred when adding the component config for component type: {componentType}")
                 .WithException(ex);
         }
     }

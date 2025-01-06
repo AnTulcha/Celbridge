@@ -27,7 +27,7 @@ public class EntityRegistry
     private readonly Dictionary<string, List<string>> _primaryComponents = new();
 
     private JsonSchema? _entitySchema;
-    private ComponentSchemaRegistry? _schemaRegistry;
+    private ComponentConfigRegistry? _configRegistry;
 
     public EntityRegistry(
         ILogger<EntityRegistry> logger,
@@ -39,10 +39,10 @@ public class EntityRegistry
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public async Task<Result> Initialize(JsonSchema entitySchema, ComponentSchemaRegistry schemaRegistry)
+    public async Task<Result> Initialize(JsonSchema entitySchema, ComponentConfigRegistry configRegistry)
     {
         _entitySchema = entitySchema;
-        _schemaRegistry = schemaRegistry;
+        _configRegistry = configRegistry;
 
         return await LoadPrimaryComponentsAsync();
     }
@@ -269,7 +269,7 @@ public class EntityRegistry
     public Result<Entity> AcquireEntity(ResourceKey resource)
     {
         Guard.IsNotNull(_entitySchema);
-        Guard.IsNotNull(_schemaRegistry);
+        Guard.IsNotNull(_configRegistry);
 
         var resourceRegistry = _workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
 
@@ -295,7 +295,7 @@ public class EntityRegistry
             EntityData? entityData = null;
             if (File.Exists(entityDataPath))
             {
-                var getDataResult = EntityUtils.LoadEntityDataFile(entityDataPath, _entitySchema, _schemaRegistry);
+                var getDataResult = EntityUtils.LoadEntityDataFile(entityDataPath, _entitySchema, _configRegistry);
                 if (getDataResult.IsSuccess)
                 {
                     entityData = getDataResult.Value;
@@ -415,7 +415,7 @@ public class EntityRegistry
     private Result<EntityData> CreateEntityData(ResourceKey resource)
     {
         Guard.IsNotNull(_primaryComponents);
-        Guard.IsNotNull(_schemaRegistry);
+        Guard.IsNotNull(_configRegistry);
         Guard.IsNotNull(_entitySchema);
 
         var entityJsonObject = new JsonObject
@@ -435,18 +435,18 @@ public class EntityRegistry
         {
             foreach (var componentType in primaryComponents)
             {
-                var getSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
-                if (getSchemaResult.IsFailure)
+                var getConfigResult = _configRegistry.GetComponentConfig(componentType);
+                if (getConfigResult.IsFailure)
                 {
-                    return Result<EntityData>.Fail($"Failed to get component schema for component type: {componentType}")
-                        .WithErrors(getSchemaResult);
+                    return Result<EntityData>.Fail($"Failed to get component config for component type: {componentType}")
+                        .WithErrors(getConfigResult);
                 }
-                var schema = getSchemaResult.Value;
+                var config = getConfigResult.Value;
 
-                // The component prototype was validated against the component schemas at startup, so we can assume
+                // The component prototype was validated against the component schema at startup, so we can assume
                 // it's valid and add a clone of the prototype to the entity data.
 
-                var componentObject = schema.Prototype.AsNode();
+                var componentObject = config.Prototype.AsNode();
                 Guard.IsNotNull(componentObject);
 
                 var componentsArray = entityJsonObject["_components"] as JsonArray;
@@ -462,7 +462,7 @@ public class EntityRegistry
             return Result<EntityData>.Fail($"Failed to create entity data. Schema validation error: {resource}");
         }
 
-        var getTagsResult = EntityUtils.GetAllComponentTags(entityJsonObject, _schemaRegistry);
+        var getTagsResult = EntityUtils.GetAllComponentTags(entityJsonObject, _configRegistry);
         if (getTagsResult.IsFailure)
         {
             return Result<EntityData>.Fail($"Failed to get component tags for entity data: {resource}")

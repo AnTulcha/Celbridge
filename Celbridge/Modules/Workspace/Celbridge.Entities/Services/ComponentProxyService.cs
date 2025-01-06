@@ -24,7 +24,6 @@ public class ComponentProxyService
 
     // Todo: A proxy contains: a resource, a component index and the component schema.
     // The schema contains the component type, version, info, prototype, descriptor, etc.
-    // Rename ComponentSchema to ComponentConfig?
 
     //public Result<IComponentProxy> AcquireComponentProxy(ResourceKey resource, int componentIndex)
     //{

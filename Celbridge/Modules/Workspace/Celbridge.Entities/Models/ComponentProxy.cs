@@ -14,7 +14,6 @@ public class ComponentProxy : IComponentProxy
 
     public IComponentDescriptor ComponentInstance { get; }
 
-    // Todo: Use a single ComponentSchema instead of separate ComponentInfo, IComponentDescriptor, etc.
     public ComponentProxy(IServiceProvider serviceProvider, ResourceKey resource, int componentIndex, ComponentInfo componentInfo, IComponentDescriptor componentDescriptor)
     {
         var workspaceWraper = serviceProvider.GetRequiredService<IWorkspaceWrapper>();

@@ -22,7 +22,7 @@ public class EntityService : IEntityService, IDisposable
     private readonly IMessengerService _messengerService;
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
-    private ComponentSchemaRegistry _schemaRegistry;
+    private ComponentConfigRegistry _configRegistry;
     private ComponentProxyService _componentProxyService;
     private EntityRegistry _entityRegistry;
 
@@ -38,8 +38,6 @@ public class EntityService : IEntityService, IDisposable
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public IReadOnlyDictionary<string, ComponentSchema> ComponentSchemas => _schemaRegistry.ComponentSchemas;
-
     public EntityService(
         IServiceProvider serviceProvider,
         ILogger<EntityService> logger,
@@ -52,7 +50,7 @@ public class EntityService : IEntityService, IDisposable
         _messengerService = messengerService;
         _workspaceWrapper = workspaceWrapper;
 
-        _schemaRegistry = serviceProvider.GetRequiredService<ComponentSchemaRegistry>();
+        _configRegistry = serviceProvider.GetRequiredService<ComponentConfigRegistry>();
         _entityRegistry = serviceProvider.GetRequiredService<EntityRegistry>();
         _componentProxyService = serviceProvider.GetRequiredService<ComponentProxyService>();
 
@@ -88,14 +86,14 @@ public class EntityService : IEntityService, IDisposable
                     .WithErrors(initProxyResult);
             }
 
-            var loadSchemasResult = await _schemaRegistry.LoadComponentSchemasAsync();
-            if (loadSchemasResult.IsFailure)
+            var loadConfigsResult = await _configRegistry.LoadComponentConfigsAsync();
+            if (loadConfigsResult.IsFailure)
             {
-                return Result.Fail("Failed to load component schemas")
-                    .WithErrors(loadSchemasResult);
+                return Result.Fail("Failed to load component configs")
+                    .WithErrors(loadConfigsResult);
             }
 
-            var initEntitiesResult = await _entityRegistry.Initialize(_entitySchema, _schemaRegistry);
+            var initEntitiesResult = await _entityRegistry.Initialize(_entitySchema, _configRegistry);
             if (initEntitiesResult.IsFailure)
             {
                 return Result.Fail("Failed to initialize entity registry")
@@ -154,19 +152,19 @@ public class EntityService : IEntityService, IDisposable
         }
         var entity = acquireResult.Value;
 
-        // Acquire the schema for the specified componentType
+        // Acquire the component config 
 
-        var componentSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
-        if (componentSchemaResult.IsFailure)
+        var getConfigResult = _configRegistry.GetComponentConfig(componentType);
+        if (getConfigResult.IsFailure)
         {
-            return Result.Fail($"Failed to get schema for component type: {componentType}")
-                .WithErrors(componentSchemaResult);
+            return Result.Fail($"Failed to get component config for component type: {componentType}")
+                .WithErrors(getConfigResult);
         }
-        var componentSchema = componentSchemaResult.Value;
+        var config = getConfigResult.Value;
 
-        // Instantiate the prototype for the specified componentType
+        // Instantiate the prototype
 
-        var prototypeInstance = componentSchema.Prototype.AsNode()!;
+        var prototypeInstance = config.Prototype.AsNode()!;
 
         // Apply a patch operation to add the component to the entity
 
@@ -400,19 +398,19 @@ public class EntityService : IEntityService, IDisposable
 
         var (componentType, _) = parseResult.Value;
 
-        // Get the component schema
+        // Get the component config
 
-        var getSchemaResult = _schemaRegistry.GetSchemaForComponentType(componentType);
-        if (getSchemaResult.IsFailure)
+        var getConfigResult = _configRegistry.GetComponentConfig(componentType);
+        if (getConfigResult.IsFailure)
         {
-            return Result<ComponentInfo>.Fail($"Failed to get schema for component type: {componentType}")
-                .WithErrors(getSchemaResult);
+            return Result<ComponentInfo>.Fail($"Failed to get component config for component type: {componentType}")
+                .WithErrors(getConfigResult);
         }
-        var componentSchema = getSchemaResult.Value;
+        var componentConfig = getConfigResult.Value;
 
         // Return the component info
 
-        return Result<ComponentInfo>.Ok(componentSchema.ComponentInfo);
+        return Result<ComponentInfo>.Ok(componentConfig.ComponentInfo);
     }
 
     public List<ComponentInfo> GetComponentInfoList(ResourceKey resource)
@@ -730,7 +728,7 @@ public class EntityService : IEntityService, IDisposable
 
     public List<string> GetAllComponentTypes()
     {
-        var componentTypes = _schemaRegistry.ComponentSchemas.Keys.ToList();
+        var componentTypes = _configRegistry.ComponentConfigs.Keys.ToList();
         componentTypes.Sort();
         return componentTypes;
     }
@@ -757,7 +755,7 @@ public class EntityService : IEntityService, IDisposable
             return Result.Fail($"Patch operation is not supported: {patchOperation.Op}");
         }
 
-        var applyResult = entity.ApplyPatchOperation(patchOperation, _schemaRegistry, undoGroupId, context);
+        var applyResult = entity.ApplyPatchOperation(patchOperation, _configRegistry, undoGroupId, context);
         if (applyResult.IsFailure)
         {
             return Result.Fail($"Failed to apply entity patch for resource: '{entity.Resource}'")
