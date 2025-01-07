@@ -44,8 +44,13 @@ public class ComponentConfigRegistry
 
                 // Perform checks
 
-                // Todo: Use substring instead
-                var componentType = descriptorKey.Replace("Component", string.Empty);
+                if (!descriptorKey.EndsWith("Component"))
+                {
+                    return Result.Fail($"Component descriptor name does not end with 'Component': '{descriptorKey}'");
+                }
+
+                // Remove trailing "Component" from descriptor key to form the componentType
+                var componentType = descriptorKey[..^9];
 
                 if (componentType != config.ComponentType)
                 {
@@ -57,7 +62,7 @@ public class ComponentConfigRegistry
                     return Result.Fail($"Component config already exists: '{componentType}'");
                 }
 
-                // Register the schema
+                // Register the config
 
                 _componentConfigs[componentType] = config;
             }
