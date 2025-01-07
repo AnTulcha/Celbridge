@@ -10,20 +10,19 @@ public class ComponentProxy : IComponentProxy
 
     public int ComponentIndex { get; }
 
-    public ComponentInfo ComponentInfo { get; }
+    public ComponentSchema Schema { get; }
 
-    public IComponentDescriptor ComponentInstance { get; }
+    public IComponentDescriptor Descriptor { get; }
 
-    // Todo: Use a single ComponentSchema instead of separate ComponentInfo, IComponentDescriptor, etc.
-    public ComponentProxy(IServiceProvider serviceProvider, ResourceKey resource, int componentIndex, ComponentInfo componentInfo, IComponentDescriptor componentDescriptor)
+    public ComponentProxy(IServiceProvider serviceProvider, ResourceKey resource, int componentIndex, ComponentSchema schema, IComponentDescriptor descriptor)
     {
         var workspaceWraper = serviceProvider.GetRequiredService<IWorkspaceWrapper>();
         _entityService = workspaceWraper.WorkspaceService.EntityService;
 
         Resource = resource;
         ComponentIndex = componentIndex;
-        ComponentInfo = componentInfo;
-        ComponentInstance = componentDescriptor;
+        Schema = schema;
+        Descriptor = descriptor;
     }
 
     // Annotation info

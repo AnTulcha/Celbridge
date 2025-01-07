@@ -60,17 +60,17 @@ public class ActivityDispatcher
 
         foreach (var fileResource in _pendingEntityUpdates)
         {
-            var componentInfoList = _entityService.GetComponentInfoList(fileResource);
+            var componentSchemas = _entityService.GetComponentSchemaList(fileResource);
 
             var unprocessedComponents = new List<int>();
 
             // Annotate empty components
 
-            for (int i = 0; i < componentInfoList.Count; i++)
+            for (int i = 0; i < componentSchemas.Count; i++)
             {
-                var componentInfo = componentInfoList[i];
+                var schema = componentSchemas[i];
 
-                if (componentInfo.ComponentType != "Empty")
+                if (schema.ComponentType != "Empty")
                 {
                     unprocessedComponents.Add(i);
                     continue;
@@ -100,34 +100,34 @@ public class ActivityDispatcher
             var getCountResult = _entityService.GetComponentCount(fileResource);
             if (getCountResult.IsFailure)
             {
-                return Result.Fail($"Failed to get component count for resource :{fileResource}");
+                return Result.Fail($"Failed to get component count for entity: '{fileResource}'");
             }
             var componentCount = getCountResult.Value;
 
             if (componentCount == 0)
             {
-                return Result.Fail($"Component count is zero for resource: {fileResource}");
+                return Result.Fail($"Component count is zero for entity: '{fileResource}'");
             }
 
-            // Get the component info for the Primary Component
+            // Get the schema for the Primary Component
 
-            ComponentInfo? primaryComponentInfo = null;
+            ComponentSchema? primaryComponentSchema = null;
 
             bool syntaxError = false;
 
             foreach (var componentIndex in unprocessedComponents)
             {
-                var componentInfo = componentInfoList[componentIndex];
+                var schema = componentSchemas[componentIndex];
 
-                if (componentInfo.ComponentType == "Empty")
+                if (schema.ComponentType == "Empty")
                 {
                     // Ignore comments
                     continue;
                 }
 
-                if (componentInfo.HasTag("PrimaryComponent"))
+                if (schema.HasTag("PrimaryComponent"))
                 {
-                    if (primaryComponentInfo is not null)
+                    if (primaryComponentSchema is not null)
                     {
                         // Todo: Annotate the component with an error message
                         // Multiple Primary Components detected
@@ -135,11 +135,11 @@ public class ActivityDispatcher
                     }
 
                     // Found the Primary Component
-                    primaryComponentInfo = componentInfo;
+                    primaryComponentSchema = schema;
                 }
                 else
                 {
-                    if (primaryComponentInfo is null)
+                    if (primaryComponentSchema is null)
                     {
                         var annotation = new ComponentAnnotation(
                             ComponentStatus.Error, 
@@ -155,7 +155,7 @@ public class ActivityDispatcher
                 }
             }
         
-            if (primaryComponentInfo is null)
+            if (primaryComponentSchema is null)
             {
                 syntaxError = true;
                 continue;
@@ -172,7 +172,7 @@ public class ActivityDispatcher
 
             // Get the activity name for this Primary Component
 
-            var activityName = primaryComponentInfo.GetStringAttribute("activityName");
+            var activityName = primaryComponentSchema.GetStringAttribute("activityName");
             if (string.IsNullOrEmpty(activityName))
             {
                 return Result.Fail($"Activity name is empty for Primary Component on resource: {fileResource}");
@@ -191,7 +191,7 @@ public class ActivityDispatcher
             var updateResult = await activity.UpdateResourceAsync(fileResource);
             if (updateResult.IsFailure)
             {
-                return Result.Fail($"Failed to update resource: {fileResource}")
+                return Result.Fail($"Failed to update resource: '{fileResource}'")
                     .WithErrors(updateResult);
             }
         }
@@ -222,7 +222,7 @@ public class ActivityDispatcher
         var annotation = new ComponentAnnotation(
             ComponentStatus.Error,
             "No Primary Component",
-            $"This component requires a 'type' Primary Component of type");
+            $"This component requires Primary Component");
 
         _entityService.UpdateComponentAnnotation(fileResource, componentIndex, annotation);
     }

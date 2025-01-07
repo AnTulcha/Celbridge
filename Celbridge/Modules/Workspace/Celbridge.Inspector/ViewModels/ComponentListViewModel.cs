@@ -266,16 +266,15 @@ public partial class ComponentListViewModel : InspectorViewModel
             return false;
         }
 
-        var getResults = _entityService.GetComponentInfo(Resource, duplicateIndex);
-        if (getResults.IsFailure)
+        var getSchemaResult = _entityService.GetComponentSchema(Resource, duplicateIndex);
+        if (getSchemaResult.IsFailure)
         {
-            _logger.LogError(getResults.Error);
+            _logger.LogError(getSchemaResult.Error);
             return false;
         }
+        var schema = getSchemaResult.Value;
 
-        var componentInfo = getResults.Value;
-
-        var allowMultipleComponents = componentInfo.GetBooleanAttribute("allowMultipleComponents");
+        var allowMultipleComponents = schema.GetBooleanAttribute("allowMultipleComponents");
 
         return allowMultipleComponents;
     }
@@ -365,15 +364,15 @@ public partial class ComponentListViewModel : InspectorViewModel
         List<ComponentItem> componentItems = new();
         for (int i = 0; i < count; i++)
         {
-            var getComponentResult = _entityService.GetComponentInfo(Resource, i);
-            if (getComponentResult.IsFailure)
+            var getSchemaResult = _entityService.GetComponentSchema(Resource, i);
+            if (getSchemaResult.IsFailure)
             {
-                _logger.LogError(getComponentResult.Error);
+                _logger.LogError(getSchemaResult.Error);
                 return;
             }
-            var componentInfo = getComponentResult.Value;
+            var schema = getSchemaResult.Value;
 
-            var componentType = componentInfo.ComponentType;
+            var componentType = schema.ComponentType;
             if (componentType == "Empty")
             {
                 componentType = string.Empty;
@@ -399,7 +398,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
 
         // Notify running activities that the component list has been populated, so that
-        // they may add annotations to present component information in the inspector. 
+        // they may now add annotations to present component information in the inspector.
+
         var message = new PopulatedComponentListMessage(Resource);
         _messengerService.Send(message);
     }

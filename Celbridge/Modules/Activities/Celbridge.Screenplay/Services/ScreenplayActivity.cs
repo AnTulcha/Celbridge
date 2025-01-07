@@ -79,21 +79,21 @@ public class ScreenplayActivity : IActivity
 
         for (int i = 0; i < componentCount; i++)
         {
-            var getInfoResult = _entityService.GetComponentInfo(fileResource, i);
-            if (getInfoResult.IsFailure)
+            var getSchemaResult = _entityService.GetComponentSchema(fileResource, i);
+            if (getSchemaResult.IsFailure)
             {
-                return Result.Fail(fileResource, $"Failed to get component info for component index '{i}' on inspected resource: '{fileResource}'")
-                    .WithErrors(getInfoResult);
+                return Result.Fail(fileResource, $"Failed to get component schema for resource '{fileResource}' at component index {i}")
+                    .WithErrors(getSchemaResult);
             }
-            var componentInfo = getInfoResult.Value;
+            var schema = getSchemaResult.Value;
 
-            if (componentInfo.ComponentType == "Empty")
+            if (schema.ComponentType == "Empty")
             {
                 // Ignore comments
                 continue;
             }
 
-            if (!componentInfo.HasTag(ScreenplayConstants.ScreenplayTag))
+            if (!schema.HasTag(ScreenplayConstants.ScreenplayTag))
             {
                 // Not a Screenplay component
 
@@ -106,11 +106,11 @@ public class ScreenplayActivity : IActivity
                 continue;
             }
 
-            Result<ComponentAnnotation> getAnnotationResult = componentInfo.ComponentType switch
+            Result<ComponentAnnotation> getAnnotationResult = schema.ComponentType switch
             {
-                ScreenplayConstants.SceneComponentType => GetSceneAnnotation(fileResource, i, componentInfo),
-                ScreenplayConstants.LineComponentType => GetLineAnnotation(fileResource, i, componentInfo),
-                _ => Result<ComponentAnnotation>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{componentInfo.ComponentType}'")
+                ScreenplayConstants.SceneComponentType => GetSceneAnnotation(fileResource, i),
+                ScreenplayConstants.LineComponentType => GetLineAnnotation(fileResource, i),
+                _ => Result<ComponentAnnotation>.Fail($"{nameof(ScreenplayActivity)} does not support component type '{schema.ComponentType}'")
             };
 
             if (getAnnotationResult.IsFailure)
@@ -151,7 +151,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex, ComponentInfo componentInfo)
+    private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex)
     {
         var sceneTitle = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneTitle);
         var sceneDescription = _entityService.GetString(resource, componentIndex, ScreenplayConstants.SceneComponent_SceneDescription);
@@ -164,7 +164,7 @@ public class ScreenplayActivity : IActivity
         return Result<ComponentAnnotation>.Ok(annotation);
     }
 
-    private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex, ComponentInfo componentInfo)
+    private Result<ComponentAnnotation> GetLineAnnotation(ResourceKey resource, int componentIndex)
     {
         var character = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_Character);
         var sourceText = _entityService.GetString(resource, componentIndex, ScreenplayConstants.LineComponent_SourceText);

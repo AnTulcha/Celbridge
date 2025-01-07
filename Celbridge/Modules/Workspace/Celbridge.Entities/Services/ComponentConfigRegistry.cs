@@ -2,19 +2,19 @@ using Celbridge.Entities.Models;
 
 namespace Celbridge.Entities.Services;
 
-public class ComponentSchemaRegistry
+public class ComponentConfigRegistry
 {
     private readonly IServiceProvider _serviceProvider;
 
-    private readonly Dictionary<string, ComponentSchema> _componentSchemas = new();
-    public IReadOnlyDictionary<string, ComponentSchema> ComponentSchemas => _componentSchemas;
+    private readonly Dictionary<string, ComponentConfig> _componentConfigs = new();
+    public IReadOnlyDictionary<string, ComponentConfig> ComponentConfigs => _componentConfigs;
 
-    public ComponentSchemaRegistry(IServiceProvider serviceProvider)
+    public ComponentConfigRegistry(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
 
-    public Result LoadComponentSchemas()
+    public Result LoadComponentConfigs()
     {
         try
         {
@@ -34,51 +34,51 @@ public class ComponentSchemaRegistry
                 // Create the component schema
 
                 var schemaJson = descriptor.SchemaJson;
-                var createResult = ComponentSchema.CreateSchema(descriptor, schemaJson);
+                var createResult = ComponentConfig.CreateConfig(descriptor, schemaJson);
                 if (!createResult.IsSuccess)
                 {
-                    return Result.Fail($"Failed to create component schema from JSON for component descriptor: '{descriptorKey}'")
+                    return Result.Fail($"Failed to create component config from JSON for component descriptor: '{descriptorKey}'")
                         .WithErrors(createResult);
                 }
-                var componentSchema = createResult.Value;
+                var config = createResult.Value;
 
                 // Perform checks
 
                 // Todo: Use substring instead
                 var componentType = descriptorKey.Replace("Component", string.Empty);
 
-                if (componentType != componentSchema.ComponentType)
+                if (componentType != config.ComponentType)
                 {
-                    return Result.Fail($"Component type '{descriptorKey}' does not match type defined in schema");
+                    return Result.Fail($"Component type does not match type defined in schema: '{descriptorKey}'");
                 }
 
-                if (_componentSchemas.ContainsKey(componentType))
+                if (_componentConfigs.ContainsKey(componentType))
                 {
-                    return Result.Fail($"Component schema '{componentType}' already exists");
+                    return Result.Fail($"Component config already exists: '{componentType}'");
                 }
 
                 // Register the schema
 
-                _componentSchemas[componentType] = componentSchema;
+                _componentConfigs[componentType] = config;
             }
 
             return Result.Ok();
         }
         catch (Exception ex)
         {
-            return Result.Fail($"An exception occurred when loading schemas")
+            return Result.Fail($"An exception occurred when loading schema JSON files")
                 .WithException(ex);
         }
     }
 
-    public Result<ComponentSchema> GetSchemaForComponentType(string componentType)
+    public Result<ComponentConfig> GetComponentConfig(string componentType)
     {
-        if (!_componentSchemas.TryGetValue(componentType, out var entitySchema))
+        if (!_componentConfigs.TryGetValue(componentType, out var config))
         {
-            return Result<ComponentSchema>.Fail($"Component schema '{componentType}' not found");
+            return Result<ComponentConfig>.Fail($"Component config not found: '{componentType}'");
         }
 
-        return Result<ComponentSchema>.Ok(entitySchema);
+        return Result<ComponentConfig>.Ok(config);
     }
 
     private Dictionary<string, Type> GetDescriptorTypes()
