@@ -88,7 +88,7 @@ public class EntityService : IEntityService, IDisposable
                     .WithErrors(initProxyResult);
             }
 
-            var loadSchemasResult = await _schemaRegistry.LoadComponentSchemasAsync();
+            var loadSchemasResult = _schemaRegistry.LoadComponentSchemas();
             if (loadSchemasResult.IsFailure)
             {
                 return Result.Fail("Failed to load component schemas")

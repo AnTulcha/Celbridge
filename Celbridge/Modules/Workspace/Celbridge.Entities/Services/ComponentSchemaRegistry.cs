@@ -1,7 +1,5 @@
 using Celbridge.Entities.Models;
 
-using Path = System.IO.Path;
-
 namespace Celbridge.Entities.Services;
 
 public class ComponentSchemaRegistry
@@ -16,33 +14,52 @@ public class ComponentSchemaRegistry
         _serviceProvider = serviceProvider;
     }
 
-    public async Task<Result> LoadComponentSchemasAsync()
+    public Result LoadComponentSchemas()
     {
         try
         {
             var descriptorTypes = GetDescriptorTypes();
 
-            // Load the component schemas from the app package
-
-            // The Uno docs only discuss using StorageFile.GetFileFromApplicationUriAsync()
-            // to load files from the app package, but Package.Current.InstalledLocation appears
-            // to work fine on both Windows and Skia+Gtk platforms.
-            // https://platform.uno/docs/articles/features/file-management.html#support-for-storagefilegetfilefromapplicationuriasync
-            var configFolder = await Package.Current.InstalledLocation.GetFolderAsync(EntityConstants.ComponentConfigFolder);
-            var schemasFolder = await configFolder.GetFolderAsync(EntityConstants.SchemasFolder);
-            var jsonFiles = await schemasFolder.GetFilesAsync();
-
-            foreach (var jsonFile in jsonFiles)
+            foreach (var kv in descriptorTypes)
             {
-                var componentType = Path.GetFileNameWithoutExtension(jsonFile.Name);
-                var content = await FileIO.ReadTextAsync(jsonFile);
+                var descriptorKey = kv.Key;
+                var objectType = kv.Value;
 
-                var addResult = AddComponentSchema(componentType, content, descriptorTypes);
-                if (addResult.IsFailure)
+                var descriptor = _serviceProvider.GetRequiredService(objectType) as IComponentDescriptor;
+                if (descriptor is null)
                 {
-                    return Result.Fail($"Failed to load component schema json file: '{jsonFile.Path}'")
-                        .WithErrors(addResult);
+                    return Result.Fail($"Failed to instantiate component descriptor: '{descriptorKey}'");
                 }
+
+                // Create the component schema
+
+                var schemaJson = descriptor.SchemaJson;
+                var createResult = ComponentSchema.CreateSchema(descriptor, schemaJson);
+                if (!createResult.IsSuccess)
+                {
+                    return Result.Fail($"Failed to create component schema from JSON for component descriptor: '{descriptorKey}'")
+                        .WithErrors(createResult);
+                }
+                var componentSchema = createResult.Value;
+
+                // Perform checks
+
+                // Todo: Use substring instead
+                var componentType = descriptorKey.Replace("Component", string.Empty);
+
+                if (componentType != componentSchema.ComponentType)
+                {
+                    return Result.Fail($"Component type '{descriptorKey}' does not match type defined in schema");
+                }
+
+                if (_componentSchemas.ContainsKey(componentType))
+                {
+                    return Result.Fail($"Component schema '{componentType}' already exists");
+                }
+
+                // Register the schema
+
+                _componentSchemas[componentType] = componentSchema;
             }
 
             return Result.Ok();
@@ -62,59 +79,6 @@ public class ComponentSchemaRegistry
         }
 
         return Result<ComponentSchema>.Ok(entitySchema);
-    }
-
-    public Result AddComponentSchema(string componentType, string schemaJson, Dictionary<string, Type> descriptorTypes)
-    {
-        try
-        {
-            // Instantiate a descriptor for the component type
-
-            var componentObjectType = $"{componentType}Component";
-            if (!descriptorTypes.TryGetValue(componentObjectType, out var objectType))
-            {
-                return Result.Fail($"Component type '{componentType}' not found in descriptor types");
-            }
-
-            var descriptor = _serviceProvider.GetRequiredService(objectType) as IComponentDescriptor;
-            if (descriptor is null)
-            {
-                return Result.Fail($"Failed to instantiate decriptor for component type: {componentType}");
-            }
-
-            // Create the component schema
-
-            var createResult = ComponentSchema.CreateSchema(descriptor, schemaJson);
-            if (!createResult.IsSuccess)
-            {
-                return Result.Fail("Failed to create entity schema from JSON")
-                    .WithErrors(createResult);
-            }
-            var componentSchema = createResult.Value;
-
-            // Perform checks
-
-            if (componentType != componentSchema.ComponentType)
-            {
-                return Result.Fail($"Component type '{componentType}' does not match type defined in schema");
-            }
-
-            if (_componentSchemas.ContainsKey(componentType))
-            {
-                return Result.Fail($"Component schema '{componentType}' already exists");
-            }
-
-            // Register the schema
-
-            _componentSchemas[componentType] = componentSchema;
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail("An exception occurred when adding the component schema.")
-                .WithException(ex);
-        }
     }
 
     private Dictionary<string, Type> GetDescriptorTypes()
