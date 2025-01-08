@@ -20,4 +20,10 @@ public interface IActivity
     /// Updates the activity.
     /// </summary>
     Task<Result> UpdateResourceAsync(ResourceKey resource);
+
+    /// <summary>
+    /// Initialize a newly created entity, if the resource is relevant to this activity.
+    /// Returns true if the entity was initialized, false otherwise.
+    /// </summary>
+    bool TryInitializeEntity(ResourceKey resource);
 }

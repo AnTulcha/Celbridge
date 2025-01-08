@@ -86,19 +86,21 @@ public class EntityService : IEntityService, IDisposable
                     .WithErrors(initProxyResult);
             }
 
-            var loadConfigsResult = _configRegistry.LoadComponentConfigs();
-            if (loadConfigsResult.IsFailure)
+            var initConfigResult = _configRegistry.Initialize();
+            if (initConfigResult.IsFailure)
             {
-                return Result.Fail("Failed to load component configs")
-                    .WithErrors(loadConfigsResult);
+                return Result.Fail("Failed to initialize the component config registry")
+                    .WithErrors(initConfigResult);
             }
 
-            var initEntitiesResult = await _entityRegistry.Initialize(_entitySchema, _configRegistry);
+            var initEntitiesResult = _entityRegistry.Initialize(_entitySchema, _configRegistry);
             if (initEntitiesResult.IsFailure)
             {
                 return Result.Fail("Failed to initialize entity registry")
                     .WithErrors(initEntitiesResult);
             }
+
+            await Task.CompletedTask;
 
             return Result.Ok();
         }

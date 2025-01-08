@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Inspector;
@@ -5,6 +6,8 @@ using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Diagnostics;
+
+using Path = System.IO.Path;
 
 namespace Celbridge.Activities.Services;
 
@@ -33,6 +36,8 @@ public class ActivityDispatcher
     {
         _activityRegistry = activityRegistry;
 
+        _messengerService.Register<EntityCreatedMessage>(this, OnEntityCreatedMessage);
+
         _messengerService.Register<SelectedResourceChangedMessage>(this, (s, e) => HandleMessage(e.Resource));
         _messengerService.Register<ComponentChangedMessage>(this, (s, e) => HandleMessage(e.Resource));
         _messengerService.Register<PopulatedComponentListMessage>(this, (s, e) => HandleMessage(e.Resource));
@@ -47,8 +52,37 @@ public class ActivityDispatcher
         return Result.Ok();
     }
 
+    private void OnEntityCreatedMessage(object recipient, EntityCreatedMessage message)
+    {
+        Guard.IsNotNull(_activityRegistry);
+
+        var resource = message.Resource;
+
+        var fileExtension = Path.GetExtension(resource.ToString());
+        var hasExtension = !string.IsNullOrEmpty(fileExtension);
+
+        if (hasExtension)
+        {
+            // Try each activity in alphabetic order for deterministic results
+            var keys = _activityRegistry.Activities.Keys.ToList();
+            keys.Sort();
+
+            foreach (var key in keys)
+            {
+                // Attempt to initialize the entity with this activity
+                var activity = _activityRegistry.Activities[key];
+                if (activity.TryInitializeEntity(resource))
+                {
+                    // First activity to initialize the entity wins
+                    break;
+                }
+            }
+        }
+    }
+
     public void Uninitialize()
     {
+        _messengerService.Unregister<EntityCreatedMessage>(this);
         _messengerService.Unregister<SelectedResourceChangedMessage>(this);
         _messengerService.Unregister<ComponentChangedMessage>(this);
         _messengerService.Unregister<PopulatedComponentListMessage>(this);

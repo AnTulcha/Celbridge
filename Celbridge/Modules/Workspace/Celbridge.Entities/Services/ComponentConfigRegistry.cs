@@ -14,7 +14,7 @@ public class ComponentConfigRegistry
         _serviceProvider = serviceProvider;
     }
 
-    public Result LoadComponentConfigs()
+    public Result Initialize()
     {
         try
         {
@@ -31,7 +31,7 @@ public class ComponentConfigRegistry
                     return Result.Fail($"Failed to instantiate component descriptor: '{descriptorKey}'");
                 }
 
-                // Create the component schema
+                // Create the component config
 
                 var schemaJson = descriptor.SchemaJson;
                 var createResult = ComponentConfig.CreateConfig(descriptor, schemaJson);

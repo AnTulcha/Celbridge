@@ -1,4 +1,5 @@
 using Celbridge.Activities;
+using Celbridge.Commands;
 using Celbridge.Documents;
 using Celbridge.Entities;
 using Celbridge.Explorer;
@@ -8,12 +9,15 @@ using Celbridge.Messaging;
 using Celbridge.Workspace;
 using System.Text;
 
+using Path = System.IO.Path;
+
 namespace Celbridge.Screenplay.Services;
 
 public class ScreenplayActivity : IActivity
 {
     private readonly ILogger<ScreenplayActivity> _logger;
     private readonly IMessengerService _messengerService;
+    private readonly ICommandService _commandService;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
     private readonly IDocumentsService _documentService;
@@ -23,11 +27,13 @@ public class ScreenplayActivity : IActivity
     public ScreenplayActivity(
         ILogger<ScreenplayActivity> logger,        
         IMessengerService messengerService,
+        ICommandService commandService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
 
         _messengerService = messengerService;
+        _commandService = commandService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _documentService = workspaceWrapper.WorkspaceService.DocumentsService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
@@ -149,6 +155,22 @@ public class ScreenplayActivity : IActivity
         await Task.CompletedTask;
 
         return Result.Ok();
+    }
+
+    public bool TryInitializeEntity(ResourceKey resource)
+    {
+        var extension = Path.GetExtension(resource);
+        if (extension == ".scene")
+        {
+            // Add a Scene component to newly created .scene entities
+            _commandService.Execute<IAddComponentCommand>(command => {
+                command.Resource = resource;
+                command.ComponentType = ScreenplayConstants.SceneComponentType;
+            });
+            return true;
+        }
+
+        return false;
     }
 
     private Result<ComponentAnnotation> GetSceneAnnotation(ResourceKey resource, int componentIndex)
