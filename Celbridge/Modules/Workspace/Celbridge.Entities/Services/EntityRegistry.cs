@@ -295,14 +295,14 @@ public class EntityRegistry
             EntityData? entityData = null;
             if (File.Exists(entityDataPath))
             {
-                var getDataResult = EntityUtils.LoadEntityDataFile(entityDataPath, _entitySchema, _configRegistry);
-                if (getDataResult.IsSuccess)
+                var loadDataResult = EntityUtils.LoadEntityDataFile(entityDataPath, _entitySchema, _configRegistry);
+                if (loadDataResult.IsSuccess)
                 {
-                    entityData = getDataResult.Value;
+                    entityData = loadDataResult.Value;
                 }
                 else
                 {
-                    _logger.LogError(getDataResult.Error);
+                    _logger.LogError(loadDataResult.Error);
                 }
             }
 
@@ -336,7 +336,7 @@ public class EntityRegistry
 
             if (createdEntity)
             {
-                // Notify activity service so it can attempt to initialize the new entity with default data.
+                // Notify activity service so it can attempt to initialize the new entity with default components.
                 var message = new EntityCreatedMessage(resource);
                 _messengerService.Send(message);               
             }

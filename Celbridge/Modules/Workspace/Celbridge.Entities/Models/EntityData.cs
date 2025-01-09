@@ -143,11 +143,11 @@ public class EntityData
             bool isRemoveComponentOperation = operation.Path.Count == 2 && operation.Op == OperationType.Remove;
             if (!isRemoveComponentOperation)
             {
-                var validateSchemaResult = EntityUtils.ValidateComponent(patchedJsonObject, componentChange.ComponentIndex, configRegistry);
-                if (validateSchemaResult.IsFailure)
+                var validateResult = EntityUtils.ValidateComponent(patchedJsonObject, componentChange.ComponentIndex, configRegistry);
+                if (validateResult.IsFailure)
                 {
                     return Result<PatchSummary>.Fail($"Failed to validate component at index '{componentChange.ComponentIndex}' against schema for component type '{componentChange.ComponentType}'")
-                        .WithErrors(validateSchemaResult);
+                        .WithErrors(validateResult);
                 }
             }
 
