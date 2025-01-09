@@ -59,7 +59,7 @@ public class EntityService : IEntityService, IDisposable
 
     public async Task<Result> InitializeAsync()
     {
-        try 
+        try
         {
             // Build and cache the entity schema
             var builder = new JsonSchemaBuilder()
@@ -346,11 +346,6 @@ public class EntityService : IEntityService, IDisposable
         return Result.Ok();
     }
 
-    public Result<List<int>> GetComponentsOfType(ResourceKey resourceKey, string componentType)
-    {
-        return _entityRegistry.GetComponentsOfType(resourceKey, componentType);
-    }
-
     public Result<int> GetComponentCount(ResourceKey resource)
     {
         // Acquire the entity for the specified resource
@@ -425,9 +420,19 @@ public class EntityService : IEntityService, IDisposable
         return _componentProxyService.GetComponent(resource, componentIndex);
     }
 
+    public Result<IComponentProxy> GetComponentOfType(ResourceKey resource, string componentType)
+    {
+        return _componentProxyService.GetComponentOfType(resource, componentType);
+    }
+
     public Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource)
     {
-        return _componentProxyService.GetComponents(resource);
+        return _componentProxyService.GetComponents(resource, string.Empty);
+    }
+
+    public Result<IReadOnlyList<IComponentProxy>> GetComponentsOfType(ResourceKey resource, string componentType)
+    {
+        return _componentProxyService.GetComponents(resource, componentType);
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
@@ -439,30 +444,6 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return getResult.Value;
-    }
-
-    public T? GetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T? defaultValue) where T : notnull
-    {
-        var getComponentsResult = GetComponentsOfType(resource, componentType);
-        if (getComponentsResult.IsFailure)
-        {
-            return default;
-        }
-        var componentIndices = getComponentsResult.Value;
-
-        if (componentIndices.Count < 1)
-        {
-            return default;
-        }
-        var componentIndex = componentIndices[0];
-
-        var getPropertyResult = GetProperty<T>(resource, componentIndex, propertyPath);
-        if (getPropertyResult.IsFailure)
-        {
-            return default;
-        }
-
-        return getPropertyResult.Value;
     }
 
     public Result<T> GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath) where T : notnull
@@ -552,24 +533,6 @@ public class EntityService : IEntityService, IDisposable
         _logger.LogDebug($"Set property '{propertyPath}' for resource '{resource}'");
 
         return Result.Ok();
-    }
-
-    public Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue, bool insert) where T : notnull
-    {
-        var getComponentsResult = GetComponentsOfType(resource, componentType);
-        if (getComponentsResult.IsFailure)
-        {
-            return getComponentsResult;
-        }
-        var componentIndices = getComponentsResult.Value;
-
-        if (componentIndices.Count < 1)
-        {
-            return Result.Fail($"No components of type '{componentType}' were found");
-        }
-        var componentIndex = componentIndices[0];
-
-        return SetProperty(resource, componentIndex, propertyPath, newValue, insert);
     }
 
     public int GetUndoCount(ResourceKey resource)

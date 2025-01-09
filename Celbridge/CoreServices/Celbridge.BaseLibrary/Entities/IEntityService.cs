@@ -62,11 +62,6 @@ public interface IEntityService
     Result MoveComponent(ResourceKey resource, int sourceComponentIndex, int destComponentIndex);
 
     /// <summary>
-    /// Returns the indices of the entity components of the specified type.
-    /// </summary>
-    Result<List<int>> GetComponentsOfType(ResourceKey resource, string componentType);
-
-    /// <summary>
     /// Returns the number of components in the entity for a resource.
     /// </summary>
     Result<int> GetComponentCount(ResourceKey resource);
@@ -82,30 +77,31 @@ public interface IEntityService
     Result<ComponentSchema> GetComponentSchema(string componentType);
 
     /// <summary>
-    /// Returns a ComponentProxy which provides a wrapper for an entity component.
-    /// It is not recommended to cache the proxy as it will be invalidated on the next structural change to 
-    /// the entity.
+    /// Returns the component at the specified index in the entity.
     /// </summary>
     Result<IComponentProxy> GetComponent(ResourceKey resource, int componentIndex);
 
     /// <summary>
-    /// Returns a list of ComponentProxies which wrap every component in the entity.
+    /// Returns the first component of the specified type in the entity.
+    /// </summary>
+    Result<IComponentProxy> GetComponentOfType(ResourceKey resource, string componentType);
+
+    /// <summary>
+    /// Returns all components in the entity.
     /// </summary>
     Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource);
 
     /// <summary>
-    /// Gets the value of a property from a component.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Returns a default value if the component or property cannot be found.
+    /// Returns all components of the specified type in the entity.
     /// </summary>
-    T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull;
+    Result<IReadOnlyList<IComponentProxy>> GetComponentsOfType(ResourceKey resource, string componentType);
 
     /// <summary>
-    /// Gets the value of a property from the first component of the specified type.
+    /// Gets the value of a property from a component.
     /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Returns a default value if the component or property cannot be found.
+    /// Returns the default value if the component or property cannot be found.
     /// </summary>
-    T? GetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T? defaultValue) where T : notnull;
+    T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull;
 
     /// <summary>
     /// Gets the value of a property from a component.
@@ -127,13 +123,6 @@ public interface IEntityService
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
     Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue, bool insert = false) where T : notnull;
-
-    /// <summary>
-    /// Replaces the value of an existing property from the first component of the specified type.
-    /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
-    /// propertyPath is a JSON Pointer (RFC 6901).
-    /// </summary>
-    Result SetProperty<T>(ResourceKey resource, string componentType, string propertyPath, T newValue, bool insert = false) where T : notnull;
 
     /// <summary>
     /// Returns the number of available undo operations for an entity.

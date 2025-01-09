@@ -55,8 +55,23 @@ public interface IComponentProxy
     Result<T> GetProperty<T>(string propertyPath) where T : notnull;
 
     /// <summary>
+    /// Gets the value of a property from a component.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// Returns the default value if the component or property cannot be found.
+    /// </summary>
+    T? GetProperty<T>(string propertyPath, T? defaultValue) where T : notnull;
+
+    /// <summary>
     /// Convenience method to get a string property with minimal boilerplate.
     /// Returns the default value if the property cannot be found.
     /// </summary>
     string GetString(string propertyPath, string defaultValue = "");
+
+    /// <summary>
+    /// Replaces the value of an existing entity property for a component.
+    /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// </summary>
+    Result SetProperty<T>(string propertyPath, T newValue, bool insert = false) where T : notnull;
+
 }

@@ -51,6 +51,11 @@ public class ComponentProxy : IComponentProxy
         return _entityService.GetProperty<T>(Resource, ComponentIndex, propertyPath);
     }
 
+    public T? GetProperty<T>(string propertyPath, T? defaultValue) where T : notnull
+    {
+        return _entityService.GetProperty<T>(Resource, ComponentIndex, propertyPath, defaultValue);
+    }
+
     public string GetString(string propertyPath, string defaultValue = "")
     {
         Guard.IsNotNull(defaultValue);
@@ -62,5 +67,10 @@ public class ComponentProxy : IComponentProxy
         }
 
         return getResult.Value;
+    }
+
+    public Result SetProperty<T>(string propertyPath, T newValue, bool insert) where T : notnull
+    {
+        return _entityService.SetProperty<T>(Resource, ComponentIndex, propertyPath, newValue);
     }
 }

@@ -142,28 +142,13 @@ public class ScreenplayActivity : IActivity
 
     private Result<string> GenerateScreenplayMarkdown(ResourceKey resource)
     {
-        var getIndicesResult = _entityService.GetComponentsOfType(resource, ScreenplayConstants.SceneComponentType);
-        if (getIndicesResult.IsFailure)
+        var getComponentResult = _entityService.GetComponentOfType(resource, ScreenplayConstants.SceneComponentType);
+        if (getComponentResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get Scene component")
-                .WithErrors(getIndicesResult);
+                .WithErrors(getComponentResult);
         }
-        var sceneIndices = getIndicesResult.Value;
-
-        if (sceneIndices.Count != 1)
-        {
-            return Result<string>.Fail($"Failed to get Scene component");
-        }
-
-        var sceneComponentIndex = sceneIndices[0];
-
-        var getSceneResult = _entityService.GetComponent(resource, sceneComponentIndex);
-        if (getSceneResult.IsFailure)
-        {
-            return Result<string>.Fail($"Failed to get Scene component")
-                .WithErrors(getIndicesResult);
-        }
-        var sceneComponent = getSceneResult.Value;
+        var sceneComponent = getComponentResult.Value;
 
         var sceneTitle = sceneComponent.GetString(ScreenplayConstants.SceneComponent_SceneTitle);
         var sceneDescription = sceneComponent.GetString(ScreenplayConstants.SceneComponent_SceneDescription);
@@ -181,18 +166,10 @@ public class ScreenplayActivity : IActivity
             return Result<string>.Fail($"Failed to get Line components")
                 .WithErrors(getLinesResult);
         }
-        var lineComponentIndices = getLinesResult.Value;
+        var lineComponents = getLinesResult.Value;
 
-        foreach (var lineComponentIndex in lineComponentIndices)
+        foreach (var lineComponent in lineComponents)
         {
-            var getLineResult = _entityService.GetComponent(resource, lineComponentIndex);
-            if (getLineResult.IsFailure)
-            {
-                return Result<string>.Fail($"Failed to get Line component")
-                    .WithErrors(getLineResult);
-            }
-            var lineComponent = getLineResult.Value;
-
             var character = lineComponent.GetString(ScreenplayConstants.LineComponent_Character);
             var sourceText = lineComponent.GetString(ScreenplayConstants.LineComponent_SourceText);
 

@@ -12,8 +12,8 @@ public class ComponentProxyService
     private readonly IWorkspaceWrapper _workspaceWrapper;
     private IEntityService? _entityService;
 
-    private Dictionary<ResourceKey, Dictionary<int, ComponentProxy>> _proxyCache = new();
-    private Dictionary<ResourceKey, IReadOnlyList<IComponentProxy>> _proxyListCache = new();
+    private Dictionary<ResourceKey, Dictionary<int, ComponentProxy>> _componentCache = new();
+    private Dictionary<ResourceKey, IReadOnlyList<IComponentProxy>> _componentListCache = new();
 
     public ComponentProxyService(
         IServiceProvider serviceProvider,
@@ -48,7 +48,7 @@ public class ComponentProxyService
 
         if (propertyPath == "/")
         {
-            if (_proxyCache.TryGetValue(resource, out var indexCache))
+            if (_componentCache.TryGetValue(resource, out var indexCache))
             {
                 // Invalidate all proxies in the index cache before removing them.
                 // If a client is holding a reference to a proxy, they can check if it is valid before using it.
@@ -57,8 +57,8 @@ public class ComponentProxyService
                     proxy.IsValid = false;
                 }
             }
-            _proxyCache.Remove(resource);
-            _proxyListCache.Remove(resource);
+            _componentCache.Remove(resource);
+            _componentListCache.Remove(resource);
         }
     }
 
@@ -67,10 +67,10 @@ public class ComponentProxyService
         Guard.IsNotNull(_entityService);
 
         // Attempt to get the proxy from the cache
-        if (!_proxyCache.TryGetValue(resource, out var indexCache))
+        if (!_componentCache.TryGetValue(resource, out var indexCache))
         {
             indexCache = new Dictionary<int, ComponentProxy>();
-            _proxyCache[resource] = indexCache;
+            _componentCache[resource] = indexCache;
         }
         if (indexCache.TryGetValue(componentIndex, out var cachedProxy))
         {
@@ -103,40 +103,75 @@ public class ComponentProxyService
         return Result<IComponentProxy>.Ok(proxy);
     }
 
-    public Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource)
+    public Result<IComponentProxy> GetComponentOfType(ResourceKey resource, string componentType)
+    {
+        if (string.IsNullOrEmpty(componentType))
+        {
+            return Result<IComponentProxy>.Fail("Component type must be specified");
+        }
+
+        var getComponentsResult = GetComponents(resource, componentType);
+        if (getComponentsResult.IsFailure)
+        {
+            return Result<IComponentProxy>.Fail($"Failed to get components for resource '{resource}'")
+                .WithErrors(getComponentsResult);
+        }
+        var components = getComponentsResult.Value;
+
+        if (components.Count == 0)
+        {
+            return Result<IComponentProxy>.Fail($"No components of type '{componentType}' found for resource '{resource}'");
+        }
+
+        return Result<IComponentProxy>.Ok(components[0]);
+    }
+
+    public Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource, string componentType)
     {
         Guard.IsNotNull(_entityService);
 
-        if (_proxyListCache.TryGetValue(resource, out var list))
+        // Attempt to get the component list from the cache
+        if (!_componentListCache.TryGetValue(resource, out var componentList))
         {
-            return Result<IReadOnlyList<IComponentProxy>>.Ok(list);
-        }
+            // List was not previously cached, populate the component list now
 
-        // Get the component count
-        var getCountResult = _entityService.GetComponentCount(resource);
-        if (getCountResult.IsFailure)
-        {
-            return Result<IReadOnlyList<IComponentProxy>>.Fail($"Failed to get component count for resource '{resource}'")
-                .WithErrors(getCountResult);
-        }
-        var count = getCountResult.Value;
-
-        // Populate the proxy list
-        var proxies = new List<IComponentProxy>(count);
-        for (int i = 0; i < count; i++)
-        {
-            var getComponentResult = GetComponent(resource, i);
+            // Get the component count
+            var getCountResult = _entityService.GetComponentCount(resource);
             if (getCountResult.IsFailure)
             {
-                return Result<IReadOnlyList<IComponentProxy>>.Fail($"Failed to get component for resource '{resource}' at index {i}")
-                    .WithErrors(getComponentResult);
+                return Result<IReadOnlyList<IComponentProxy>>.Fail($"Failed to get component count for resource '{resource}'")
+                    .WithErrors(getCountResult);
             }
-            var component = getComponentResult.Value;
+            var count = getCountResult.Value;
 
-            proxies.Add(component);
+            // Populate the component list
+            var newList = new List<IComponentProxy>(count);
+            for (int i = 0; i < count; i++)
+            {
+                var getComponentResult = GetComponent(resource, i);
+                if (getCountResult.IsFailure)
+                {
+                    return Result<IReadOnlyList<IComponentProxy>>.Fail($"Failed to get component for resource '{resource}' at index {i}")
+                        .WithErrors(getComponentResult);
+                }
+                var component = getComponentResult.Value;
+
+                newList.Add(component);
+            }
+
+            _componentListCache[resource] = newList;
         }
-        _proxyListCache[resource] = proxies;
 
-        return Result<IReadOnlyList<IComponentProxy>>.Ok(proxies);
+        var components = _componentListCache[resource];
+
+        if (string.IsNullOrEmpty(componentType))
+        {
+            // Return the full list
+            return Result<IReadOnlyList<IComponentProxy>>.Ok(components);
+        }
+
+        // Return only the components of the specified type
+        var filtered = components.Where(c => c.Schema.ComponentType == componentType).ToList();
+        return Result<IReadOnlyList<IComponentProxy>>.Ok(filtered);
     }
 }
