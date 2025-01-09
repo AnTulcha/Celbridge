@@ -48,6 +48,13 @@ public interface IComponentProxy
     void SetAnnotation(ComponentStatus Status, string Description, string Tooltip);
 
     /// <summary>
+    /// Gets the value of a string property.
+    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// Fails if the property cannot be found, or is of the wrong type.
+    /// </summary>
+    Result<T> GetProperty<T>(string propertyPath) where T : notnull;
+
+    /// <summary>
     /// Convenience method to get a string property with minimal boilerplate.
     /// Returns the default value if the property cannot be found.
     /// </summary>

@@ -46,6 +46,11 @@ public class ComponentProxy : IComponentProxy
 
     // Property accessors
 
+    public Result<T> GetProperty<T>(string propertyPath) where T : notnull
+    {
+        return _entityService.GetProperty<T>(Resource, ComponentIndex, propertyPath);
+    }
+
     public string GetString(string propertyPath, string defaultValue = "")
     {
         Guard.IsNotNull(defaultValue);
