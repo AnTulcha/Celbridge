@@ -2,10 +2,7 @@ using Celbridge.Activities;
 using Celbridge.Commands;
 using Celbridge.Documents;
 using Celbridge.Entities;
-using Celbridge.Explorer;
-using Celbridge.Inspector;
 using Celbridge.Logging;
-using Celbridge.Messaging;
 using Celbridge.Workspace;
 using System.Text;
 
@@ -16,62 +13,37 @@ namespace Celbridge.Screenplay.Services;
 public class ScreenplayActivity : IActivity
 {
     private readonly ILogger<ScreenplayActivity> _logger;
-    private readonly IMessengerService _messengerService;
     private readonly ICommandService _commandService;
     private readonly IEntityService _entityService;
-    private readonly IInspectorService _inspectorService;
     private readonly IDocumentsService _documentService;
 
     private HashSet<ResourceKey> _pendingEntityUpdates = new();
 
     public ScreenplayActivity(
         ILogger<ScreenplayActivity> logger,        
-        IMessengerService messengerService,
         ICommandService commandService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
 
-        _messengerService = messengerService;
         _commandService = commandService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _documentService = workspaceWrapper.WorkspaceService.DocumentsService;
-        _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
     }
 
-    public async Task<Result> Start()
+    public async Task<Result> ActivateAsync()
     {
-        _messengerService.Register<SelectedResourceChangedMessage>(this, (s,e) => HandleMessage(e.Resource));
-        _messengerService.Register<ComponentChangedMessage>(this, (s, e) => HandleMessage(e.Resource));
-        _messengerService.Register<PopulatedComponentListMessage>(this, (s, e) => HandleMessage(e.Resource));
-
-        void HandleMessage(ResourceKey resource)
-        {
-            bool hasScreenplayTag = _entityService.HasTag(resource, ScreenplayConstants.ScreenplayTag);
-
-            if (hasScreenplayTag)
-            {
-                _pendingEntityUpdates.Add(resource);
-            }
-        }
-
         await Task.CompletedTask;
-
         return Result.Ok();
     }
 
-    public async Task<Result> Stop()
+    public async Task<Result> DeactivateAsync()
     {
-        _messengerService.Unregister<SelectedResourceChangedMessage>(this);
-        _messengerService.Unregister<ComponentChangedMessage>(this);
-        _messengerService.Unregister<PopulatedComponentListMessage>(this);
-
         await Task.CompletedTask;
-
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateResourceAsync(ResourceKey fileResource)
+    public async Task<Result> UpdateEntityAsync(ResourceKey fileResource)
     {
         var getCountResult = _entityService.GetComponentCount(fileResource);
         if (getCountResult.IsFailure)

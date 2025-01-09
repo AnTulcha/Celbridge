@@ -7,6 +7,11 @@ namespace Celbridge.Workspace;
 
 public class Module : IModule
 {
+    public IReadOnlyList<string> SupportedActivities { get; } = new List<string>()
+    {
+        ScreenplayConstants.ScreenplayTag
+    };
+
     public void ConfigureServices(IModuleServiceCollection config)
     {
         //
@@ -32,8 +37,6 @@ public class Module : IModule
     {
         return Result.Ok();
     }
-
-    public bool SupportsActivity(string activityName) => activityName == ScreenplayConstants.ScreenplayTag;
 
     public Result<IActivity> CreateActivity(string activityName)
     {

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Inspector;
@@ -118,12 +117,6 @@ public class ActivityDispatcher
             bool hasPrimaryComponent = _entityService.HasTag(fileResource, "PrimaryComponent");
             if (!hasPrimaryComponent)
             {
-                // Todo: Annotate the entity and all components with an error message
-                foreach (var componentIndex in unprocessedComponents)
-                {
-                    AnnotateNoPrimaryComponentError(fileResource, componentIndex);
-                }
-
                 // Move onto next modified file resource
                 continue;
             }
@@ -155,7 +148,7 @@ public class ActivityDispatcher
 
                 if (schema.ComponentType == "Empty")
                 {
-                    // Ignore comments
+                    // Ignore empty components at top of Entity
                     continue;
                 }
 
@@ -222,7 +215,7 @@ public class ActivityDispatcher
 
             // Use the activity to annotate all components in the entity
 
-            var updateResult = await activity.UpdateResourceAsync(fileResource);
+            var updateResult = await activity.UpdateEntityAsync(fileResource);
             if (updateResult.IsFailure)
             {
                 return Result.Fail($"Failed to update resource: '{fileResource}'")
@@ -247,17 +240,5 @@ public class ActivityDispatcher
             comment);
 
         return _entityService.UpdateComponentAnnotation(resource, componentIndex, annotation);
-    }
-
-    private void AnnotateNoPrimaryComponentError(ResourceKey fileResource, int componentIndex)
-    {
-        // Todo: Display the activityName property for the component type
-
-        var annotation = new ComponentAnnotation(
-            ComponentStatus.Error,
-            "No Primary Component",
-            $"This component requires Primary Component");
-
-        _entityService.UpdateComponentAnnotation(fileResource, componentIndex, annotation);
     }
 }
