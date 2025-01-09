@@ -73,7 +73,8 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void OnComponentAnnotationUpdatedMessage(object recipient, ComponentAnnotationUpdatedMessage message)
     {
-        if (message.Resource != Resource)
+        var resource = message.Resource;
+        if (resource != Resource)
         {
             // This message does not apply to the resource being presented by this ViewModel.
             // This is probably because the user has just switched to inspecting a different resource and the ViewUnloaded
@@ -81,20 +82,27 @@ public partial class ComponentListViewModel : InspectorViewModel
             return;
         }
 
-        var index = message.ComponentIndex;
-        if (index < 0 || index >= ComponentItems.Count)
+        var componentIndex = message.ComponentIndex;
+        if (componentIndex < 0 || componentIndex >= ComponentItems.Count)
         {
             // Component index is out of range
-            _logger.LogError($"Component index '{index}' is out of range for resource '{message.Resource}'");
+            _logger.LogError($"Component index '{componentIndex}' is out of range for resource '{message.Resource}'");
             return;
         }
 
-        var annotation = message.Annotation;
-        var componentItem = ComponentItems[index];
+        var componentItem = ComponentItems[componentIndex];
 
-        componentItem.Description = annotation.Description;
-        componentItem.Status = annotation.Status;
-        componentItem.Tooltip = annotation.Tooltip;
+        var getComponentResult = _entityService.GetComponent(resource, componentIndex);
+        if (getComponentResult.IsFailure)
+        {
+            _logger.LogError(getComponentResult.Error);
+            return;
+        }
+        var component = getComponentResult.Value;
+
+        componentItem.Description = component.Description;
+        componentItem.Status = component.Status;
+        componentItem.Tooltip = component.Tooltip;
     }
 
     public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);

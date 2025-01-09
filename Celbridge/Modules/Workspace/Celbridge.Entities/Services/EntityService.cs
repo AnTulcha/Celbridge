@@ -420,43 +420,14 @@ public class EntityService : IEntityService, IDisposable
         return Result<ComponentSchema>.Ok(componentConfig.ComponentSchema);
     }
 
-    public List<ComponentSchema> GetComponentSchemaList(ResourceKey resource)
+    public Result<IComponentProxy> GetComponent(ResourceKey resource, int componentIndex)
     {
-        var schemaList = new List<ComponentSchema>();
+        return _componentProxyService.GetComponent(resource, componentIndex);
+    }
 
-        var getCountResult = GetComponentCount(resource);
-        if (getCountResult.IsFailure)
-        {
-            return schemaList;
-        }
-        var count = getCountResult.Value;
-
-        for (int i = 0; i < count; i++)
-        {
-            // Get the component type
-            var getTypeResult = GetComponentType(resource, i);
-            if (getTypeResult.IsFailure)
-            {
-                _logger.LogError($"Failed to get component type for resource '{resource}' at component index {i}. {getTypeResult.Error}");
-                schemaList.Clear();
-                return schemaList;
-            }
-            var componentType = getTypeResult.Value;
-
-            // Get the component schema
-            var getSchemaResult = GetComponentSchema(componentType);
-            if (getSchemaResult.IsFailure)
-            {
-                _logger.LogError($"Failed to get component schema for resource '{resource}' at component index {i}. {getSchemaResult.Error}");
-                schemaList.Clear();
-                return schemaList;
-            }
-            var schema = getSchemaResult.Value;
-
-            schemaList.Add(schema);
-        }
-
-        return schemaList;
+    public Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource)
+    {
+        return _componentProxyService.GetComponents(resource);
     }
 
     public T? GetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T? defaultValue) where T : notnull
@@ -543,19 +514,6 @@ public class EntityService : IEntityService, IDisposable
         var jsonString = jsonNode.ToJsonString();
 
         return Result<string>.Ok(jsonString);
-    }
-
-    public string GetString(ResourceKey resource, int componentIndex, string propertyPath, string defaultValue = "")
-    {
-        Guard.IsNotNull(defaultValue);
-
-        var getResult = GetProperty<string>(resource, componentIndex, propertyPath);
-        if (getResult.IsFailure)
-        {
-            return defaultValue;
-        }
-
-        return getResult.Value;
     }
 
     public Result SetProperty<T>(ResourceKey resource, int componentIndex, string propertyPath, T newValue, bool insert) where T : notnull
@@ -735,16 +693,6 @@ public class EntityService : IEntityService, IDisposable
         return entity.EntityData.Tags.Contains(tag);
     }
 
-    public Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation)
-    {
-        // Updates the component appearance in the inspector
-
-        var message = new ComponentAnnotationUpdatedMessage(inspectedResource, componentIndex, annotation);
-        _messengerService.Send(message);
-
-        return Result.Ok();
-    }
-
     public List<string> GetAllComponentTypes()
     {
         var componentTypes = _configRegistry.ComponentConfigs.Keys.ToList();
@@ -811,6 +759,13 @@ public class EntityService : IEntityService, IDisposable
             if (disposing)
             {
                 // Dispose managed objects here
+
+                // Uninitialize the component proxy service
+                var uninitializeResult = _componentProxyService.Uninitialize();
+                if (uninitializeResult.IsFailure)
+                {
+                    _logger.LogError(uninitializeResult.Error);
+                }
             }
 
             _disposed = true;

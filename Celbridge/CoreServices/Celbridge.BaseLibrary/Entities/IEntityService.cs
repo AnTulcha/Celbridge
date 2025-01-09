@@ -82,9 +82,16 @@ public interface IEntityService
     Result<ComponentSchema> GetComponentSchema(string componentType);
 
     /// <summary>
-    /// Returns a list containing the ComponentSchema of every component in the specified entity.
+    /// Returns a ComponentProxy which provides a wrapper for an entity component.
+    /// It is not recommended to cache the proxy as it will be invalidated on the next structural change to 
+    /// the entity.
     /// </summary>
-    List<ComponentSchema> GetComponentSchemaList(ResourceKey resource);
+    Result<IComponentProxy> GetComponent(ResourceKey resource, int componentIndex);
+
+    /// <summary>
+    /// Returns a list of ComponentProxies which wrap every component in the entity.
+    /// </summary>
+    Result<IReadOnlyList<IComponentProxy>> GetComponents(ResourceKey resource);
 
     /// <summary>
     /// Gets the value of a property from a component.
@@ -113,11 +120,6 @@ public interface IEntityService
     /// Fails if the property cannot be found.
     /// </summary>
     Result<string> GetPropertyAsJson(ResourceKey resource, int componentIndex, string propertyPath);
-
-    /// <summary>
-    /// Convenience method to get a string property from a component with minimal boilerplate.
-    /// </summary>
-    string GetString(ResourceKey resource, int componentIndex, string propertyPath, string defaultValue = "");
 
     /// <summary>
     /// Replaces the value of an existing entity property for a component.
@@ -157,11 +159,6 @@ public interface IEntityService
     /// Returns true if any component in the entity has the specified tag.
     /// </summary>
     bool HasTag(ResourceKey resource, string tag);
-
-    /// <summary>
-    /// Updates the annotation data for a component in the inspector.
-    /// </summary>
-    Result UpdateComponentAnnotation(ResourceKey inspectedResource, int componentIndex, ComponentAnnotation annotation);
 
     /// <summary>
     /// Return the list of all available component types.
