@@ -273,25 +273,16 @@ public partial class ComponentListViewModel : InspectorViewModel
             return false;
         }
 
-        // Get the component type
-        var getTypeResult = _entityService.GetComponentType(Resource, duplicateIndex);
-        if (getTypeResult.IsFailure)
+        // Get the component
+        var getComponentResult = _entityService.GetComponent(Resource, duplicateIndex);
+        if (getComponentResult.IsFailure)
         {
-            _logger.LogError(getTypeResult.Error);
+            _logger.LogError(getComponentResult.Error);
             return false;
         }
-        var componentType = getTypeResult.Value;
+        var component = getComponentResult.Value;
 
-        // Get the component schema
-        var getSchemaResult = _entityService.GetComponentSchema(componentType);
-        if (getSchemaResult.IsFailure)
-        {
-            _logger.LogError(getSchemaResult.Error);
-            return false;
-        }
-        var schema = getSchemaResult.Value;
-
-        var allowMultipleComponents = schema.GetBooleanAttribute("allowMultipleComponents");
+        var allowMultipleComponents = component.Schema.GetBooleanAttribute("allowMultipleComponents");
 
         return allowMultipleComponents;
     }
