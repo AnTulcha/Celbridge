@@ -39,12 +39,50 @@ public class EntityRegistry
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public Result Initialize(JsonSchema entitySchema, ComponentConfigRegistry configRegistry)
+    public Result Initialize(ComponentConfigRegistry configRegistry)
     {
-        _entitySchema = entitySchema;
         _configRegistry = configRegistry;
 
+        // Create the entity schema
+
+        var createResult = CreateEntitySchema();
+        if (createResult.IsFailure)
+        {
+            return Result.Fail($"Failed to create entity schema")
+                .WithErrors(createResult);
+        }
+        _entitySchema = createResult.Value;
+
         return Result.Ok();
+    }
+
+    private Result<JsonSchema> CreateEntitySchema()
+    {
+        try
+        {
+            // Build and cache the entity schema
+            var builder = new JsonSchemaBuilder()
+                .Type(SchemaValueType.Object)
+                .Properties(
+                    ("_entityVersion", new JsonSchemaBuilder()
+                        .Type(SchemaValueType.Integer)
+                        .Const(1)
+                    ),
+                    ("_components", new JsonSchemaBuilder()
+                        .Type(SchemaValueType.Array)
+                    )
+                )
+                .Required("_entityVersion", "_components");
+
+            var entitySchema = builder.Build();
+
+            return Result<JsonSchema>.Ok(entitySchema);
+        }
+        catch (Exception ex)
+        {
+            return Result<JsonSchema>.Fail("An exception occurred when creating entity schema")
+                .WithException(ex);
+        }
     }
 
     public string GetEntityDataPath(ResourceKey resource)

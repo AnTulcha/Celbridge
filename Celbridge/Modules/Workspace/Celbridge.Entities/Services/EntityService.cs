@@ -26,8 +26,6 @@ public class EntityService : IEntityService, IDisposable
     private ComponentProxyService _componentProxyService;
     private EntityRegistry _entityRegistry;
 
-    private JsonSchema? _entitySchema;
-
     private static long _undoGroupId;
 
     public static JsonSerializerOptions SerializerOptions { get; } = new()
@@ -61,23 +59,6 @@ public class EntityService : IEntityService, IDisposable
     {
         try
         {
-            // Build and cache the entity schema
-            var builder = new JsonSchemaBuilder()
-                .Type(SchemaValueType.Object)
-                .Properties(
-                    ("_entityVersion", new JsonSchemaBuilder()
-                        .Type(SchemaValueType.Integer)
-                        .Const(1)
-                    ),
-                    ("_components", new JsonSchemaBuilder()
-                        .Type(SchemaValueType.Array)
-                    )
-                )
-                .Required("_entityVersion", "_components");
-
-            _entitySchema = builder.Build();
-            Guard.IsNotNull(_entitySchema);
-
             // Initialize the component proxy service
             var initProxyResult = _componentProxyService.Initialize();
             if (initProxyResult.IsFailure)
@@ -93,7 +74,7 @@ public class EntityService : IEntityService, IDisposable
                     .WithErrors(initConfigResult);
             }
 
-            var initEntitiesResult = _entityRegistry.Initialize(_entitySchema, _configRegistry);
+            var initEntitiesResult = _entityRegistry.Initialize(_configRegistry);
             if (initEntitiesResult.IsFailure)
             {
                 return Result.Fail("Failed to initialize entity registry")
