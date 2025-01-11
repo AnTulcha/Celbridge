@@ -8,7 +8,6 @@ using Json.Schema;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 using Path = System.IO.Path;
 
