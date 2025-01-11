@@ -56,35 +56,6 @@ public class EntityRegistry
         return Result.Ok();
     }
 
-    private Result<JsonSchema> CreateEntitySchema()
-    {
-        try
-        {
-            // Build and cache the entity schema
-            var builder = new JsonSchemaBuilder()
-                .Type(SchemaValueType.Object)
-                .Properties(
-                    ("_entityVersion", new JsonSchemaBuilder()
-                        .Type(SchemaValueType.Integer)
-                        .Const(1)
-                    ),
-                    ("_components", new JsonSchemaBuilder()
-                        .Type(SchemaValueType.Array)
-                    )
-                )
-                .Required("_entityVersion", "_components");
-
-            var entitySchema = builder.Build();
-
-            return Result<JsonSchema>.Ok(entitySchema);
-        }
-        catch (Exception ex)
-        {
-            return Result<JsonSchema>.Fail("An exception occurred when creating entity schema")
-                .WithException(ex);
-        }
-    }
-
     public string GetEntityDataPath(ResourceKey resource)
     {
         var entityDataPath = Path.Combine(GetEntitiesFolderPath(), resource) + ".json";
@@ -349,7 +320,7 @@ public class EntityRegistry
             if (entityData is null)
             {
                 // We were unable to load an existing entity data, so we need to create a new one
-                var createResult = CreateEntityData(resource);
+                var createResult = EntityUtils.CreateEntityData(resource, _configRegistry, _entitySchema);
                 if (createResult.IsSuccess)
                 {
                     entityData = createResult.Value;
@@ -412,40 +383,43 @@ public class EntityRegistry
         return Result<List<int>>.Ok(componentIndices);
     }
 
+    private Result<JsonSchema> CreateEntitySchema()
+    {
+        try
+        {
+            // Build and cache the entity schema
+            var builder = new JsonSchemaBuilder()
+                .Type(SchemaValueType.Object)
+                .Properties(
+                    ("_entityVersion", new JsonSchemaBuilder()
+                        .Type(SchemaValueType.Integer)
+                        .Const(1)
+                    ),
+                    ("_components", new JsonSchemaBuilder()
+                        .Type(SchemaValueType.Array)
+                    ),
+                    ("_activity", new JsonSchemaBuilder()
+                        .Type(SchemaValueType.String)
+                    )
+                )
+                .Required("_entityVersion", "_components", "_activity");
+
+            var entitySchema = builder.Build();
+
+            return Result<JsonSchema>.Ok(entitySchema);
+        }
+        catch (Exception ex)
+        {
+            return Result<JsonSchema>.Fail("An exception occurred when creating entity schema")
+                .WithException(ex);
+        }
+    }
+
+
     private string GetEntitiesFolderPath()
     {
         var projectDataFolderPath = _projectService.CurrentProject!.ProjectDataFolderPath;
         var path = Path.Combine(projectDataFolderPath, FileNameConstants.EntitiesFolder);
         return path;
-    }
-
-    private Result<EntityData> CreateEntityData(ResourceKey resource)
-    {
-        Guard.IsNotNull(_configRegistry);
-        Guard.IsNotNull(_entitySchema);
-
-        var entityJsonObject = new JsonObject
-        {
-            ["_entityVersion"] = 1,
-            ["_components"] = new JsonArray()
-        };
-
-        var evaluateResult = _entitySchema.Evaluate(entityJsonObject);
-        if (!evaluateResult.IsValid)
-        {
-            return Result<EntityData>.Fail($"Failed to create entity data. Schema validation error: {resource}");
-        }
-
-        var getTagsResult = EntityUtils.GetAllComponentTags(entityJsonObject, _configRegistry);
-        if (getTagsResult.IsFailure)
-        {
-            return Result<EntityData>.Fail($"Failed to get component tags for entity data: {resource}")
-                .WithErrors(getTagsResult);
-        }
-        var tags = getTagsResult.Value;
-
-        var entityData = EntityData.Create(entityJsonObject, _entitySchema, tags);
-
-        return Result<EntityData>.Ok(entityData);
     }
 }
