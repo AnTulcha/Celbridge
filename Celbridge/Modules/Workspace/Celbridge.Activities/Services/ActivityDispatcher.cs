@@ -43,7 +43,10 @@ public class ActivityDispatcher
 
         void HandleMessage(ResourceKey resource)
         {
-            _pendingEntityUpdates.Add(resource);
+            if (!resource.IsEmpty)
+            {
+                _pendingEntityUpdates.Add(resource);
+            }
         }
 
         await Task.CompletedTask;
