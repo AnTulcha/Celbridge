@@ -43,8 +43,11 @@ public static class ServiceConfiguration
         //
         // Register forms
         //
+        services.AddSingleton<IFormFactory, FormFactory>();
+        services.AddSingleton<IFormBuilder, FormBuilder>();
         services.AddTransient<IForm, Form>();
         services.AddTransient<ITextBlockElement, TextBlockElement>();
+        services.AddTransient<IStackPanelContainer, StackPanelContainer>();
     }
 
     public static void Initialize()

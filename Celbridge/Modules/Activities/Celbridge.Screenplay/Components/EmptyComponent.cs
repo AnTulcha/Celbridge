@@ -5,11 +5,11 @@ namespace Celbridge.Screenplay.Components;
 
 public class EmptyComponent : IComponentDescriptor
 {
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IFormFactory _formFactory;
 
-    public EmptyComponent(IServiceProvider serviceProvider)
+    public EmptyComponent(IFormFactory formFactory)
     {
-        _serviceProvider = serviceProvider;
+        _formFactory = formFactory;
     }
 
     public string SchemaJson => """
@@ -42,14 +42,18 @@ public class EmptyComponent : IComponentDescriptor
     }
     """;
 
-    public IForm CreateDetailForm(IComponentProxy component)
+    public Result<IForm> CreateDetailForm(IComponentProxy component)
     {
-        var form = _serviceProvider.GetRequiredService<IForm>();
+        var textBlockA = _formFactory.CreateTextBlock();
+        textBlockA.Text = "Hello, World!";
 
-        // Todo: Add textblock element to form
-        var textBlock = _serviceProvider.GetRequiredService<ITextBlockElement>();
-        textBlock.Text = "Hello, World!";
+        var textBlockB = _formFactory.CreateTextBlock();
+        textBlockB.Text = "It LIVESSSS!";
 
-        return form;
+        var form = _formFactory.CreateForm();
+        form.Container.Children.Add(textBlockA);
+        form.Container.Children.Add(textBlockB);
+
+        return Result<IForm>.Ok(form);
     }
 }
