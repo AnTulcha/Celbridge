@@ -50,9 +50,9 @@ public class EmptyComponent : IComponentDescriptor
         var textBlockB = _formFactory.CreateTextBlock();
         textBlockB.Text = "It LIVESSSS!";
 
-        var form = _formFactory.CreateForm();
-        form.Container.Children.Add(textBlockA);
-        form.Container.Children.Add(textBlockB);
+        var form = _formFactory.CreateVerticalForm();
+        form.Panel.Children.Add(textBlockA);
+        form.Panel.Children.Add(textBlockB);
 
         return Result<IForm>.Ok(form);
     }

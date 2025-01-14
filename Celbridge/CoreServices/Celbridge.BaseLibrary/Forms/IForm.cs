@@ -1,3 +1,4 @@
+
 namespace Celbridge.Forms;
 
 /// <summary>
@@ -7,7 +8,7 @@ namespace Celbridge.Forms;
 public interface IForm
 {
     /// <summary>
-    /// The root container of the form.
+    /// The root panel of the form.
     /// </summary>
-    IFormContainer Container { get; }
+    IFormPanel Panel { get; set; }
 }

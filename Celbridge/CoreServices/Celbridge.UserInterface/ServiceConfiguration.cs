@@ -4,6 +4,8 @@ using Celbridge.Forms;
 using Celbridge.Navigation;
 using Celbridge.UserInterface.Models.Forms;
 using Celbridge.UserInterface.Services;
+using Celbridge.UserInterface.Services.Dialogs;
+using Celbridge.UserInterface.Services.Forms;
 using Celbridge.UserInterface.ViewModels.Pages;
 using Celbridge.UserInterface.Views;
 using Celbridge.Workspace;
@@ -47,7 +49,7 @@ public static class ServiceConfiguration
         services.AddSingleton<IFormBuilder, FormBuilder>();
         services.AddTransient<IForm, Form>();
         services.AddTransient<ITextBlockElement, TextBlockElement>();
-        services.AddTransient<IStackPanelContainer, StackPanelContainer>();
+        services.AddTransient<IStackPanelElement, StackPanelContainer>();
     }
 
     public static void Initialize()

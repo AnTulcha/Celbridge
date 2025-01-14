@@ -4,10 +4,10 @@ namespace Celbridge.UserInterface.Models.Forms;
 
 public class Form : IForm
 {
-    public Form(IStackPanelContainer stackPanelContainer)
+    public Form(IStackPanelElement stackPanel)
     {
-        Container = stackPanelContainer;
+        Panel = stackPanel;
     }
 
-    public IFormContainer Container { get; set; }
+    public IFormPanel Panel { get; set; }
 }

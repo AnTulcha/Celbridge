@@ -6,9 +6,14 @@ namespace Celbridge.Forms;
 public interface IFormFactory
 {
     /// <summary>
-    /// Creates a form.
+    /// Creates a form with a vertical layout.
     /// </summary>
-    IForm CreateForm();
+    IForm CreateVerticalForm();
+
+    /// <summary>
+    /// Creates a form with a horizontal layout.
+    /// </summary>
+    IForm CreateHorizontalForm();
 
     /// <summary>
     /// Creates a text block form element.
