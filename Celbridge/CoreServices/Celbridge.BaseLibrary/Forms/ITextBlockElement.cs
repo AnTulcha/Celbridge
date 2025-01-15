@@ -9,4 +9,9 @@ public interface ITextBlockElement : IFormElement
     /// The text to display in the text block.
     /// </summary>
     public string Text { get; set; }
+
+    /// <summary>
+    /// Fluent API to set the text to display in the text block.
+    /// </summary>
+    ITextBlockElement WithText(string comment);
 }

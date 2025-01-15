@@ -11,11 +11,10 @@ public class FormFactory : IFormFactory
         _serviceProvider = serviceProvider;
     }
 
-    public IForm CreateForm(FormOrientation orientation)
+    public IForm CreateForm(IFormPanel formPanel)
     {
         var form = _serviceProvider.GetRequiredService<IForm>();
-        form.Panel = CreateStackPanel(orientation);
-
+        form.Panel = formPanel;
         return form;
     }
 
