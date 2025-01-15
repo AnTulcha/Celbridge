@@ -6,47 +6,85 @@ public class FormBuilder : IFormBuilder
 {
     public Result<FormInstance> Build(IForm form)
     {
-        var formPanel = form.Panel;
-        var uiPanel = BuildUIPanel(formPanel);
-        if (uiPanel is null)
+        // Construct a famework panel based on the form description
+        var fameworkPanel = BuildFrameworkPanel(form.Panel);
+        if (fameworkPanel is null)
         {
-            return Result<FormInstance>.Fail($"Failed to build form panel: '{formPanel}'");
+            return Result<FormInstance>.Fail($"Failed to build framework panel for form panel");
         }
 
-        foreach (var formChild in formPanel.Children)
-        {
-            var uiElement = BuildUIElement(formChild);
-            if (uiElement is null)
-            {
-                return Result<FormInstance>.Fail($"Failed to build form element: {formChild}");
-            }
-            uiPanel.Children.Add(uiElement);
-        }
-
-        var formInstance = new FormInstance(form, uiPanel);
+        var formInstance = new FormInstance(form, fameworkPanel);
 
         return Result<FormInstance>.Ok(formInstance);
     }
 
-    private Panel? BuildUIPanel(IFormPanel formPanel)
+    private Panel? BuildFrameworkPanel(IFormPanel formPanel)
     {
-        if (formPanel is IStackPanelElement)
+        // Create the Framework panel
+        Panel? fameworkPanel = CreateFrameworkPanel(formPanel);
+        if (fameworkPanel is null)
         {
-            var stackPanel = new StackPanel();
-            stackPanel.Orientation = Orientation.Vertical;
-            return stackPanel;
+            return null;
+        }
+
+        foreach (var formChild in formPanel.Children)
+        {
+            switch (formChild)
+            {
+                case IFormPanel childFormPanel:
+                    {
+                        var childFrameworkPanel = BuildFrameworkPanel(childFormPanel);
+                        if (childFrameworkPanel is not null)
+                        {
+                            fameworkPanel.Children.Add(childFrameworkPanel);
+                        }
+
+                        break;
+                    }
+
+                case IFormElement childFormElement:
+                    {
+                        var childFrameworkElement = CreateFrameworkElement(childFormElement);
+                        if (childFrameworkElement is not null)
+                        {
+                            fameworkPanel.Children.Add(childFrameworkElement);
+                        }
+
+                        break;
+                    }
+            }
+        }
+
+        return fameworkPanel;
+    }
+
+    private Panel? CreateFrameworkPanel(IFormPanel formPanel)
+    {
+        if (formPanel is IStackPanelElement stackPanelElement)
+        {
+            var fameworkStackPanel = new StackPanel();
+            if (stackPanelElement.Orientation == FormOrientation.Vertical)
+            {
+                fameworkStackPanel.Orientation = Orientation.Vertical;
+            }
+            else
+            {
+                fameworkStackPanel.Orientation = Orientation.Horizontal;
+            }
+
+            return fameworkStackPanel;
         }
 
         return null;
     }
 
-    private UIElement? BuildUIElement(IFormElement formElement)
+    private UIElement? CreateFrameworkElement(IFormElement formElement)
     {
         if (formElement is ITextBlockElement formTextBlock)
         {
-            var textBlock = new TextBlock();
-            textBlock.Text = formTextBlock.Text;
-            return textBlock;
+            var fameworkTextBlock = new TextBlock();
+            fameworkTextBlock.Text = formTextBlock.Text;
+            return fameworkTextBlock;
         }
 
         return null;

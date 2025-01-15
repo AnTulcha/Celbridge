@@ -4,4 +4,6 @@ namespace Celbridge.Forms;
 /// A stack panel form element.
 /// </summary>
 public interface IStackPanelElement : IFormPanel
-{}
+{
+    FormOrientation Orientation { get; set; }
+}

@@ -48,11 +48,19 @@ public class EmptyComponent : IComponentDescriptor
         textBlockA.Text = "Hello, World!";
 
         var textBlockB = _formFactory.CreateTextBlock();
-        textBlockB.Text = "It LIVESSSS!";
+        textBlockB.Text = "1";
 
-        var form = _formFactory.CreateVerticalForm();
+        var textBlockC = _formFactory.CreateTextBlock();
+        textBlockC.Text = "2";
+
+        var form = _formFactory.CreateForm(FormOrientation.Vertical);
         form.Panel.Children.Add(textBlockA);
-        form.Panel.Children.Add(textBlockB);
+
+        var childPanel = _formFactory.CreateStackPanel(FormOrientation.Horizontal);
+        childPanel.Children.Add(textBlockB);
+        childPanel.Children.Add(textBlockC);
+
+        form.Panel.Children.Add(childPanel);
 
         return Result<IForm>.Ok(form);
     }

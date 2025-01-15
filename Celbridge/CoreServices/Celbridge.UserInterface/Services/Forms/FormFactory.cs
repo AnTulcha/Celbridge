@@ -11,33 +11,24 @@ public class FormFactory : IFormFactory
         _serviceProvider = serviceProvider;
     }
 
-    public IForm CreateVerticalForm()
+    public IForm CreateForm(FormOrientation orientation)
     {
-        // Todo: Set orientation to vertical
         var form = _serviceProvider.GetRequiredService<IForm>();
-        form.Panel = CreateStackPanel();
+        form.Panel = CreateStackPanel(orientation);
 
         return form;
     }
 
-    public IForm CreateHorizontalForm()
+    public IStackPanelElement CreateStackPanel(FormOrientation orientation)
     {
-        // Todo: Set orientation to horizontal
-        var form = _serviceProvider.GetRequiredService<IForm>();
-        form.Panel = CreateStackPanel();
-
-        return form;
+        var formPanel = _serviceProvider.GetRequiredService<IStackPanelElement>();
+        formPanel.Orientation = orientation;
+        return formPanel;
     }
 
     public ITextBlockElement CreateTextBlock()
     {
-        var element = _serviceProvider.GetRequiredService<ITextBlockElement>();
-        return element;
-    }
-
-    public IStackPanelElement CreateStackPanel()
-    {
-        var panel = _serviceProvider.GetRequiredService<IStackPanelElement>();
-        return panel;
+        var formTextBlock = _serviceProvider.GetRequiredService<ITextBlockElement>();
+        return formTextBlock;
     }
 }

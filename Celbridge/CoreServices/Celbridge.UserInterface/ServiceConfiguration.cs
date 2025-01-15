@@ -49,7 +49,7 @@ public static class ServiceConfiguration
         services.AddSingleton<IFormBuilder, FormBuilder>();
         services.AddTransient<IForm, Form>();
         services.AddTransient<ITextBlockElement, TextBlockElement>();
-        services.AddTransient<IStackPanelElement, StackPanelContainer>();
+        services.AddTransient<IStackPanelElement, StackPanelElement>();
     }
 
     public static void Initialize()
