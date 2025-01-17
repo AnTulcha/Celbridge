@@ -1,5 +1,4 @@
 using Celbridge.Entities;
-using Celbridge.Forms;
 
 namespace Celbridge.Screenplay.Components;
 
@@ -43,9 +42,4 @@ public class SceneComponent : IComponentDescriptor
       }
     }    
     """;
-
-    public Result<IForm> CreateDetailForm(IComponentProxy component)
-    {
-        return Result<IForm>.Fail();
-    }
 }

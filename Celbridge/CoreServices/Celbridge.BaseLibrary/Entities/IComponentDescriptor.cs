@@ -1,5 +1,3 @@
-using Celbridge.Forms;
-
 namespace Celbridge.Entities;
 
 /// <summary>
@@ -11,9 +9,4 @@ public interface IComponentDescriptor
     /// Returns the JSON schema text for the component.
     /// </summary>
     string SchemaJson { get; }
-
-    /// <summary>
-    /// Create the form for editing the component details
-    /// </summary>
-    Result<IForm> CreateDetailForm(IComponentProxy component);
 }

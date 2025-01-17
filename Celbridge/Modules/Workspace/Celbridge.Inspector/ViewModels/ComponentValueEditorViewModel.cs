@@ -1,5 +1,4 @@
 using Celbridge.Entities;
-using Celbridge.Forms;
 using Celbridge.Inspector.Models;
 using Celbridge.Inspector.Services;
 using Celbridge.Logging;
@@ -12,7 +11,6 @@ namespace Celbridge.Inspector.ViewModels;
 public partial class ComponentValueEditorViewModel : ObservableObject
 {
     private readonly ILogger<ComponentValueEditorViewModel> _logger;
-    private readonly IFormBuilder _formBuilder;
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
 
@@ -25,12 +23,10 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
     public ComponentValueEditorViewModel(
         ILogger<ComponentValueEditorViewModel> logger,
-        IFormBuilder formBuilder,
         IMessengerService messengerService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
-        _formBuilder = formBuilder;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
 
@@ -117,25 +113,10 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         // Populate the property fields using the component descriptor
 
+        // Todo: Instantiate a ComponentEditor for the component type
+        // Populate it with the IComponentProxy
+
         var descriptor = component.Schema.Descriptor;
-
-        var createFormResult = descriptor.CreateDetailForm(component);
-        if (createFormResult.IsSuccess)
-        {
-            var form = createFormResult.Value;
-
-            var buildResult = _formBuilder.Build(form);
-            if (buildResult.IsFailure)
-            {
-                _logger.LogError($"Failed to build form for component '{componentKey}'. {buildResult.Error}");
-                return;
-            }
-            var formUIElement = buildResult.Value;
-
-            // Todo: Remove property field system, use forms instead
-            var field = new Field(formUIElement.UIElement);
-            propertyFields.Add(field);
-        }
 
         // Construct the form by adding property fields one by one.
 
