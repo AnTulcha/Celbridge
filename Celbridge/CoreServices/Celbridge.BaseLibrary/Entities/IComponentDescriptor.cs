@@ -5,8 +5,5 @@ namespace Celbridge.Entities;
 /// </summary>
 public interface IComponentDescriptor
 {
-    /// <summary>
-    /// Returns the JSON schema text for the component.
-    /// </summary>
-    string SchemaJson { get; }
+    string ComponentDefinition { get; }
 }

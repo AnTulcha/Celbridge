@@ -1,3 +1,4 @@
+using System.Reflection;
 using Celbridge.Entities.Models;
 
 namespace Celbridge.Entities.Services;
@@ -33,7 +34,18 @@ public class ComponentConfigRegistry
 
                 // Create the component config
 
-                var schemaJson = descriptor.SchemaJson;
+                var componentDefinition = descriptor.ComponentDefinition;
+
+                // Load the component definition JSON from an embedded resource
+                var loadDefinitionResult = LoadComponentDefinition(componentDefinition);
+                if (loadDefinitionResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to load component definition for component descriptor: '{descriptorKey}'")
+                        .WithErrors(loadDefinitionResult);
+                }
+                var schemaJson = loadDefinitionResult.Value;
+
+                // Create the component config
                 var createResult = ComponentConfig.CreateConfig(descriptor, schemaJson);
                 if (!createResult.IsSuccess)
                 {
@@ -74,6 +86,34 @@ public class ComponentConfigRegistry
             return Result.Fail($"An exception occurred when loading schema JSON files")
                 .WithException(ex);
         }
+    }
+
+    private Result<string> LoadComponentDefinition(string componentDefinitionFile)
+    {
+        var assembly = Assembly.Load("Celbridge.Screenplay");
+
+        var stream = assembly.GetManifestResourceStream(componentDefinitionFile);
+        if (stream is null)
+        {
+            return Result<string>.Fail($"Embedded resource not found: {componentDefinitionFile}");
+        }
+
+        var json = string.Empty;
+        try
+        {
+            using (stream)
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                json = reader.ReadToEnd();
+            }
+        }
+        catch (Exception ex)
+        {
+            return Result<string>.Fail($"An exception occurred when reading content of embedded resource: {componentDefinitionFile}")
+                .WithException(ex);
+        }
+
+        return Result<string>.Ok(json);
     }
 
     public Result<ComponentConfig> GetComponentConfig(string componentType)
