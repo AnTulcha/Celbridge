@@ -108,16 +108,23 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         var component = getComponentResult.Value;
 
         // Populate the Component Type in the panel header
-
         ComponentType = component.Schema.ComponentType;
 
-        // Populate the property fields using the component descriptor
+        // Instantiate a ComponentEditor for this component type
+        var createEditorResult = _entityService.CreateComponentEditor(component);
+        if (createEditorResult.IsFailure)
+        {
+            _logger.LogError($"Failed to create component editor for component type: '{ComponentType}'");
+            return;
+        }
+        var editor = createEditorResult.Value;
 
-        // Todo: Instantiate a ComponentEditor for the component type
-        // Populate it with the IComponentProxy
+        // Todo: Instantiate the XAML control for this component
+        // Todo: Instantiate a dynamic ViewModel that forwards to the ComponentEditor
+        // Todo: Set this ViewModel as the DataContext for the XAML control
+        // Todo: Display the XAML control in the Inspector panel
 
         // Construct the form by adding property fields one by one.
-
         foreach (var property in component.Schema.Properties)
         {
             var createResult = _inspectorService.FieldFactory.CreatePropertyField(component, property.PropertyName);

@@ -19,6 +19,7 @@ public class ComponentConfig
     public int ComponentVersion { get; }
     public ComponentSchema ComponentSchema { get; }
     public JsonElement Prototype { get; }
+    public Type ComponentEditorType { get; }
 
     private readonly JsonSchema _jsonSchema;
 
@@ -27,16 +28,18 @@ public class ComponentConfig
         int componentVersion, 
         ComponentSchema componentSchema, 
         JsonElement prototype,
-        JsonSchema jsonSchema)
+        JsonSchema jsonSchema,
+        Type componentEditorType)
     {
         ComponentType = componentType;
         ComponentVersion = componentVersion;
         ComponentSchema = componentSchema;
         Prototype = prototype;
+        ComponentEditorType = componentEditorType;
         _jsonSchema = jsonSchema;
     }
 
-    public static Result<ComponentConfig> CreateConfig(string schemaJson)
+    public static Result<ComponentConfig> CreateConfig(Type componentEditorType, string schemaJson)
     {
         try
         {
@@ -161,7 +164,7 @@ public class ComponentConfig
                 return Result<ComponentConfig>.Fail($"Prototype failed schema validation: '{componentType}'");
             }
 
-            var config = new ComponentConfig(componentType, componentVersion, componentSchema, prototype, jsonSchema);
+            var config = new ComponentConfig(componentType, componentVersion, componentSchema, prototype, jsonSchema, componentEditorType);
 
             return Result<ComponentConfig>.Ok(config);
         }

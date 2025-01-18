@@ -9,4 +9,6 @@ public class LineEditor : IComponentEditor
     public const string SourceText = "/sourceText";
 
     public string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.Line.json";
+
+    public IComponentProxy? Component { get; set; }
 }

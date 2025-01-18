@@ -68,5 +68,4 @@ public interface IComponentProxy
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
     Result SetProperty<T>(string propertyPath, T newValue, bool insert = false) where T : notnull;
-
 }

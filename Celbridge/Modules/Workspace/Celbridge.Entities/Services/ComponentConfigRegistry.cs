@@ -19,23 +19,22 @@ public class ComponentConfigRegistry
     {
         try
         {
-            var getPathsResult = GetComponentConfigPaths();
-            if (getPathsResult.IsFailure)
+            var getTypesResult = GetComponentEditorTypes();
+            if (getTypesResult.IsFailure)
             {
-                return Result.Fail($"Failed to get component config paths")
-                    .WithErrors(getPathsResult);
+                return Result.Fail($"Failed to get component editor types")
+                    .WithErrors(getTypesResult);
             }
-            var configPaths = getPathsResult.Value;
+            var editorTypes = getTypesResult.Value;
 
-            foreach (var kv in configPaths)
+            foreach (var editorType in editorTypes)
             {
-                var editorKey = kv.Key;
-                var configPath = kv.Value;
+                var editorKey = editorType.Name;
 
                 // Create the component config
 
                 // Load the component config JSON from an embedded resource
-                var loadConfigResult = LoadComponentConfig(configPath);
+                var loadConfigResult = LoadComponentConfigFile(editorType);
                 if (loadConfigResult.IsFailure)
                 {
                     return Result.Fail($"Failed to load component config for component editor: '{editorKey}'")
@@ -44,7 +43,7 @@ public class ComponentConfigRegistry
                 var configJson = loadConfigResult.Value;
 
                 // Create the component config
-                var createResult = ComponentConfig.CreateConfig(configJson);
+                var createResult = ComponentConfig.CreateConfig(editorType, configJson);
                 if (!createResult.IsSuccess)
                 {
                     return Result.Fail($"Failed to create component config from JSON for component editor: '{editorKey}'")
@@ -86,34 +85,6 @@ public class ComponentConfigRegistry
         }
     }
 
-    private Result<string> LoadComponentConfig(string componentConfigFile)
-    {
-        var assembly = Assembly.Load("Celbridge.Screenplay");
-
-        var stream = assembly.GetManifestResourceStream(componentConfigFile);
-        if (stream is null)
-        {
-            return Result<string>.Fail($"Embedded resource not found: {componentConfigFile}");
-        }
-
-        var json = string.Empty;
-        try
-        {
-            using (stream)
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                json = reader.ReadToEnd();
-            }
-        }
-        catch (Exception ex)
-        {
-            return Result<string>.Fail($"An exception occurred when reading content of embedded resource: {componentConfigFile}")
-                .WithException(ex);
-        }
-
-        return Result<string>.Ok(json);
-    }
-
     public Result<ComponentConfig> GetComponentConfig(string componentType)
     {
         if (!_componentConfigs.TryGetValue(componentType, out var config))
@@ -124,11 +95,11 @@ public class ComponentConfigRegistry
         return Result<ComponentConfig>.Ok(config);
     }
 
-    private Result<Dictionary<string, string>> GetComponentConfigPaths()
+    private Result<List<Type>> GetComponentEditorTypes()
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        var configPaths = new Dictionary<string, string>();
+        var editorTypes = new List<Type>();
         foreach (var assembly in assemblies)
         {
             foreach (var type in assembly.GetTypes())
@@ -143,14 +114,48 @@ public class ComponentConfigRegistry
                 var editor = _serviceProvider.GetRequiredService(type) as IComponentEditor;
                 if (editor is null)
                 {
-                    return Result<Dictionary<string, string>>.Fail($"Failed to instantiate component editor type: '{type}'");
+                    return Result<List<Type>>.Fail($"Failed to instantiate component editor type: '{type}'");
                 }
 
-                string configPath = editor.ComponentConfigPath;
-                configPaths[type.Name] = configPath;
+                editorTypes.Add(type);
             }
         }
 
-        return Result<Dictionary<string, string>>.Ok(configPaths);
+        return Result<List<Type>>.Ok(editorTypes);
+    }
+
+    private Result<string> LoadComponentConfigFile(Type componentEditorType)
+    {
+        var editor = _serviceProvider.GetRequiredService(componentEditorType) as IComponentEditor;
+        if (editor is null)
+        {
+            return Result<string>.Fail($"Failed to instantiate component editor type: '{componentEditorType}'");
+        }
+        string configPath = editor.ComponentConfigPath;
+
+        // Load the component config JSON from an embedded resource
+        var assembly = componentEditorType.Assembly;
+        var stream = assembly.GetManifestResourceStream(configPath);
+        if (stream is null)
+        {
+            return Result<string>.Fail($"Embedded resource not found: '{configPath}'");
+        }
+
+        var json = string.Empty;
+        try
+        {
+            using (stream)
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                json = reader.ReadToEnd();
+            }
+        }
+        catch (Exception ex)
+        {
+            return Result<string>.Fail($"An exception occurred when reading content of embedded resource: {configPath}")
+                .WithException(ex);
+        }
+
+        return Result<string>.Ok(json);
     }
 }
