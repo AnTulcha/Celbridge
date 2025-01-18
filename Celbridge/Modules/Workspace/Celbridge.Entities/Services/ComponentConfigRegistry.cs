@@ -19,54 +19,52 @@ public class ComponentConfigRegistry
     {
         try
         {
-            var descriptorTypes = GetDescriptorTypes();
-
-            foreach (var kv in descriptorTypes)
+            var getPathsResult = GetComponentConfigPaths();
+            if (getPathsResult.IsFailure)
             {
-                var descriptorKey = kv.Key;
-                var objectType = kv.Value;
+                return Result.Fail($"Failed to get component config paths")
+                    .WithErrors(getPathsResult);
+            }
+            var configPaths = getPathsResult.Value;
 
-                var descriptor = _serviceProvider.GetRequiredService(objectType) as IComponentDescriptor;
-                if (descriptor is null)
-                {
-                    return Result.Fail($"Failed to instantiate component descriptor: '{descriptorKey}'");
-                }
-
-                // Create the component config
-
-                var componentDefinition = descriptor.ComponentDefinition;
-
-                // Load the component definition JSON from an embedded resource
-                var loadDefinitionResult = LoadComponentDefinition(componentDefinition);
-                if (loadDefinitionResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to load component definition for component descriptor: '{descriptorKey}'")
-                        .WithErrors(loadDefinitionResult);
-                }
-                var schemaJson = loadDefinitionResult.Value;
+            foreach (var kv in configPaths)
+            {
+                var editorKey = kv.Key;
+                var configPath = kv.Value;
 
                 // Create the component config
-                var createResult = ComponentConfig.CreateConfig(descriptor, schemaJson);
+
+                // Load the component config JSON from an embedded resource
+                var loadConfigResult = LoadComponentConfig(configPath);
+                if (loadConfigResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to load component config for component editor: '{editorKey}'")
+                        .WithErrors(loadConfigResult);
+                }
+                var configJson = loadConfigResult.Value;
+
+                // Create the component config
+                var createResult = ComponentConfig.CreateConfig(configJson);
                 if (!createResult.IsSuccess)
                 {
-                    return Result.Fail($"Failed to create component config from JSON for component descriptor: '{descriptorKey}'")
+                    return Result.Fail($"Failed to create component config from JSON for component editor: '{editorKey}'")
                         .WithErrors(createResult);
                 }
                 var config = createResult.Value;
 
                 // Perform checks
 
-                if (!descriptorKey.EndsWith("Component"))
+                if (!editorKey.EndsWith("Editor"))
                 {
-                    return Result.Fail($"Component descriptor name does not end with 'Component': '{descriptorKey}'");
+                    return Result.Fail($"Component editor name does not end with 'Editor': '{editorKey}'");
                 }
 
-                // Remove trailing "Component" from descriptor key to form the componentType
-                var componentType = descriptorKey[..^9];
+                // Remove trailing "Editor" from editor key to form the component type
+                var componentType = editorKey[..^6];
 
                 if (componentType != config.ComponentType)
                 {
-                    return Result.Fail($"Component type does not match type defined in schema: '{descriptorKey}'");
+                    return Result.Fail($"Component type does not match type defined in schema: '{editorKey}'");
                 }
 
                 if (_componentConfigs.ContainsKey(componentType))
@@ -88,14 +86,14 @@ public class ComponentConfigRegistry
         }
     }
 
-    private Result<string> LoadComponentDefinition(string componentDefinitionFile)
+    private Result<string> LoadComponentConfig(string componentConfigFile)
     {
         var assembly = Assembly.Load("Celbridge.Screenplay");
 
-        var stream = assembly.GetManifestResourceStream(componentDefinitionFile);
+        var stream = assembly.GetManifestResourceStream(componentConfigFile);
         if (stream is null)
         {
-            return Result<string>.Fail($"Embedded resource not found: {componentDefinitionFile}");
+            return Result<string>.Fail($"Embedded resource not found: {componentConfigFile}");
         }
 
         var json = string.Empty;
@@ -109,7 +107,7 @@ public class ComponentConfigRegistry
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail($"An exception occurred when reading content of embedded resource: {componentDefinitionFile}")
+            return Result<string>.Fail($"An exception occurred when reading content of embedded resource: {componentConfigFile}")
                 .WithException(ex);
         }
 
@@ -126,22 +124,33 @@ public class ComponentConfigRegistry
         return Result<ComponentConfig>.Ok(config);
     }
 
-    private Dictionary<string, Type> GetDescriptorTypes()
+    private Result<Dictionary<string, string>> GetComponentConfigPaths()
     {
         var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 
-        var descriptorTypes = new Dictionary<string, Type>();
+        var configPaths = new Dictionary<string, string>();
         foreach (var assembly in assemblies)
         {
             foreach (var type in assembly.GetTypes())
             {
-                if (typeof(IComponentDescriptor).IsAssignableFrom(type) && !type.IsAbstract && type.IsClass)
+                if (!typeof(IComponentEditor).IsAssignableFrom(type) || 
+                    type.IsAbstract || 
+                    !type.IsClass)
                 {
-                    descriptorTypes[type.Name] = type;
+                    continue;
                 }
+
+                var editor = _serviceProvider.GetRequiredService(type) as IComponentEditor;
+                if (editor is null)
+                {
+                    return Result<Dictionary<string, string>>.Fail($"Failed to instantiate component editor type: '{type}'");
+                }
+
+                string configPath = editor.ComponentConfigPath;
+                configPaths[type.Name] = configPath;
             }
         }
 
-        return descriptorTypes;
+        return Result<Dictionary<string, string>>.Ok(configPaths);
     }
 }

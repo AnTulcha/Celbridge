@@ -2,11 +2,11 @@ using Celbridge.Entities;
 
 namespace Celbridge.Screenplay.Components;
 
-public class SceneComponent : IComponentDescriptor
+public class SceneEditor : IComponentEditor
 {
     public const string ComponentType = "Scene";
     public const string SceneTitle = "/sceneTitle";
     public const string SceneDescription = "/sceneDescription";
 
-    public string ComponentDefinition => "Celbridge.Screenplay.Assets.Components.Scene.json";
+    public string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.Scene.json";
 }

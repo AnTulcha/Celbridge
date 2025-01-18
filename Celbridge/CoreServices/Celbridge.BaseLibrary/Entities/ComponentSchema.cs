@@ -8,8 +8,7 @@ public record ComponentSchema(
     int ComponentVersion, 
     IReadOnlySet<string> Tags,
     IReadOnlyDictionary<string, string> Attributes, 
-    IReadOnlyList<ComponentPropertyInfo> Properties,
-    IComponentDescriptor Descriptor)
+    IReadOnlyList<ComponentPropertyInfo> Properties)
 {
     /// <summary>
     /// Returns true if the component type has the specified tag.

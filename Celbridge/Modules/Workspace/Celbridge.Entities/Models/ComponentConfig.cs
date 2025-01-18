@@ -36,7 +36,7 @@ public class ComponentConfig
         _jsonSchema = jsonSchema;
     }
 
-    public static Result<ComponentConfig> CreateConfig(IComponentDescriptor componentDescriptor, string schemaJson)
+    public static Result<ComponentConfig> CreateConfig(string schemaJson)
     {
         try
         {
@@ -132,7 +132,7 @@ public class ComponentConfig
                 }
             }
 
-            var componentSchema = new ComponentSchema(componentType, componentVersion, componentTags, componentAttributes, componentProperties, componentDescriptor);
+            var componentSchema = new ComponentSchema(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
 
             // Construct the prototype element
 

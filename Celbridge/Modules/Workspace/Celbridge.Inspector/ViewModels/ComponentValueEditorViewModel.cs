@@ -116,8 +116,6 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         // Todo: Instantiate a ComponentEditor for the component type
         // Populate it with the IComponentProxy
 
-        var descriptor = component.Schema.Descriptor;
-
         // Construct the form by adding property fields one by one.
 
         foreach (var property in component.Schema.Properties)

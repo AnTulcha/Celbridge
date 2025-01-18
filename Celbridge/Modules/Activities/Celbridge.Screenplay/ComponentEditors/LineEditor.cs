@@ -2,11 +2,11 @@ using Celbridge.Entities;
 
 namespace Celbridge.Screenplay.Components;
 
-public class LineComponent : IComponentDescriptor
+public class LineEditor : IComponentEditor
 {    
     public const string ComponentType = "Line";
     public const string Character = "/character";
     public const string SourceText = "/sourceText";
 
-    public string ComponentDefinition => "Celbridge.Screenplay.Assets.Components.Line.json";
+    public string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.Line.json";
 }
