@@ -27,11 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Assets\Components\Line.json" />
-    <EmbeddedResource Include="Assets\Components\Empty.json" />
-    <EmbeddedResource Include="Assets\Components\Markdown.json" />
-    <EmbeddedResource Include="Assets\Components\Scene.json" />
-    <EmbeddedResource Include="Assets\Components\ScreenplayActivity.json" />
+    <EmbeddedResource Include="Assets\Components\**" />
   </ItemGroup>
 
   <ItemGroup>
