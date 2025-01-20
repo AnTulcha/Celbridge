@@ -23,5 +23,26 @@
 
   "prototype": {
     "comment": ""
-  }
+  },
+
+  "form": [
+    {
+      "elementType": "StackPanel",
+      "orientation": "Horizontal",
+      "children": [
+        {
+          "elementType": "TextBox",
+          "bindKey": "/comment",
+          "bindMode":  "TwoWay",
+          "placeholder": "Enter a note",
+          "checkSpelling": false
+        },
+        {
+          "elementType": "Button",
+          "text": "Clear",
+          "command": "Clear"
+        }
+      ]
+    }
+  ]
 }
