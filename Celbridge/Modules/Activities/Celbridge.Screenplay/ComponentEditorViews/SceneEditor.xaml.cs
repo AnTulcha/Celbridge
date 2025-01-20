@@ -1,8 +1,8 @@
 namespace Celbridge.Screenplay.ComponentEditorViews;
 
-public sealed partial class SceneEditor : UserControl
+public sealed partial class SceneEditorView : UserControl
 {
-    public SceneEditor()
+    public SceneEditorView()
     {
         this.InitializeComponent();
     }

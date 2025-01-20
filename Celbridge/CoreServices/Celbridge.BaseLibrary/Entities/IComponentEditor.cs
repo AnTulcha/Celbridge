@@ -14,4 +14,12 @@ public interface IComponentEditor
     /// Initialize the component editor with the component proxy that it edits.
     /// </summary>
     IComponentProxy? Component { get; set; }
+
+    /// <summary>
+    /// Returns the type of editor view to instantiate for this component.
+    /// </summary>
+    Type EditorViewType { get; }
+
+    Result<object> GetProperty(string name);
+    Result<bool> SetProperty(string name, object value);
 }

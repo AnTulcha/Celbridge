@@ -1,5 +1,6 @@
 using Celbridge.Entities;
 using Celbridge.Explorer;
+using Celbridge.Inspector.ViewModels;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -72,6 +73,27 @@ public class InspectorService : IInspectorService, IDisposable
         _messengerService.Send(message);
 
         return Result.Ok();
+    }
+
+    public Result<object> CreateComponentEditorView(IComponentEditor componentEditor)
+    {
+        // Instantiate the component editor view model
+        // Use the dynamic keyword to enable dynamic binding at runtime.
+        dynamic editorViewModel = _serviceProvider.GetRequiredService<ComponentEditorViewModel>();
+        editorViewModel.Initialize(componentEditor);
+
+        // Ask the component editor for the editor type to instantiate
+        var type = componentEditor.EditorViewType;
+
+        var editorView = Activator.CreateInstance(type) as UserControl;
+        if (editorView is null)
+        {
+            return Result<object>.Fail("Failed to create editor view");
+        }
+
+        editorView.DataContext = editorViewModel;
+
+        return Result<object>.Ok(editorView);
     }
 
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)

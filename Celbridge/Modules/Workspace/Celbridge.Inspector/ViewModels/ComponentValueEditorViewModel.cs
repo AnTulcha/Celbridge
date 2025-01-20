@@ -119,9 +119,21 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         }
         var editor = createEditorResult.Value;
 
-        // Todo: Instantiate the XAML control for this component
-        // Todo: Instantiate a dynamic ViewModel that forwards to the ComponentEditor
-        // Todo: Set this ViewModel as the DataContext for the XAML control
+        // Instantiate the XAML control for this component
+        var createViewResult = _inspectorService.CreateComponentEditorView(editor);
+        if (createViewResult.IsFailure)
+        {
+            _logger.LogError($"Failed to create component editor view for component type: '{ComponentType}'");
+            return;
+        }
+        var editorView = createViewResult.Value as UIElement;
+
+        if (editorView is not null)
+        {
+            var field = new Field(editorView)
+    ;       propertyFields.Add(field);
+        }
+
         // Todo: Display the XAML control in the Inspector panel
 
         // Construct the form by adding property fields one by one.

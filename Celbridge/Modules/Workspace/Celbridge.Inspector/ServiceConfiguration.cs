@@ -36,6 +36,7 @@ public static class ServiceConfiguration
         config.AddTransient<ComponentValueEditorViewModel>();
         config.AddTransient<ComponentTypeEditorViewModel>();
         config.AddTransient<StringFieldViewModel>();
+        config.AddTransient<ComponentEditorViewModel>();
     }
 
     public static Result Initialize()

@@ -1,8 +1,8 @@
 namespace Celbridge.Screenplay.ComponentEditorViews;
 
-public sealed partial class ScreenplayActivityEditor : UserControl
+public sealed partial class MarkdownEditorView : UserControl
 {
-    public ScreenplayActivityEditor()
+    public MarkdownEditorView()
     {
         this.InitializeComponent();
     }

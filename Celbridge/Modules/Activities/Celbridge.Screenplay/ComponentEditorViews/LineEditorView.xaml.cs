@@ -1,8 +1,8 @@
 namespace Celbridge.Screenplay.ComponentEditorViews;
 
-public sealed partial class EmptyEditor : UserControl
+public sealed partial class LineEditorView : UserControl
 {
-    public EmptyEditor()
+    public LineEditorView()
     {
         this.InitializeComponent();
     }
