@@ -13,6 +13,7 @@ public class ComponentConfig
     private const string AttributesKey = "attributes";
     private const string PropertiesKey = "properties";
     private const string PrototypeKey = "prototype";
+    private const string FormKey = "form";
     private const string TypeKey = "type";
 
     public string ComponentType { get; }
@@ -135,7 +136,17 @@ public class ComponentConfig
                 }
             }
 
-            var componentSchema = new ComponentSchema(componentType, componentVersion, componentTags, componentAttributes, componentProperties);
+            var formJson = string.Empty;
+            if (root.TryGetProperty(FormKey, out JsonElement formElement))
+            { 
+                if (formElement.ValueKind != JsonValueKind.Array)
+                {
+                    return Result<ComponentConfig>.Fail("Form json does not contain an array of form elements");
+                }
+                formJson = formElement.ToJsonString();
+            }            
+
+            var componentSchema = new ComponentSchema(componentType, componentVersion, componentTags, componentAttributes, componentProperties, formJson);
 
             // Construct the prototype element
 

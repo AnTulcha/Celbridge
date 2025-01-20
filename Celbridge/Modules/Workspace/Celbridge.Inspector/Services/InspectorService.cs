@@ -1,9 +1,11 @@
 using Celbridge.Entities;
 using Celbridge.Explorer;
+using Celbridge.Forms;
 using Celbridge.Inspector.ViewModels;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
+using CommunityToolkit.Diagnostics;
 
 namespace Celbridge.Inspector.Services;
 
@@ -77,6 +79,28 @@ public class InspectorService : IInspectorService, IDisposable
 
     public Result<object> CreateComponentEditorView(IComponentEditor componentEditor)
     {
+        Guard.IsNotNull(componentEditor.Component);
+
+        var workspaceWrapper = _serviceProvider.GetRequiredService<IWorkspaceWrapper>();
+        var entityService = workspaceWrapper.WorkspaceService.EntityService;
+        var formService = _serviceProvider.GetRequiredService<IFormBuilder>();
+
+        var formJson = componentEditor.Component.Schema.FormJson;
+        if (!string.IsNullOrEmpty(formJson))
+        {
+            var buildResult = formService.BuildForm(formJson);
+            if (buildResult.IsFailure)
+            {
+                return Result<object>.Fail($"Failed to build form for component type: '{componentEditor.Component.Schema.ComponentType}'")
+                    .WithErrors(buildResult);
+            }
+            var uiElement = buildResult.Value;
+
+            return Result<object>.Ok(uiElement);
+        }
+
+        // Todo: Remove everything below here
+
         // Instantiate the component editor view model
         // Use the dynamic keyword to enable dynamic binding at runtime.
         dynamic editorViewModel = _serviceProvider.GetRequiredService<ComponentEditorViewModel>();

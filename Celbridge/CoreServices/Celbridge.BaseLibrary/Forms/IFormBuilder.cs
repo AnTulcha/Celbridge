@@ -8,5 +8,5 @@ public interface IFormBuilder
     /// <summary>
     /// Constructs a form UI element based on a JSON definition.
     /// </summary>
-    Result<object> BuildFormAsync(string fromConfigJson);
+    Result<object> BuildForm(string fromConfigJson);
 }
