@@ -23,6 +23,11 @@ public interface IComponentProxy
     ComponentSchema Schema { get; }
 
     /// <summary>
+    /// Raised when a component property changes.
+    /// </summary>
+    event Action<string>? PropertyChanged;
+
+    /// <summary>
     /// The validation status of the component.
     /// </summary>
     ComponentStatus Status { get; }

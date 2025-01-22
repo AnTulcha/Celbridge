@@ -1,9 +1,12 @@
+using Celbridge.Forms;
+
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Defines an editor for editing an entity component.
+/// A component editor edits the properties of an entity component.
+/// It implements IFormDataProvider, so it is typically used as the data provider for a form.
 /// </summary>
-public interface IComponentEditor
+public interface IComponentEditor : IFormDataProvider
 {
     /// <summary>
     /// Path to the JSON confuration file for this component.
@@ -11,15 +14,12 @@ public interface IComponentEditor
     string ComponentConfigPath { get; }
 
     /// <summary>
-    /// Initialize the component editor with the component proxy that it edits.
+    /// Returns the component that the editor instance edits.
     /// </summary>
-    IComponentProxy? Component { get; set; }
+    IComponentProxy Component { get; }
 
     /// <summary>
-    /// Returns the type of editor view to instantiate for this component.
+    /// Initializes the component editor with the component to be edited.
     /// </summary>
-    Type EditorViewType { get; }
-
-    Result<object> GetProperty(string name);
-    Result<bool> SetProperty(string name, object value);
+    Result Initialize(IComponentProxy component);
 }

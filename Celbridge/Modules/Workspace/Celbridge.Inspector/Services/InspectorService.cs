@@ -81,14 +81,15 @@ public class InspectorService : IInspectorService, IDisposable
     {
         Guard.IsNotNull(componentEditor.Component);
 
-        var workspaceWrapper = _serviceProvider.GetRequiredService<IWorkspaceWrapper>();
-        var entityService = workspaceWrapper.WorkspaceService.EntityService;
-        var formService = _serviceProvider.GetRequiredService<IFormBuilder>();
+        var formBuilder = _serviceProvider.GetRequiredService<IFormBuilder>();
 
         var formJson = componentEditor.Component.Schema.FormJson;
         if (!string.IsNullOrEmpty(formJson))
         {
-            var buildResult = formService.BuildForm(formJson);
+            // The form name helps when debugging problems with the form configuration
+            var formName = componentEditor.Component.Schema.ComponentType;
+
+            var buildResult = formBuilder.BuildForm(formName, formJson, componentEditor);
             if (buildResult.IsFailure)
             {
                 return Result<object>.Fail($"Failed to build form for component type: '{componentEditor.Component.Schema.ComponentType}'")
@@ -99,25 +100,7 @@ public class InspectorService : IInspectorService, IDisposable
             return Result<object>.Ok(uiElement);
         }
 
-        // Todo: Remove everything below here
-
-        // Instantiate the component editor view model
-        // Use the dynamic keyword to enable dynamic binding at runtime.
-        dynamic editorViewModel = _serviceProvider.GetRequiredService<ComponentEditorViewModel>();
-        editorViewModel.Initialize(componentEditor);
-
-        // Ask the component editor for the editor type to instantiate
-        var type = componentEditor.EditorViewType;
-
-        var editorView = Activator.CreateInstance(type) as UserControl;
-        if (editorView is null)
-        {
-            return Result<object>.Fail("Failed to create editor view");
-        }
-
-        editorView.DataContext = editorViewModel;
-
-        return Result<object>.Ok(editorView);
+        return Result<object>.Fail();
     }
 
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)

@@ -119,7 +119,8 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         }
         var editor = createEditorResult.Value;
 
-        // Instantiate the XAML control for this component
+        // Instantiate the form UI for the ComponentEditor
+        // When the form UI unloads, it will uninitialize the ComponentEditor automatically.
         var createViewResult = _inspectorService.CreateComponentEditorView(editor);
         if (createViewResult.IsFailure)
         {

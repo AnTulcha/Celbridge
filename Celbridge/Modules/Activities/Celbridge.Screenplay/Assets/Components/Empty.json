@@ -32,10 +32,14 @@
       "children": [
         {
           "elementType": "TextBox",
-          "bindKey": "/comment",
-          "bindMode":  "TwoWay",
+          "header": "Comment",
+          "textBinding": "/comment",
           "placeholder": "Enter a note",
           "checkSpelling": false
+        },
+        {
+          "elementType": "TextBlock",
+          "textBinding": "/comment"
         },
         {
           "elementType": "Button",

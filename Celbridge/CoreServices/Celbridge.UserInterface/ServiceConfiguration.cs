@@ -5,6 +5,7 @@ using Celbridge.Navigation;
 using Celbridge.UserInterface.Services;
 using Celbridge.UserInterface.Services.Dialogs;
 using Celbridge.UserInterface.Services.Forms;
+using Celbridge.UserInterface.ViewModels.Forms;
 using Celbridge.UserInterface.ViewModels.Pages;
 using Celbridge.UserInterface.Views;
 using Celbridge.Workspace;
@@ -26,8 +27,8 @@ public static class ServiceConfiguration
         services.AddSingleton<IUserInterfaceService, UserInterfaceService>();
         services.AddSingleton<IWorkspaceWrapper, WorkspaceWrapper>();
         services.AddSingleton<IUndoService, UndoService>();
-        services.AddSingleton<IFormBuilder, FormBuilder>();
         services.AddSingleton<MainMenuUtils>();
+        services.AddTransient<IFormBuilder, FormBuilder>();
 
         //
         // Register view models
@@ -41,6 +42,7 @@ public static class ServiceConfiguration
         services.AddTransient<ProgressDialogViewModel>();
         services.AddTransient<NewProjectDialogViewModel>();
         services.AddTransient<InputTextDialogViewModel>();
+        services.AddTransient<StringPropertyViewModel>();
     }
 
     public static void Initialize()

@@ -700,6 +700,7 @@ public class EntityService : IEntityService, IDisposable
         var config = getConfigResult.Value;
 
         // Instantiate the component editor
+
         var editorType = config.ComponentEditorType;
         var editor = _serviceProvider.GetService(editorType) as IComponentEditor;
         if (editor is null)
@@ -707,7 +708,12 @@ public class EntityService : IEntityService, IDisposable
             return Result<IComponentEditor>.Fail($"Failed to created component editor for component type: {componentType}");
         }
 
-        editor.Component = componentProxy;
+        var initResult = editor.Initialize(componentProxy);
+        if (initResult.IsFailure)
+        {
+            return Result<IComponentEditor>.Fail($"Failed to initialize component editor")
+                .WithErrors(initResult);
+        }
 
         return Result<IComponentEditor>.Ok(editor);
     }

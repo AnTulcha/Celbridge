@@ -6,7 +6,7 @@ namespace Celbridge.Forms;
 public interface IFormBuilder
 {
     /// <summary>
-    /// Constructs a form UI element based on a JSON definition.
+    /// Constructs a form UI element based on a JSON configuration.
     /// </summary>
-    Result<object> BuildForm(string fromConfigJson);
+    Result<object> BuildForm(string formName, string fromConfig, IFormDataProvider formDataProvider);
 }
