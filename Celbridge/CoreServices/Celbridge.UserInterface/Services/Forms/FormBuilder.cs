@@ -91,62 +91,75 @@ public class FormBuilder : IFormBuilder
         return Result<object>.Ok(rootPanel);
     }
 
-    private UIElement? CreateUIElementFromJsonElement(JsonElement element)
+    private UIElement? CreateUIElementFromJsonElement(JsonElement jsonElement)
     {
-        if (element.ValueKind != JsonValueKind.Object)
+        if (jsonElement.ValueKind != JsonValueKind.Object)
         {
             _buildErrors.Add("Form array element is not an object");
             return null;
         }
 
-        if (!element.TryGetProperty("elementType", out var elementTypeNode))
+        if (!jsonElement.TryGetProperty("element", out var element))
         {
             _buildErrors.Add("Form object does not contain an 'elementType' property");
             return null;
         }
-        var elementType = elementTypeNode.GetString();
+        var elementName = element.GetString();
 
         UIElement? uiElement = null;        
-        switch (elementType)
+        switch (elementName)
         {
             case "StackPanel":
-                uiElement = CreateStackPanel(element);
+                uiElement = CreateStackPanel(jsonElement);
                 break;
 
             case "TextBox":
-                uiElement = CreateTextBox(element);
+                uiElement = CreateTextBox(jsonElement);
                 break;
 
             case "TextBlock":
-                uiElement = CreateTextBlock(element);
+                uiElement = CreateTextBlock(jsonElement);
                 break;
 
             case "Button":
-                uiElement = CreateButton(element);
+                uiElement = CreateButton(jsonElement);
                 break;
         }
 
         if (uiElement is null)
         {
-            _buildErrors.Add($"Failed to create element of type: '{elementTypeNode.GetString()}'");
+            _buildErrors.Add($"Failed to create element of type: '{elementName}'");
             return null;
         }
 
         return uiElement;
     }
 
-    private StackPanel? CreateStackPanel(JsonElement element)
+    private StackPanel? CreateStackPanel(JsonElement jsonElement)
     {
         var stackPanel = new StackPanel();
 
         // Set the orientation
-        if (element.TryGetProperty("orientation", out var orientation))
+        if (jsonElement.TryGetProperty("orientation", out var orientation))
         {
-            stackPanel.Orientation = orientation.GetString() == "Horizontal" ? Orientation.Horizontal : Orientation.Vertical;
+            var orientationString = orientation.GetString();
+            if (orientationString == "Horizontal")
+            {
+                stackPanel.Orientation = Orientation.Horizontal;
+            }
+            else if (orientationString == "Vertical")
+            {
+                stackPanel.Orientation = Orientation.Vertical;
+            }
+            else
+            {
+                // Log the error and default to vertical
+                _buildErrors.Add($"Invalid orientation value: '{orientationString}'");
+            }
         }
 
         // Add child controls
-        if (element.TryGetProperty("children", out var children))
+        if (jsonElement.TryGetProperty("children", out var children))
         {
             foreach (var child in children.EnumerateArray())
             {
@@ -164,11 +177,11 @@ public class FormBuilder : IFormBuilder
         return stackPanel;
     }
 
-    private TextBox? CreateTextBox(JsonElement config)
+    private TextBox? CreateTextBox(JsonElement jsonElement)
     {
         var textBox = new TextBox();
 
-        if (!ApplyAlignmentConfig(textBox, config))
+        if (!ApplyAlignmentConfig(textBox, jsonElement))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
             return null;
@@ -183,7 +196,7 @@ public class FormBuilder : IFormBuilder
             "placeholder", 
             "checkSpelling" 
         };
-        if (!ValidateConfigKeys(config, validConfigKeys))
+        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
         {
             _buildErrors.Add("Invalid TextBox configuration");
             return null;
@@ -191,25 +204,25 @@ public class FormBuilder : IFormBuilder
 
         // Apply unbound properties
 
-        if (config.TryGetProperty("header", out var header))
+        if (jsonElement.TryGetProperty("header", out var header))
         {
             // Todo: Support localization
             textBox.Header = header.GetString();
         }
 
-        if (config.TryGetProperty("placeholder", out var placeholder))
+        if (jsonElement.TryGetProperty("placeholder", out var placeholder))
         {
             textBox.PlaceholderText = placeholder.GetString();
         }
 
-        if (config.TryGetProperty("checkSpelling", out var checkSpelling))
+        if (jsonElement.TryGetProperty("checkSpelling", out var checkSpelling))
         {
             textBox.IsSpellCheckEnabled = checkSpelling.GetBoolean();
         }
 
-        // Apply bound properties
+        // Apply property bindings
 
-        if (GetBindingPropertyPath(config, "textBinding", out var propertyPath))
+        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
         {
             ApplyBinding<StringPropertyViewModel>(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
         }
@@ -217,11 +230,11 @@ public class FormBuilder : IFormBuilder
         return textBox;
     }
 
-    private TextBlock? CreateTextBlock(JsonElement config)
+    private TextBlock? CreateTextBlock(JsonElement jsonElement)
     {
         var textBlock = new TextBlock();
 
-        if (!ApplyAlignmentConfig(textBlock, config))
+        if (!ApplyAlignmentConfig(textBlock, jsonElement))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
             return null;
@@ -236,21 +249,21 @@ public class FormBuilder : IFormBuilder
             "italic",
             "bold"
         };
-        if (!ValidateConfigKeys(config, validConfigKeys))
+        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
         {
             _buildErrors.Add("Invalid TextBlock configuration");
             return null;
         }
 
-        // Apply unbound properties
+        // Apply property bindings
 
-        if (config.TryGetProperty("text", out var text))
+        if (jsonElement.TryGetProperty("text", out var text))
         {
             // Todo: Support localization
             textBlock.Text = text.GetString();
         }
 
-        if (config.TryGetProperty("italic", out var italic))
+        if (jsonElement.TryGetProperty("italic", out var italic))
         {
             if (italic.GetBoolean())
             {
@@ -258,7 +271,7 @@ public class FormBuilder : IFormBuilder
             }
         }
 
-        if (config.TryGetProperty("bold", out var bold))
+        if (jsonElement.TryGetProperty("bold", out var bold))
         {
             if (bold.GetBoolean())
             {
@@ -268,7 +281,7 @@ public class FormBuilder : IFormBuilder
 
         // Apply bound properties
 
-        if (GetBindingPropertyPath(config, "textBinding", out var propertyPath))
+        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
         {
             ApplyBinding<StringPropertyViewModel>(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath);
         }
@@ -276,18 +289,18 @@ public class FormBuilder : IFormBuilder
         return textBlock;
     }
 
-    private Button? CreateButton(JsonElement config)
+    private Button? CreateButton(JsonElement jsonElement)
     {
         var button = new Button();
 
-        if (!ApplyAlignmentConfig(button, config))
+        if (!ApplyAlignmentConfig(button, jsonElement))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to Button");
             return null;
         }
 
         // Set the button text
-        if (config.TryGetProperty("text", out var text))
+        if (jsonElement.TryGetProperty("text", out var text))
         {
             button.Content = text.GetString();
         }
@@ -303,11 +316,11 @@ public class FormBuilder : IFormBuilder
         return button;
     }
 
-    private bool GetBindingPropertyPath(JsonElement config, string configPropertyName, out string bindingPropertyPath)
+    private bool GetBindingPropertyPath(JsonElement jsonElement, string configPropertyName, out string bindingPropertyPath)
     {
         bindingPropertyPath = string.Empty;
 
-        if (!config.TryGetProperty(configPropertyName, out var bindingConfig))
+        if (!jsonElement.TryGetProperty(configPropertyName, out var bindingConfig))
         {
             // Config does not contain the specified property.
             // The client decides if this is an error or not.
@@ -387,7 +400,7 @@ public class FormBuilder : IFormBuilder
             foreach (var property in jsonElement.EnumerateObject())
             {
                 var configKey = property.Name;
-                if (configKey == "elementType" ||
+                if (configKey == "element" ||
                     configKey == "horizontalAlignment" ||
                     configKey == "verticalAlignment")
                 {

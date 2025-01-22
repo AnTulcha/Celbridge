@@ -1,7 +1,7 @@
 namespace Celbridge.Forms;
 
 /// <summary>
-/// A view model used to bind a form UI element to a property of a form data provider.
+/// A view model that binds a form UI element to a form property via a form data provider.
 /// </summary>
 public interface IPropertyViewModel
 {

@@ -110,7 +110,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         // Populate the Component Type in the panel header
         ComponentType = component.Schema.ComponentType;
 
-        // Instantiate a ComponentEditor for this component type
+        // Instantiate a ComponentEditor for this component
         var createEditorResult = _entityService.CreateComponentEditor(component);
         if (createEditorResult.IsFailure)
         {
@@ -121,7 +121,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         // Instantiate the form UI for the ComponentEditor
         // When the form UI unloads, it will uninitialize the ComponentEditor automatically.
-        var createViewResult = _inspectorService.CreateComponentEditorView(editor);
+        var createViewResult = _inspectorService.CreateComponentEditorForm(editor);
         if (createViewResult.IsFailure)
         {
             _logger.LogError($"Failed to create component editor view for component type: '{ComponentType}'");
@@ -131,11 +131,11 @@ public partial class ComponentValueEditorViewModel : ObservableObject
 
         if (editorView is not null)
         {
+            // Todo: Display the XAML control in the Inspector panel properly, and remove the field system
             var field = new Field(editorView)
     ;       propertyFields.Add(field);
         }
 
-        // Todo: Display the XAML control in the Inspector panel
 
         // Construct the form by adding property fields one by one.
         foreach (var property in component.Schema.Properties)

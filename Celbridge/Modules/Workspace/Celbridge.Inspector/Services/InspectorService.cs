@@ -1,7 +1,6 @@
 using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Forms;
-using Celbridge.Inspector.ViewModels;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -77,7 +76,7 @@ public class InspectorService : IInspectorService, IDisposable
         return Result.Ok();
     }
 
-    public Result<object> CreateComponentEditorView(IComponentEditor componentEditor)
+    public Result<object> CreateComponentEditorForm(IComponentEditor componentEditor)
     {
         Guard.IsNotNull(componentEditor.Component);
 
@@ -92,7 +91,7 @@ public class InspectorService : IInspectorService, IDisposable
             var buildResult = formBuilder.BuildForm(formName, formJson, componentEditor);
             if (buildResult.IsFailure)
             {
-                return Result<object>.Fail($"Failed to build form for component type: '{componentEditor.Component.Schema.ComponentType}'")
+                return Result<object>.Fail($"Failed to build form for component type: '{formName}'")
                     .WithErrors(buildResult);
             }
             var uiElement = buildResult.Value;
@@ -100,6 +99,7 @@ public class InspectorService : IInspectorService, IDisposable
             return Result<object>.Ok(uiElement);
         }
 
+        // No component editor defined for this component
         return Result<object>.Fail();
     }
 

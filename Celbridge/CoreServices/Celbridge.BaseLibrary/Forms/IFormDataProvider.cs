@@ -11,9 +11,10 @@ public interface IFormDataProvider
     void OnFormUnloaded();
 
     /// <summary>
-    /// Event that is fired when an edited property value changes.
+    /// An event that fires when a property used by the form changes.
+    /// The event contains the property path that changed.
     /// </summary>
-    event Action<string>? PropertyChanged;
+    event Action<string>? FormPropertyChanged;
 
     /// <summary>
     /// Gets the property at the specified path.

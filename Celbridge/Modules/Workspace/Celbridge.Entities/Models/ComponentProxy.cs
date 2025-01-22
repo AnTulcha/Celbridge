@@ -15,7 +15,7 @@ public class ComponentProxy : IComponentProxy
 
     public ComponentSchema Schema { get; }
 
-    public event Action<string>? PropertyChanged;
+    public event Action<string>? ComponentPropertyChanged;
 
     public ComponentStatus Status { get; private set; }
 
@@ -90,17 +90,17 @@ public class ComponentProxy : IComponentProxy
             else
             {
                 // Notify listeners that a component property has changed
-                PropertyChanged?.Invoke(propertyPath);
+                ComponentPropertyChanged?.Invoke(propertyPath);
             }
         }
     }
 
-    private void Invalidate()
+    public void Invalidate()
     {
         if (IsValid)
         {
             IsValid = false;
-            PropertyChanged = null;
+            ComponentPropertyChanged = null;
             _messengerService.UnregisterAll(this);
         }
     }

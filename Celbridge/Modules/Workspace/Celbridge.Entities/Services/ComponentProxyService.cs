@@ -49,8 +49,16 @@ public class ComponentProxyService
         if (propertyPath == "/")
         {
             // Remove the proxy from caches.
-            // The proxy listens for the same event and will invalidate itself in case
-            // any clients are still holding a reference to it.
+            if (_componentCache.TryGetValue(resource, out var indexCache))
+            {
+                // Invalidate all proxies in the index cache before clearing the cache.
+                foreach (var proxy in indexCache.Values)
+                {
+                    // Just to be safe, the proxy also listens for the same event and invalidates itself.
+                    proxy.Invalidate();
+                }
+            }
+
             _componentCache.Remove(resource);
             _componentListCache.Remove(resource);
         }

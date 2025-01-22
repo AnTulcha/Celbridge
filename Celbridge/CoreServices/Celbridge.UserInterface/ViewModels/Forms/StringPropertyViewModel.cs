@@ -29,12 +29,10 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
                 .WithErrors(updateResult);
         }
 
-        // Todo: Unregister these listeners when the form is unloaded
+        // Listen for property changes on the component (via the form data provider)
+        formDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
 
-        // Listen for property changes on the component
-        formDataProvider.PropertyChanged += OnFormDataPropertyChanged;
-
-        // Listen for property changes on this view model
+        // Listen for property changes on this view model (via ObservableObject)
         PropertyChanged += OnViewModelPropertyChanged;
 
         return Result.Ok();
@@ -44,7 +42,8 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
     {
         if (_formDataProvider != null)
         {
-            _formDataProvider.PropertyChanged -= OnFormDataPropertyChanged;
+            // Unregister listeners
+            _formDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
             PropertyChanged -= OnViewModelPropertyChanged;
         }
     }
@@ -64,12 +63,12 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
         if (e.PropertyName == nameof(Value))
         {
             // Stop listening for component property changes while we update the component
-            _formDataProvider.PropertyChanged -= OnFormDataPropertyChanged;
+            _formDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
 
             _formDataProvider.SetProperty(_propertyPath, Value, false);
 
             // Start listening for component property changes again
-            _formDataProvider.PropertyChanged += OnFormDataPropertyChanged;
+            _formDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
         }
     }
 

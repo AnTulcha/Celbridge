@@ -27,22 +27,22 @@
 
   "form": [
     {
-      "elementType": "StackPanel",
+      "element": "StackPanel",
       "orientation": "Horizontal",
       "children": [
         {
-          "elementType": "TextBox",
+          "element": "TextBox",
           "header": "Comment",
           "textBinding": "/comment",
           "placeholder": "Enter a note",
           "checkSpelling": false
         },
         {
-          "elementType": "TextBlock",
+          "element": "TextBlock",
           "textBinding": "/comment"
         },
         {
-          "elementType": "Button",
+          "element": "Button",
           "text": "Clear",
           "command": "Clear"
         }

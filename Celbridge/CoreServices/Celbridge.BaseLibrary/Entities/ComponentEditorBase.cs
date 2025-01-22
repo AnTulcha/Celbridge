@@ -9,7 +9,7 @@ public abstract class ComponentEditorBase : IComponentEditor
 {
     public abstract string ComponentConfigPath { get; }
 
-    public event Action<string>? PropertyChanged;
+    public event Action<string>? FormPropertyChanged;
 
     protected IComponentProxy? _component;
     public IComponentProxy Component => _component!;
@@ -17,7 +17,7 @@ public abstract class ComponentEditorBase : IComponentEditor
     public virtual Result Initialize(IComponentProxy component)
     {
         _component = component;
-        _component.PropertyChanged += OnComponentPropertyChanged;
+        _component.ComponentPropertyChanged += OnComponentPropertyChanged;
 
         return Result.Ok();
     }
@@ -26,7 +26,7 @@ public abstract class ComponentEditorBase : IComponentEditor
     {
         if (_component is not null)
         {
-            _component.PropertyChanged -= OnComponentPropertyChanged;
+            _component.ComponentPropertyChanged -= OnComponentPropertyChanged;
         }
     }
 
@@ -62,6 +62,6 @@ public abstract class ComponentEditorBase : IComponentEditor
     protected virtual void OnComponentPropertyChanged(string propertyPath)
     {
         // Forward the property changed event so the editor view can update itself
-        PropertyChanged?.Invoke(propertyPath);
+        FormPropertyChanged?.Invoke(propertyPath);
     }
 }

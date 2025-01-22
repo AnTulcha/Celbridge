@@ -25,7 +25,7 @@ public interface IComponentProxy
     /// <summary>
     /// Raised when a component property changes.
     /// </summary>
-    event Action<string>? PropertyChanged;
+    event Action<string>? ComponentPropertyChanged;
 
     /// <summary>
     /// The validation status of the component.
