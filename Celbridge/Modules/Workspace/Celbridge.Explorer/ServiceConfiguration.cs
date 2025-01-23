@@ -10,47 +10,47 @@ namespace Celbridge.Explorer;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<IExplorerService, ExplorerService>();
-        config.AddTransient<IResourceRegistry, ResourceRegistry>();
-        config.AddTransient<IResourceRegistryDumper, ResourceRegistryDumper>();
-        config.AddTransient<IResourceNameValidator, ResourceNameValidator>();
-        config.AddTransient<ResourceArchiver>();
+        services.AddTransient<IExplorerService, ExplorerService>();
+        services.AddTransient<IResourceRegistry, ResourceRegistry>();
+        services.AddTransient<IResourceRegistryDumper, ResourceRegistryDumper>();
+        services.AddTransient<IResourceNameValidator, ResourceNameValidator>();
+        services.AddTransient<ResourceArchiver>();
 
         //
         // Register views
         //
 
-        config.AddTransient<IExplorerPanel, ExplorerPanel>();
+        services.AddTransient<IExplorerPanel, ExplorerPanel>();
 
         //
         // Register view models
         //
 
-        config.AddTransient<ExplorerPanelViewModel>();
-        config.AddTransient<ResourceTreeViewModel>();
+        services.AddTransient<ExplorerPanelViewModel>();
+        services.AddTransient<ResourceTreeViewModel>();
 
         //
         // Register commands
         //
 
-        config.AddTransient<IUpdateResourcesCommand, UpdateResourcesCommand>();
-        config.AddTransient<IAddResourceCommand, AddResourceCommand>();
-        config.AddTransient<IDeleteResourceCommand, DeleteResourceCommand>();
-        config.AddTransient<ICopyResourceCommand, CopyResourceCommand>();
-        config.AddTransient<IAddResourceDialogCommand, AddResourceDialogCommand>();
-        config.AddTransient<IDeleteResourceDialogCommand, DeleteResourceDialogCommand>();
-        config.AddTransient<IRenameResourceDialogCommand, RenameResourceDialogCommand>();
-        config.AddTransient<IDuplicateResourceDialogCommand, DuplicateResourceDialogCommand>();
-        config.AddTransient<ISelectResourceCommand, SelectResourceCommand>();
-        config.AddTransient<IExpandFolderCommand, ExpandFolderCommand>();
-        config.AddTransient<IOpenFileManagerCommand, OpenFileManagerCommand>();
-        config.AddTransient<IOpenApplicationCommand, OpenApplicationCommand>();
-        config.AddTransient<IOpenBrowserCommand, OpenBrowserCommand>();
+        services.AddTransient<IUpdateResourcesCommand, UpdateResourcesCommand>();
+        services.AddTransient<IAddResourceCommand, AddResourceCommand>();
+        services.AddTransient<IDeleteResourceCommand, DeleteResourceCommand>();
+        services.AddTransient<ICopyResourceCommand, CopyResourceCommand>();
+        services.AddTransient<IAddResourceDialogCommand, AddResourceDialogCommand>();
+        services.AddTransient<IDeleteResourceDialogCommand, DeleteResourceDialogCommand>();
+        services.AddTransient<IRenameResourceDialogCommand, RenameResourceDialogCommand>();
+        services.AddTransient<IDuplicateResourceDialogCommand, DuplicateResourceDialogCommand>();
+        services.AddTransient<ISelectResourceCommand, SelectResourceCommand>();
+        services.AddTransient<IExpandFolderCommand, ExpandFolderCommand>();
+        services.AddTransient<IOpenFileManagerCommand, OpenFileManagerCommand>();
+        services.AddTransient<IOpenApplicationCommand, OpenApplicationCommand>();
+        services.AddTransient<IOpenBrowserCommand, OpenBrowserCommand>();
     }
 }

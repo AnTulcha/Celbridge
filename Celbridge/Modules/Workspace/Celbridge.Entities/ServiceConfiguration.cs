@@ -6,26 +6,26 @@ namespace Celbridge.Entities;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
-        config.AddTransient<IEntityService, EntityService>();
-        config.AddTransient<ComponentConfigRegistry>();
-        config.AddTransient<ComponentProxyService>();
-        config.AddTransient<EntityRegistry>();
+        services.AddTransient<IEntityService, EntityService>();
+        services.AddTransient<ComponentConfigRegistry>();
+        services.AddTransient<ComponentProxyService>();
+        services.AddTransient<EntityRegistry>();
 
         //
         // Register commands
         //
-        config.AddTransient<ISetPropertyCommand, SetPropertyCommand>();
-        config.AddTransient<IUndoEntityCommand, UndoEntityCommand>();
-        config.AddTransient<IRedoEntityCommand, RedoEntityCommand>();
-        config.AddTransient<IPrintPropertyCommand, PrintPropertyCommand>();
-        config.AddTransient<IAddComponentCommand, AddComponentCommand>();
-        config.AddTransient<IRemoveComponentCommand, RemoveComponentCommand>();
-        config.AddTransient<ICopyComponentCommand, CopyComponentCommand>();
-        config.AddTransient<IMoveComponentCommand, MoveComponentCommand>();
+        services.AddTransient<ISetPropertyCommand, SetPropertyCommand>();
+        services.AddTransient<IUndoEntityCommand, UndoEntityCommand>();
+        services.AddTransient<IRedoEntityCommand, RedoEntityCommand>();
+        services.AddTransient<IPrintPropertyCommand, PrintPropertyCommand>();
+        services.AddTransient<IAddComponentCommand, AddComponentCommand>();
+        services.AddTransient<IRemoveComponentCommand, RemoveComponentCommand>();
+        services.AddTransient<ICopyComponentCommand, CopyComponentCommand>();
+        services.AddTransient<IMoveComponentCommand, MoveComponentCommand>();
     }
 }

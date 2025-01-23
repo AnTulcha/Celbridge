@@ -60,7 +60,7 @@
     <UnoImage Include="Assets\Images\title_icon.svg" />
   </ItemGroup>
 
-  <!-- Core Services -->
+  <!-- Direct project dependencies -->
   <ItemGroup>
     <ProjectReference Include="..\CoreServices\Celbridge.Commands\Celbridge.Commands.csproj" />
     <ProjectReference Include="..\CoreServices\Celbridge.Extensions\Celbridge.Extensions.csproj" />
@@ -72,11 +72,11 @@
     <ProjectReference Include="..\CoreServices\Celbridge.Telemetry\Celbridge.Telemetry.csproj" />
     <ProjectReference Include="..\CoreServices\Celbridge.UserInterface\Celbridge.UserInterface.csproj" />
     <ProjectReference Include="..\CoreServices\Celbridge.Utilities\Celbridge.Utilities.csproj" />
+    <ProjectReference Include="..\Modules\Workspace\Celbridge.Workspace\Celbridge.Workspace.csproj" />
   </ItemGroup>
 
   <!-- Modules -->
   <ItemGroup>
-    <ProjectReference Include="..\Modules\Workspace\Celbridge.Workspace\Celbridge.Workspace.csproj" />
     <ProjectReference Include="..\Modules\Activities\Celbridge.Screenplay\Celbridge.Screenplay.csproj" />
   </ItemGroup>
 

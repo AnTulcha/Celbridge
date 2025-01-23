@@ -111,7 +111,6 @@ public partial class App : Application
                     // Load modules and configure module services
                     var modules = new List<string>() 
                     { 
-                        "Celbridge.Workspace",
                         "Celbridge.Screenplay",
                     };
                     ModuleService.LoadModules(modules, services);
@@ -258,11 +257,13 @@ public partial class App : Application
         Telemetry.ServiceConfiguration.ConfigureServices(services);
         UserInterface.ServiceConfiguration.ConfigureServices(services);
         Utilities.ServiceConfiguration.ConfigureServices(services);
+        Workspace.ServiceConfiguration.ConfigureServices(services);
     }
 
     private void InitializeCoreServices()
     {
         UserInterface.ServiceConfiguration.Initialize();
+        Workspace.ServiceConfiguration.Initialize();
     }
 
     private void OnUnhandledException(object sender, System.UnhandledExceptionEventArgs e)

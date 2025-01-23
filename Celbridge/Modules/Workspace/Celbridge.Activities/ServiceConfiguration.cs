@@ -1,17 +1,16 @@
 using Celbridge.Activities.Services;
-using Celbridge.Modules;
 
 namespace Celbridge.Activities;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
-        config.AddTransient<IActivityService, ActivityService>();
-        config.AddTransient<ActivityRegistry>();
-        config.AddTransient<ActivityDispatcher>();
+        services.AddTransient<IActivityService, ActivityService>();
+        services.AddTransient<ActivityRegistry>();
+        services.AddTransient<ActivityDispatcher>();
     }
 }

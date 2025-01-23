@@ -7,37 +7,37 @@ namespace Celbridge.Console;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<IConsoleService, ConsoleService>();
-        config.AddTransient<ICommandHistory, CommandHistory>();
+        services.AddTransient<IConsoleService, ConsoleService>();
+        services.AddTransient<ICommandHistory, CommandHistory>();
 
         //
         // Register views
         //
 
-        config.AddTransient<IConsolePanel, ConsolePanel>();
+        services.AddTransient<IConsolePanel, ConsolePanel>();
 
         //
         // Register view models
         //
 
-        config.AddTransient<ConsolePanelViewModel>();
+        services.AddTransient<ConsolePanelViewModel>();
 
         //
         // Register commands
         // 
 
-        config.AddTransient<IClearCommand, ClearCommand>();
-        config.AddTransient<IClearHistoryCommand, ClearHistoryCommand>();
-        config.AddTransient<IUndoCommand, UndoCommand>();
-        config.AddTransient<IRedoCommand, RedoCommand>();
-        config.AddTransient<IHelpCommand, HelpCommand>();
-        config.AddTransient<IPrintCommand, PrintCommand>();
-        config.AddTransient<IRunCommand, RunCommand>();
+        services.AddTransient<IClearCommand, ClearCommand>();
+        services.AddTransient<IClearHistoryCommand, ClearHistoryCommand>();
+        services.AddTransient<IUndoCommand, UndoCommand>();
+        services.AddTransient<IRedoCommand, RedoCommand>();
+        services.AddTransient<IHelpCommand, HelpCommand>();
+        services.AddTransient<IPrintCommand, PrintCommand>();
+        services.AddTransient<IRunCommand, RunCommand>();
     }
 }

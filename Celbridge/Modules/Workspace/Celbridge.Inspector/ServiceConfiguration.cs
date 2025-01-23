@@ -7,33 +7,33 @@ namespace Celbridge.Inspector;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<IInspectorService, InspectorService>();
-        config.AddTransient<IInspectorFactory, InspectorFactory>();
+        services.AddTransient<IInspectorService, InspectorService>();
+        services.AddTransient<IInspectorFactory, InspectorFactory>();
 
         //
         // Register views
         //
 
-        config.AddTransient<IInspectorPanel, InspectorPanel>();
+        services.AddTransient<IInspectorPanel, InspectorPanel>();
 
         //
         // Register view models
         //
 
-        config.AddTransient<InspectorPanelViewModel>();
-        config.AddTransient<ResourceNameInspectorViewModel>();
-        config.AddTransient<WebInspectorViewModel>();
-        config.AddTransient<MarkdownInspectorViewModel>();
-        config.AddTransient<ComponentListViewModel>();
-        config.AddTransient<EntityEditorViewModel>();
-        config.AddTransient<ComponentValueEditorViewModel>();
-        config.AddTransient<ComponentTypeEditorViewModel>();
+        services.AddTransient<InspectorPanelViewModel>();
+        services.AddTransient<ResourceNameInspectorViewModel>();
+        services.AddTransient<WebInspectorViewModel>();
+        services.AddTransient<MarkdownInspectorViewModel>();
+        services.AddTransient<ComponentListViewModel>();
+        services.AddTransient<EntityEditorViewModel>();
+        services.AddTransient<ComponentValueEditorViewModel>();
+        services.AddTransient<ComponentTypeEditorViewModel>();
     }
 
     public static Result Initialize()

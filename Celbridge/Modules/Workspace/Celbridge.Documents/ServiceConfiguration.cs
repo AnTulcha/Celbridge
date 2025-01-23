@@ -8,46 +8,46 @@ namespace Celbridge.Documents;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<IDocumentsService, DocumentsService>();
-        config.AddTransient<FileTypeHelper>();
+        services.AddTransient<IDocumentsService, DocumentsService>();
+        services.AddTransient<FileTypeHelper>();
 
         //
         // Register views
         //
 
-        config.AddTransient<IDocumentsPanel, DocumentsPanel>();
-        config.AddTransient<TextBoxDocumentView>();
-        config.AddTransient<WebPageDocumentView>();
-        config.AddTransient<MonacoEditorView>();
-        config.AddTransient<FileViewerDocumentView>();
-        config.AddTransient<EditorPreviewView>();
-        config.AddTransient<TextEditorDocumentView>();
+        services.AddTransient<IDocumentsPanel, DocumentsPanel>();
+        services.AddTransient<TextBoxDocumentView>();
+        services.AddTransient<WebPageDocumentView>();
+        services.AddTransient<MonacoEditorView>();
+        services.AddTransient<FileViewerDocumentView>();
+        services.AddTransient<EditorPreviewView>();
+        services.AddTransient<TextEditorDocumentView>();
 
         //
         // Register view models
         //
 
-        config.AddTransient<DocumentsPanelViewModel>();
-        config.AddTransient<DocumentTabViewModel>();
-        config.AddTransient<DefaultDocumentViewModel>();
-        config.AddTransient<WebPageDocumentViewModel>();
-        config.AddTransient<MonacoEditorViewModel>();
-        config.AddTransient<FileViewerDocumentViewModel>();
-        config.AddTransient<EditorPreviewViewModel>();
-        config.AddTransient<TextEditorDocumentViewModel>();
+        services.AddTransient<DocumentsPanelViewModel>();
+        services.AddTransient<DocumentTabViewModel>();
+        services.AddTransient<DefaultDocumentViewModel>();
+        services.AddTransient<WebPageDocumentViewModel>();
+        services.AddTransient<MonacoEditorViewModel>();
+        services.AddTransient<FileViewerDocumentViewModel>();
+        services.AddTransient<EditorPreviewViewModel>();
+        services.AddTransient<TextEditorDocumentViewModel>();
 
         //
         // Register commands
         //
 
-        config.AddTransient<IOpenDocumentCommand, OpenDocumentCommand>();
-        config.AddTransient<ICloseDocumentCommand, CloseDocumentCommand>();
-        config.AddTransient<ISelectDocumentCommand, SelectDocumentCommand>();
+        services.AddTransient<IOpenDocumentCommand, OpenDocumentCommand>();
+        services.AddTransient<ICloseDocumentCommand, CloseDocumentCommand>();
+        services.AddTransient<ISelectDocumentCommand, SelectDocumentCommand>();
     }
 }

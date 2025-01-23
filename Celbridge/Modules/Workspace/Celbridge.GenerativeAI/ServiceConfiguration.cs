@@ -1,24 +1,25 @@
 using Celbridge.GenerativeAI.Commands;
 using Celbridge.Modules;
+using Microsoft.Extensions.DependencyInjection;
 
 
 namespace Celbridge.GenerativeAI;
 
 public static class ServiceConfiguration
 {
-    public static void ConfigureServices(IModuleServiceCollection config)
+    public static void ConfigureServices(IServiceCollection services)
     {
         //
         // Register commands
         //
 
-        config.AddTransient<IMakeTextCommand, MakeTextCommand>();
+        services.AddTransient<IMakeTextCommand, MakeTextCommand>();
 
         //
         // Register services
         //
 
-        config.AddTransient<IGenerativeAIService, GenerativeAIService>();
-        config.AddTransient<IGenerativeAIProvider, OpenAIProvider>();
+        services.AddTransient<IGenerativeAIService, GenerativeAIService>();
+        services.AddTransient<IGenerativeAIProvider, OpenAIProvider>();
     }
 }
