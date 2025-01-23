@@ -77,7 +77,7 @@
 
   <!-- Modules -->
   <ItemGroup>
-    <ProjectReference Include="..\Modules\Activities\Celbridge.Screenplay\Celbridge.Screenplay.csproj" />
+    <ProjectReference Include="..\Modules\Celbridge.Screenplay\Celbridge.Screenplay.csproj" />
   </ItemGroup>
 
   <!-- Extensions -->
