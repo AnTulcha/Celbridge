@@ -195,6 +195,8 @@ public class FormBuilder : IFormBuilder
     {
         var textBox = new TextBox();
 
+        textBox.TextWrapping = TextWrapping.Wrap;
+
         if (!ApplyAlignmentConfig(textBox, jsonElement))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
