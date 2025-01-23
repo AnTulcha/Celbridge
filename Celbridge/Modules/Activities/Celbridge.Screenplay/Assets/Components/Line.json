@@ -85,8 +85,7 @@
     {
       "element": "TextBox",
       "header": "Character",
-      "textBinding": "/character",
-      "checkSpelling": false
+      "textBinding": "/character"
     },
     {
       "element": "TextBox",
@@ -97,50 +96,42 @@
     {
       "element": "TextBox",
       "header": "Context Notes",
-      "textBinding": "/contextNotes",
-      "checkSpelling": false
+      "textBinding": "/contextNotes"
     },
     {
       "element": "TextBox",
       "header": "Line Priority",
-      "textBinding": "/linePriority",
-      "checkSpelling": false
+      "textBinding": "/linePriority"
     },
     {
       "element": "TextBox",
       "header": "Speaking To",
-      "textBinding": "/speakingTo",
-      "checkSpelling": false
+      "textBinding": "/speakingTo"
     },
     {
       "element": "TextBox",
       "header": "Game Area",
-      "textBinding": "/gameArea",
-      "checkSpelling": false
+      "textBinding": "/gameArea"
     },
     {
       "element": "TextBox",
       "header": "Time Constraint",
-      "textBinding": "/timeConstraint",
-      "checkSpelling": false
+      "textBinding": "/timeConstraint"
     },
     {
       "element": "TextBox",
       "header": "Direction",
-      "textBinding": "/direction",
-      "checkSpelling": false
+      "textBinding": "/direction"
     },
     {
       "element": "TextBox",
       "header": "Platform",
-      "textBinding": "/platform",
-      "checkSpelling": false
+      "textBinding": "/platform"
     },
     {
       "element": "TextBox",
       "header": "Production Status",
-      "textBinding": "/productionStatus",
-      "checkSpelling": false
+      "textBinding": "/productionStatus"
     }
   ]
 }
