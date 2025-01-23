@@ -15,7 +15,6 @@ public static class ServiceConfiguration
 
         config.AddTransient<IInspectorService, InspectorService>();
         config.AddTransient<IInspectorFactory, InspectorFactory>();
-        config.AddTransient<IFieldFactory, FieldFactory>();
 
         //
         // Register views
