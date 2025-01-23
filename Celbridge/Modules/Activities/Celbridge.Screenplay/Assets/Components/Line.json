@@ -3,7 +3,6 @@
   "additionalProperties": false,
 
   "attributes": {
-    "tags": [ "Screenplay" ],
     "allowMultipleComponents": true
   },
 

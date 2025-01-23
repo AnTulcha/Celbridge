@@ -2,9 +2,7 @@
   "type": "object",
   "additionalProperties": false,
 
-  "attributes": {
-    "tags": [ "Screenplay" ]
-  },
+  "attributes": {},
 
   "properties": {
     "_componentType": {

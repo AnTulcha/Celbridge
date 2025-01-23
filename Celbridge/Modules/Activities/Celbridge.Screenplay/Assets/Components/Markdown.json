@@ -2,9 +2,7 @@
   "type": "object",
   "additionalProperties": false,
 
-  "attributes": {
-    "tags": [ "Markdown" ]
-  },
+  "attributes": {},
 
   "properties": {
     "_componentType": {
