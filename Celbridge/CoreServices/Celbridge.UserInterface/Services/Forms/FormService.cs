@@ -15,9 +15,9 @@ public class FormService : IFormService
         _formBuilder = formBuilder;
     }
 
-    public Result RegisterForm(string formName, string formJSON, FormScope scope)
+    public Result RegisterForm(string formName, string formConfigJSON, FormScope scope)
     {
-        return _formRegistry.RegisterFormConfig(formName, formJSON, scope);
+        return _formRegistry.RegisterFormConfig(formName, formConfigJSON, scope);
     }
 
     public Result<object> CreateForm(string formName, IFormDataProvider formDataProvider)

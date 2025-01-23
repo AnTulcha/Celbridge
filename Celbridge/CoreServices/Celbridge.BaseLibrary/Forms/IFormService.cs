@@ -17,7 +17,8 @@ public enum FormScope
 }
 
 /// <summary>
-/// A service for registering and building forms, defined in JSON.
+/// A service for registering and building forms.
+/// Forms are UI elements used to edit the properties of an object, such as entity component.
 /// </summary>
 public interface IFormService
 {
@@ -26,7 +27,7 @@ public interface IFormService
     /// If the scope is set to Workspace, the form will be unregistered when the workspace is closed.
     /// This avoids exposing the forms from previously loaded projects to the current project.
     /// </summary>
-    Result RegisterForm(string formName, string formJSON, FormScope scope);
+    Result RegisterForm(string formName, string formConfigJSON, FormScope scope);
 
     /// <summary>
     /// Creates a UI Element instance of the named form using the specified form data provider.
