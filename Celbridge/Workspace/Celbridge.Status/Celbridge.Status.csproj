@@ -24,13 +24,11 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Diagnostics" />
-    <PackageReference Include="JsonPatch.Net" />
-    <PackageReference Include="JsonPointer.Net" />
-    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="Newtonsoft.Json"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Celbridge.BaseLibrary\Celbridge.BaseLibrary.csproj" />
+    <ProjectReference Include="..\..\Celbridge.BaseLibrary\Celbridge.BaseLibrary.csproj" />
   </ItemGroup>
-
+  
 </Project>
