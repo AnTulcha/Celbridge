@@ -74,5 +74,73 @@
     "direction": "",
     "platform": "",
     "productionStatus": ""
-  }
+  },
+
+  "form": [
+    {
+      "element": "TextBox",
+      "header": "Dialogue Key",
+      "textBinding": "/dialogueKey"
+    },
+    {
+      "element": "TextBox",
+      "header": "Character",
+      "textBinding": "/character",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Source Text",
+      "textBinding": "/sourceText",
+      "checkSpelling": true
+    },
+    {
+      "element": "TextBox",
+      "header": "Context Notes",
+      "textBinding": "/contextNotes",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Line Priority",
+      "textBinding": "/linePriority",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Speaking To",
+      "textBinding": "/speakingTo",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Game Area",
+      "textBinding": "/gameArea",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Time Constraint",
+      "textBinding": "/timeConstraint",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Direction",
+      "textBinding": "/direction",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Platform",
+      "textBinding": "/platform",
+      "checkSpelling": false
+    },
+    {
+      "element": "TextBox",
+      "header": "Production Status",
+      "textBinding": "/productionStatus",
+      "checkSpelling": false
+    }
+  ]
 }
