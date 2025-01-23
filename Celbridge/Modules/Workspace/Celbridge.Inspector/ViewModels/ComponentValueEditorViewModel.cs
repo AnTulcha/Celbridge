@@ -129,7 +129,8 @@ public partial class ComponentValueEditorViewModel : ObservableObject
         if (uiElement is not null)
         {
             // Display the form UI in the inspector panel
-            // I'm leaving this as a list in case we want to add more UI elements in the future
+            // Using a list here avoids having to pass a nullable parameter to clear the list. Also handy if
+            // we want to insert additional UI elements in the future.
             var uiElements = new List<UIElement>() 
             { 
                 uiElement 

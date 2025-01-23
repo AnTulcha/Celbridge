@@ -247,7 +247,7 @@ public class FormBuilder : IFormBuilder
         {
             if (e.Key == VirtualKey.Enter)
             {
-                // Pressing enter moves focus to next property field
+                // Pressing enter moves focus to next focusable element
                 var options = new FindNextElementOptions
                 {
                     SearchRoot = ((UIElement)sender).XamlRoot!.Content
