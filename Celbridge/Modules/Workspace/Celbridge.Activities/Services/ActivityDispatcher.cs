@@ -10,7 +10,7 @@ namespace Celbridge.Activities.Services;
 
 public class ActivityDispatcher
 {
-    private const string EmptyComponentType = "Component.Empty";
+    private const string EmptyComponentType = ".Empty";
 
     private readonly ILogger<ActivityDispatcher> _logger;
     private readonly IMessengerService _messengerService;

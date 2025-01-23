@@ -15,7 +15,7 @@ namespace Celbridge.Inspector.ViewModels;
 
 public partial class ComponentListViewModel : InspectorViewModel
 {
-    private const string EmptyComponentType = "Component.Empty";
+    private const string EmptyComponentType = ".Empty";
 
     private readonly ILogger<MarkdownInspectorViewModel> _logger;
     private readonly IMessengerService _messengerService;

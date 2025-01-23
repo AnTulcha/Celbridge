@@ -13,7 +13,7 @@ namespace Celbridge.Screenplay.Services;
 
 public class ScreenplayActivity : IActivity
 {
-    private const string EmptyComponentType = "Component.Empty";
+    private const string EmptyComponentType = ".Empty";
 
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ScreenplayActivity> _logger;
