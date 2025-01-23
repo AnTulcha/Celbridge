@@ -9,7 +9,7 @@
   "properties": {
     "_componentType": {
       "type": "string",
-      "const": "Scene#1"
+      "const": "Screenplay.Scene#1"
     },
     "sceneTitle": {
       "type": "string"

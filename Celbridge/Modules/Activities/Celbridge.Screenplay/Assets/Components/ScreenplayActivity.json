@@ -10,7 +10,7 @@
   "properties": {
     "_componentType": {
       "type": "string",
-      "const": "ScreenplayActivity#1"
+      "const": "Screenplay.ScreenplayActivity#1"
     }
   },
 
