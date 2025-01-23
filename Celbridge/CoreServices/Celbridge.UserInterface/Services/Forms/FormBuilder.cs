@@ -10,6 +10,8 @@ namespace Celbridge.UserInterface.Services.Forms;
 
 public class FormBuilder : IFormBuilder
 {
+    private const int DefaultStackPanelSpacing = 8;
+
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<FormBuilder> _logger;
 
@@ -34,7 +36,8 @@ public class FormBuilder : IFormBuilder
         var rootPanel = new StackPanel
         {
             Orientation = Orientation.Vertical,
-            DataContext = formDataProvider
+            DataContext = formDataProvider,
+            Spacing = DefaultStackPanelSpacing
         };
 
         try
@@ -139,6 +142,16 @@ public class FormBuilder : IFormBuilder
     private StackPanel? CreateStackPanel(JsonElement jsonElement)
     {
         var stackPanel = new StackPanel();
+
+        // Set the spacing between elements
+        if (jsonElement.TryGetProperty("spacing", out var spacing))
+        {
+            stackPanel.Spacing = spacing.GetInt32();
+        }
+        else
+        {
+            stackPanel.Spacing = DefaultStackPanelSpacing;
+        }
 
         // Set the orientation
         if (jsonElement.TryGetProperty("orientation", out var orientation))
