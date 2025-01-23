@@ -13,11 +13,8 @@
     <PackageReference Include="Markdig" />
   </ItemGroup>
 
-  <!-- 
-    Celbridge.ExtensionAPI should be the only directly referenced project in any extension project.
-  -->
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Shared\Celbridge.ExtensionAPI\Celbridge.ExtensionAPI.csproj" />
+    <ProjectReference Include="..\..\..\Celbridge.BaseLibrary\Celbridge.BaseLibrary.csproj" />
   </ItemGroup>
 
 </Project>

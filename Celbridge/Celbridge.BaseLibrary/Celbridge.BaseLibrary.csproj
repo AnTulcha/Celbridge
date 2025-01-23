@@ -10,8 +10,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   
-  <ItemGroup>
-    <ProjectReference Include="..\Shared\Celbridge.ExtensionAPI\Celbridge.ExtensionAPI.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -1,3 +1,2 @@
-global using Celbridge.Foundation;
-global using Celbridge.ExtensionAPI;
+global using Celbridge.Core;
 

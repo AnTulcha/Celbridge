@@ -1,6 +1,5 @@
 using Celbridge.Commands.Services;
 using Celbridge.Commands;
-using Celbridge.Foundation;
 using Celbridge.Modules.Services;
 using Celbridge.Modules;
 using Celbridge.UserInterface.Services;
@@ -248,7 +247,6 @@ public partial class App : Application
     public static void ConfigureCoreServices(IServiceCollection services)
     {
         Commands.ServiceConfiguration.ConfigureServices(services);
-        Extensions.ServiceConfiguration.ConfigureServices(services);
         Logging.ServiceConfiguration.ConfigureServices(services);
         Messaging.ServiceConfiguration.ConfigureServices(services);
         Modules.ServiceConfiguration.ConfigureServices(services);

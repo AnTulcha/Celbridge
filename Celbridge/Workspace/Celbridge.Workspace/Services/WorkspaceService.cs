@@ -4,7 +4,6 @@ using Celbridge.DataTransfer;
 using Celbridge.Documents;
 using Celbridge.Entities;
 using Celbridge.Explorer;
-using Celbridge.Extensions;
 using Celbridge.GenerativeAI;
 using Celbridge.Inspector;
 using Celbridge.Logging;
@@ -22,7 +21,6 @@ public class WorkspaceService : IWorkspaceService, IDisposable
 
     private readonly ILogger<WorkspaceService> _logger;
     private readonly IEditorSettings _editorSettings;
-    private readonly IExtensionService _extensionService;
 
     public IWorkspaceSettingsService WorkspaceSettingsService { get; }
     public IWorkspaceSettings WorkspaceSettings => WorkspaceSettingsService.WorkspaceSettings!;
@@ -47,12 +45,10 @@ public class WorkspaceService : IWorkspaceService, IDisposable
         IServiceProvider serviceProvider,
         ILogger<WorkspaceService> logger,
         IEditorSettings editorSettings,
-        IExtensionService extensionService,
         IProjectService projectService)
     {
         _logger = logger;
         _editorSettings = editorSettings; 
-        _extensionService = extensionService;
 
         // Create instances of the required sub-services
 
@@ -200,8 +196,6 @@ public class WorkspaceService : IWorkspaceService, IDisposable
             {
                 // We use the dispose pattern to ensure that the sub-services release all their resources when the project is closed.
                 // This helps avoid memory leaks and orphaned objects/tasks when the user edits multiple projects during a session.
-
-                _extensionService.UnloadExtensions();
 
                 (WorkspaceSettingsService as IDisposable)!.Dispose();
                 (ScriptingService as IDisposable)!.Dispose();

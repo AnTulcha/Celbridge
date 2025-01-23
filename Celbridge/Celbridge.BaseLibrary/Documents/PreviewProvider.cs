@@ -1,4 +1,4 @@
-namespace Celbridge.ExtensionAPI;
+namespace Celbridge.Documents;
 
 /// <summary>
 /// Provides a HTML preview rendering of text data in a specific language (e.g. markdown, .md files)

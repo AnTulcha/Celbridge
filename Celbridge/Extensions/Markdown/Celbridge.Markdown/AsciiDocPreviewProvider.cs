@@ -1,3 +1,5 @@
+using Celbridge.Documents;
+
 namespace Celbridge.Markdown;
 
 public class AsciiDocPreviewProvider : PreviewProvider

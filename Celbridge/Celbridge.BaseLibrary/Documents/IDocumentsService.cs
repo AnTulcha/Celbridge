@@ -1,5 +1,3 @@
-using Celbridge.ExtensionAPI;
-
 namespace Celbridge.Documents;
 
 /// <summary>

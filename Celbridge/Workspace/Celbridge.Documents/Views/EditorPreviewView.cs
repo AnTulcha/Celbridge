@@ -1,5 +1,4 @@
 using Celbridge.Documents.ViewModels;
-using Celbridge.ExtensionAPI;
 using CommunityToolkit.Diagnostics;
 using Microsoft.Web.WebView2.Core;
 

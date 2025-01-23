@@ -1,5 +1,4 @@
 using Celbridge.Documents.ViewModels;
-using Celbridge.ExtensionAPI;
 
 namespace Celbridge.Documents.Views;
 

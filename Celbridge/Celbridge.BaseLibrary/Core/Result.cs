@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Celbridge.Foundation;
+namespace Celbridge.Core;
 
 /**
  * A lightweight Result type for returning success or failure from methods.

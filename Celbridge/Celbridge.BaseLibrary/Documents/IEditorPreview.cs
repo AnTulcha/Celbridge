@@ -1,4 +1,4 @@
-namespace Celbridge.ExtensionAPI;
+namespace Celbridge.Documents;
 
 public interface IEditorPreview
 {
