@@ -3,6 +3,7 @@ using Celbridge.Logging;
 using Celbridge.UserInterface.ViewModels.Forms;
 using Microsoft.UI.Text;
 using System.Text.Json;
+using Windows.System;
 using Windows.UI.Text;
 
 namespace Celbridge.UserInterface.Services.Forms;
@@ -226,6 +227,22 @@ public class FormBuilder : IFormBuilder
         {
             ApplyBinding<StringPropertyViewModel>(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
         }
+
+        textBox.KeyDown += (sender, e) =>
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                // Pressing enter moves focus to next property field
+                var options = new FindNextElementOptions
+                {
+                    SearchRoot = ((UIElement)sender).XamlRoot!.Content
+                };
+
+                FocusManager.TryMoveFocus(FocusNavigationDirection.Next, options);
+
+                e.Handled = true;
+            }
+        };
 
         return textBox;
     }
