@@ -12,24 +12,21 @@ public class Module : IModule
         ScreenplayActivity.ActivityName
     };
 
-    public void ConfigureServices(IModuleServiceCollection config)
+    public void ConfigureServices(IModuleServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<ScreenplayActivity>();
+        services.AddTransient<ScreenplayActivity>();
 
         //
         // Register compoments
         //
 
-        config.AddTransient<LineEditor>();
-        config.AddTransient<SceneEditor>();
-        config.AddTransient<ScreenplayActivityEditor>();
-
-        // Todo: Move these to more appropriate modules
-        config.AddTransient<EmptyEditor>();
+        services.AddTransient<LineEditor>();
+        services.AddTransient<SceneEditor>();
+        services.AddTransient<ScreenplayActivityEditor>();
     }
 
     public Result Initialize()

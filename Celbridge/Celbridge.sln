@@ -68,6 +68,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Screenplay", "Mod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Markdown", "Modules\Celbridge.Markdown\Celbridge.Markdown.csproj", "{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celbridge.Core", "Modules\Celbridge.Core\Celbridge.Core.csproj", "{0B45C8C1-3A3B-4824-895B-B02B1A800257}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -174,6 +176,10 @@ Global
 		{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -201,6 +207,7 @@ Global
 		{DB461244-BEFF-4C91-86E1-5F57A7336361} = {00D6636E-63D7-4B7C-AEB0-9A433AA10316}
 		{B30CD000-BFBB-455D-B5BF-6995FAC4BF81} = {C0824544-3370-4309-915C-D12EA7D91482}
 		{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0} = {C0824544-3370-4309-915C-D12EA7D91482}
+		{0B45C8C1-3A3B-4824-895B-B02B1A800257} = {C0824544-3370-4309-915C-D12EA7D91482}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {695F2378-3B43-4460-9FB8-6D27C121D85D}

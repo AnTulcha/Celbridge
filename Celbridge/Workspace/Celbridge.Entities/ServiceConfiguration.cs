@@ -1,4 +1,3 @@
-using Celbridge.Modules;
 using Celbridge.Entities.Services;
 using Celbridge.Entities.Commands;
 
@@ -11,6 +10,7 @@ public static class ServiceConfiguration
         //
         // Register services
         //
+
         services.AddTransient<IEntityService, EntityService>();
         services.AddTransient<ComponentConfigRegistry>();
         services.AddTransient<ComponentProxyService>();
@@ -19,6 +19,7 @@ public static class ServiceConfiguration
         //
         // Register commands
         //
+
         services.AddTransient<ISetPropertyCommand, SetPropertyCommand>();
         services.AddTransient<IUndoEntityCommand, UndoEntityCommand>();
         services.AddTransient<IRedoEntityCommand, RedoEntityCommand>();

@@ -12,21 +12,21 @@ public class Module : IModule
         "Markdown"
     };
 
-    public void ConfigureServices(IModuleServiceCollection config)
+    public void ConfigureServices(IModuleServiceCollection services)
     {
         //
         // Register services
         //
 
-        config.AddTransient<MarkdownActivity>();
-        config.AddTransient<MarkdownPreviewProvider>();
-        config.AddTransient<AsciiDocPreviewProvider>();
+        services.AddTransient<MarkdownActivity>();
+        services.AddTransient<MarkdownPreviewProvider>();
+        services.AddTransient<AsciiDocPreviewProvider>();
 
         //
         // Register component editors
         //
 
-        config.AddTransient<MarkdownEditor>();
+        services.AddTransient<MarkdownEditor>();
     }
 
     public Result Initialize()
