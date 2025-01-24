@@ -9,7 +9,7 @@ public class Module : IModule
 {
     public IReadOnlyList<string> SupportedActivities { get; } = new List<string>()
     {
-        ScreenplayActivityEditor.ActivityName
+        ScreenplayActivity.ActivityName
     };
 
     public void ConfigureServices(IModuleServiceCollection config)
@@ -30,7 +30,6 @@ public class Module : IModule
 
         // Todo: Move these to more appropriate modules
         config.AddTransient<EmptyEditor>();
-        config.AddTransient<MarkdownEditor>();
     }
 
     public Result Initialize()
@@ -40,10 +39,9 @@ public class Module : IModule
 
     public Result<IActivity> CreateActivity(string activityName)
     {
-        var serviceProvider = ServiceLocator.ServiceProvider;
-
-        if (activityName == ScreenplayActivityEditor.ActivityName)
+        if (activityName == ScreenplayActivity.ActivityName)
         {
+            var serviceProvider = ServiceLocator.ServiceProvider;
             var activity = serviceProvider.GetRequiredService<ScreenplayActivity>();
             return Result<IActivity>.Ok(activity);
         }

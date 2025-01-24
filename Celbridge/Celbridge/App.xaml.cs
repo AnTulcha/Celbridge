@@ -109,7 +109,8 @@ public partial class App : Application
 
                     // Load modules and configure module services
                     var modules = new List<string>() 
-                    { 
+                    {
+                        "Celbridge.Markdown",
                         "Celbridge.Screenplay",
                     };
                     ModuleService.LoadModules(modules, services);

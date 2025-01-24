@@ -1,15 +1,19 @@
 using Celbridge.Documents;
 
-namespace Celbridge.Markdown;
+namespace Celbridge.Markdown.Services;
 
-public class AsciiDocPreviewProvider : PreviewProvider
+public class AsciiDocPreviewProvider : IPreviewProvider
 {
+    private List<string> _supportedFileExtensions = new();
+    public IReadOnlyList<string> SupportedFileExtensions => _supportedFileExtensions;
+
+
     public AsciiDocPreviewProvider()
     {
-        SupportedFileExtensions.Add(".adoc");
+        _supportedFileExtensions.Add(".adoc");
     }
 
-    public override async Task<Result<string>> GeneratePreview(string text, IEditorPreview editorPreview)
+    public async Task<Result<string>> GeneratePreview(string text, IEditorPreview editorPreview)
     {
         // Todo: Refactor this - I'm using the AsciiDoctor.js library in the preview webview to do the conversion.
         var convertResult = await editorPreview.ConvertAsciiDocToHTML(text);

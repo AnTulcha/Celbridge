@@ -322,9 +322,9 @@ public class DocumentsService : IDocumentsService, IDisposable
         }
     }
 
-    private List<PreviewProvider> _previewProviders = new();
+    private List<IPreviewProvider> _previewProviders = new();
 
-    public Result AddPreviewProvider(PreviewProvider previewProvider)
+    public Result AddPreviewProvider(IPreviewProvider previewProvider)
     {
         var extensions = previewProvider.SupportedFileExtensions;
 
@@ -338,7 +338,7 @@ public class DocumentsService : IDocumentsService, IDisposable
         // Check for conflicts with previously registered providers
         foreach (var fileExtension in previewProvider.SupportedFileExtensions)
         {
-            var existingProvider = _previewProviders.FirstOrDefault(p => p.SupportsFileExtension(fileExtension));
+            var existingProvider = _previewProviders.FirstOrDefault(p => p.SupportedFileExtensions.Contains(fileExtension));
             if (existingProvider != null)
             {
                 return Result.Fail($"A preview provider is already registered for extension: '{fileExtension}'");
@@ -350,15 +350,15 @@ public class DocumentsService : IDocumentsService, IDisposable
         return Result.Ok();
     }
 
-    public Result<PreviewProvider> GetPreviewProvider(string fileExtension)
+    public Result<IPreviewProvider> GetPreviewProvider(string fileExtension)
     {
-        var provider = _previewProviders.FirstOrDefault(p => p.SupportsFileExtension(fileExtension));
+        var provider = _previewProviders.FirstOrDefault(p => p.SupportedFileExtensions.Contains(fileExtension));
         if (provider != null)
         {
-            return Result<PreviewProvider>.Ok(provider);
+            return Result<IPreviewProvider>.Ok(provider);
         }
 
-        return Result<PreviewProvider>.Fail();
+        return Result<IPreviewProvider>.Fail();
     }
 
     private Result<IDocumentView> CreateDocumentViewInternal(ResourceKey fileResource)

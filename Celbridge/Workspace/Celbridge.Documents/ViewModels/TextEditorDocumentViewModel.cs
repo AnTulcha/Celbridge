@@ -53,12 +53,12 @@ public partial class TextEditorDocumentViewModel : ObservableObject
         UpdateEditorMode();
     }
 
-    public Result<PreviewProvider> GetPreviewProvider()
+    public Result<IPreviewProvider> GetPreviewProvider()
     {
         var fileExtension = Path.GetExtension(_fileResource);
         if (string.IsNullOrEmpty(fileExtension))
         {
-            return Result<PreviewProvider>.Fail();
+            return Result<IPreviewProvider>.Fail();
         }
 
         var getResult = _documentsService.GetPreviewProvider(fileExtension);
@@ -69,7 +69,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
 
         var provider = getResult.Value;
 
-        return Result<PreviewProvider>.Ok(provider);
+        return Result<IPreviewProvider>.Ok(provider);
     }
 
     private void OnSetTextDocumentContentMessage(object recipient, SetTextDocumentContentMessage message)

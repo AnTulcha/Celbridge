@@ -13,6 +13,8 @@ namespace Celbridge.Screenplay.Services;
 
 public class ScreenplayActivity : IActivity
 {
+    public const string ActivityName = "Screenplay";
+
     private const string EmptyComponentType = ".Empty";
 
     private readonly IServiceProvider _serviceProvider;
@@ -104,7 +106,7 @@ public class ScreenplayActivity : IActivity
                 continue;
             }
 
-            if (!schema.HasTag(ScreenplayActivityEditor.ActivityName))
+            if (!schema.HasTag(ActivityName))
             {
                 component.SetAnnotation(
                     ComponentStatus.Error,

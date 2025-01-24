@@ -1,16 +1,19 @@
 using Celbridge.Documents;
 using Markdig;
 
-namespace Celbridge.Markdown;
+namespace Celbridge.Markdown.Services;
 
-public class MarkdownPreviewProvider : PreviewProvider
+public class MarkdownPreviewProvider : IPreviewProvider
 {
+    private List<string> _supportedFileExtensions = new();
+    public IReadOnlyList<string> SupportedFileExtensions => _supportedFileExtensions;
+
     public MarkdownPreviewProvider()
     {
-        SupportedFileExtensions.Add(".md");
+        _supportedFileExtensions.Add(".md");
     }
 
-    public override async Task<Result<string>> GeneratePreview(string text, IEditorPreview editorPreview)
+    public async Task<Result<string>> GeneratePreview(string text, IEditorPreview editorPreview)
     {
         await Task.CompletedTask;
 

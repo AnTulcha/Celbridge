@@ -7,10 +7,27 @@
     <GenerateLibraryLayout>true</GenerateLibraryLayout>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <UnoFeatures>
+      CSharpMarkup;
+      Lottie;
+      Hosting;
+      Toolkit;
+      Logging;
+      Mvvm;
+      Configuration;
+      Localization;
+      ThemeService;
+    </UnoFeatures>
+
   </PropertyGroup>
   
   <ItemGroup>
     <PackageReference Include="Markdig" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Components\**" />
   </ItemGroup>
 
   <ItemGroup>

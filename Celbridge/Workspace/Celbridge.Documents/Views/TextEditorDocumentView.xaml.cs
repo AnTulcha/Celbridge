@@ -12,7 +12,7 @@ public sealed partial class TextEditorDocumentView : UserControl, IDocumentView
 
     public bool HasUnsavedChanges => MonacoEditor.HasUnsavedChanges;
 
-    private PreviewProvider? _previewProvider;
+    private IPreviewProvider? _previewProvider;
 
     private bool _supportsPreview;
 
