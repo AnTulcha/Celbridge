@@ -42,8 +42,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{C082
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workspace", "Workspace", "{00D6636E-63D7-4B7C-AEB0-9A433AA10316}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.BaseLibrary", "Celbridge.BaseLibrary\Celbridge.BaseLibrary.csproj", "{22D5011B-AA98-489F-9BB1-0B00BE74088F}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Workspace", "Workspace\Celbridge.Workspace\Celbridge.Workspace.csproj", "{26A7ADE4-1563-4B7F-9458-01512D6FB3DB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Status", "Workspace\Celbridge.Status\Celbridge.Status.csproj", "{8E31A08A-FC97-4E4C-9AE8-6ACB07486D6A}"
@@ -68,7 +66,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Screenplay", "Mod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Markdown", "Modules\Celbridge.Markdown\Celbridge.Markdown.csproj", "{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Celbridge.Core", "Modules\Celbridge.Core\Celbridge.Core.csproj", "{0B45C8C1-3A3B-4824-895B-B02B1A800257}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.Core", "Modules\Celbridge.Core\Celbridge.Core.csproj", "{0B45C8C1-3A3B-4824-895B-B02B1A800257}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BaseLibrary", "BaseLibrary", "{901BDB4C-F3AC-4017-AB91-78A47D8A6F98}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Celbridge.BaseLibrary", "BaseLibrary\Celbridge.BaseLibrary.csproj", "{8D964A70-3C2F-48B7-8D71-E72D63510249}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -124,10 +126,6 @@ Global
 		{E76E804F-0DF6-476C-9B10-05DEBFBD5086}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E76E804F-0DF6-476C-9B10-05DEBFBD5086}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E76E804F-0DF6-476C-9B10-05DEBFBD5086}.Release|Any CPU.Build.0 = Release|Any CPU
-		{22D5011B-AA98-489F-9BB1-0B00BE74088F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{22D5011B-AA98-489F-9BB1-0B00BE74088F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{22D5011B-AA98-489F-9BB1-0B00BE74088F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{22D5011B-AA98-489F-9BB1-0B00BE74088F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{26A7ADE4-1563-4B7F-9458-01512D6FB3DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{26A7ADE4-1563-4B7F-9458-01512D6FB3DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26A7ADE4-1563-4B7F-9458-01512D6FB3DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -180,6 +178,10 @@ Global
 		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B45C8C1-3A3B-4824-895B-B02B1A800257}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D964A70-3C2F-48B7-8D71-E72D63510249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D964A70-3C2F-48B7-8D71-E72D63510249}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D964A70-3C2F-48B7-8D71-E72D63510249}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D964A70-3C2F-48B7-8D71-E72D63510249}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -208,6 +210,7 @@ Global
 		{B30CD000-BFBB-455D-B5BF-6995FAC4BF81} = {C0824544-3370-4309-915C-D12EA7D91482}
 		{20345FB4-450A-4D5A-BB88-2A35DEAA3EF0} = {C0824544-3370-4309-915C-D12EA7D91482}
 		{0B45C8C1-3A3B-4824-895B-B02B1A800257} = {C0824544-3370-4309-915C-D12EA7D91482}
+		{8D964A70-3C2F-48B7-8D71-E72D63510249} = {901BDB4C-F3AC-4017-AB91-78A47D8A6F98}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {695F2378-3B43-4460-9FB8-6D27C121D85D}
