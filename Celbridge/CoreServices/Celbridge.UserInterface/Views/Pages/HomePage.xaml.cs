@@ -20,10 +20,9 @@ public sealed partial class HomePage : Page
     {
         this.InitializeComponent();
 
-        var serviceProvider = ServiceLocator.ServiceProvider;
-        ViewModel = serviceProvider.GetRequiredService<HomePageViewModel>();
+        ViewModel = ServiceLocator.AcquireService<HomePageViewModel>();
 
-        _stringLocalizer = serviceProvider.GetRequiredService<IStringLocalizer>();
+        _stringLocalizer = ServiceLocator.AcquireService<IStringLocalizer>();
     }
 
     private void RecentProjectButton_Click(object sender, RoutedEventArgs e)
