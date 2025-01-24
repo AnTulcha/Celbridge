@@ -9,7 +9,7 @@ public class Module : IModule
 {
     public IReadOnlyList<string> SupportedActivities { get; } = new List<string>()
     {
-        "Markdown"
+        nameof(MarkdownActivity)
     };
 
     public void ConfigureServices(IModuleServiceCollection services)
@@ -36,7 +36,7 @@ public class Module : IModule
 
     public Result<IActivity> CreateActivity(string activityName)
     {
-        if (activityName == MarkdownActivity.ActivityName)
+        if (activityName == nameof(MarkdownActivity))
         {
             var serviceProvider = ServiceLocator.ServiceProvider;   
             var activity = serviceProvider.GetRequiredService<MarkdownActivity>();

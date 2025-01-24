@@ -11,8 +11,6 @@ namespace Celbridge.Markdown.Services;
 
 public class MarkdownActivity : IActivity
 {
-    public const string ActivityName = "Markdown";
-
     private const string EmptyComponentType = ".Empty";
 
     private readonly IServiceProvider _serviceProvider;

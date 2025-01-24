@@ -52,6 +52,7 @@ public class ActivityRegistry
         _projectFileResource = getResourceResult.Value;
 
         // Create all activities
+        // Todo: Ensure that the project file entity has an ActivityComponent for each available activity.
 
         var names = _moduleService.SupportedActivities.ToList();
         names.Sort(); // Ensure stable creation and initialization order
@@ -71,6 +72,7 @@ public class ActivityRegistry
         }
 
         // Activate all activities
+        // Todo: Only activate activities that have been marked as enabled in the project file entity.
 
         foreach (var activityName in ActivityNames)
         {

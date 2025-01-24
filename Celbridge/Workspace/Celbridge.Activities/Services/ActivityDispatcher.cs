@@ -229,7 +229,7 @@ public class ActivityDispatcher
     {
         Guard.IsNotNull(_activityRegistry);
 
-        // Check if the current associated  is still valid
+        // Check if the current associated activity is still valid
         var getActivityResult = _entityService.GetActivity(resource);
         if (getActivityResult.IsSuccess)
         {

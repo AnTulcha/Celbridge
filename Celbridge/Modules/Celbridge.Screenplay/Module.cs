@@ -9,7 +9,7 @@ public class Module : IModule
 {
     public IReadOnlyList<string> SupportedActivities { get; } = new List<string>()
     {
-        ScreenplayActivity.ActivityName
+        nameof(ScreenplayActivity)
     };
 
     public void ConfigureServices(IModuleServiceCollection services)
@@ -36,7 +36,7 @@ public class Module : IModule
 
     public Result<IActivity> CreateActivity(string activityName)
     {
-        if (activityName == ScreenplayActivity.ActivityName)
+        if (activityName == nameof(ScreenplayActivity))
         {
             var serviceProvider = ServiceLocator.ServiceProvider;
             var activity = serviceProvider.GetRequiredService<ScreenplayActivity>();
