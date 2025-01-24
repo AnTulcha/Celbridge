@@ -76,12 +76,8 @@
 
   <!-- Modules -->
   <ItemGroup>
+    <ProjectReference Include="..\Modules\Celbridge.Markdown\Celbridge.Markdown.csproj" />
     <ProjectReference Include="..\Modules\Celbridge.Screenplay\Celbridge.Screenplay.csproj" />
-  </ItemGroup>
-
-  <!-- Extensions -->
-  <ItemGroup>
-    <ProjectReference Include="..\Extensions\Markdown\Celbridge.Markdown\Celbridge.Markdown.csproj" />
   </ItemGroup>
 
 </Project>
