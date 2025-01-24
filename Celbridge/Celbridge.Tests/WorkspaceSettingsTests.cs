@@ -39,7 +39,7 @@ public class WorkspaceSettingsTests
         Guard.IsNotNull(_workspaceSettingsService);
         Guard.IsNotNullOrEmpty(_workspaceFolderPath);
 
-        var databaseFilePath = Path.Combine(_workspaceFolderPath, FileNameConstants.WorkspaceSettingsFile);
+        var databaseFilePath = Path.Combine(_workspaceFolderPath, EntityConstants.WorkspaceSettingsFile);
 
         var createResult = await _workspaceSettingsService.CreateWorkspaceSettingsAsync(databaseFilePath);
         createResult.IsSuccess.Should().BeTrue();

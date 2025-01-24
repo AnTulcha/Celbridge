@@ -1,3 +1,4 @@
+using Celbridge.Projects;
 using Celbridge.UserInterface.Models;
 using Celbridge.UserInterface.ViewModels.Pages;
 
@@ -36,7 +37,7 @@ public sealed partial class HomePage : Page
             return;
         }
 
-        var projectFilePath = Path.Combine(recentProject.ProjectFolderPath, $"{recentProject.ProjectName}{FileNameConstants.ProjectFileExtension}");
+        var projectFilePath = Path.Combine(recentProject.ProjectFolderPath, $"{recentProject.ProjectName}{ProjectConstants.ProjectFileExtension}");
         ViewModel.OpenProject(projectFilePath);
     }
 }
