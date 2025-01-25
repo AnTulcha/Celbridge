@@ -115,9 +115,9 @@
                           Foreground="{ThemeResource WarningTextColor}"
                           Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
                 
-                <TextBlock Text="{x:Bind Description, Mode=OneWay}"
-                           VerticalAlignment="Center"
-                           Margin="6 0 0 0"/>
+                <Grid x:Name="SummaryForm"
+                      Margin="6 0 0 0"
+                      Loaded="ComponentItem_Loaded" />
               </StackPanel>
             </Grid>
 

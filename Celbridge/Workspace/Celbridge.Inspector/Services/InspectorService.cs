@@ -83,7 +83,7 @@ public class InspectorService : IInspectorService, IDisposable
         // The registered form name is just the component type
         var formName = componentEditor.Component.Schema.ComponentType;
 
-        var buildResult = _formService.CreateForm(formName, componentEditor);
+        var buildResult = _formService.CreateRegisteredForm(formName, componentEditor);
         if (buildResult.IsFailure)
         {
             return Result<object>.Fail($"Failed to build form for component type: '{formName}'")

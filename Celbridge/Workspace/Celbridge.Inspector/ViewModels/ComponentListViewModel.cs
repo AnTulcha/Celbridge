@@ -1,7 +1,9 @@
 using Celbridge.Activities;
 using Celbridge.Commands;
 using Celbridge.Entities;
+using Celbridge.Forms;
 using Celbridge.Inspector.Models;
+using Celbridge.Inspector.Views;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -22,6 +24,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     private readonly IEntityService _entityService;
     private readonly IInspectorService _inspectorService;
     private readonly IActivityService _activityService;
+    private readonly IFormService _formService;
 
     public ObservableCollection<ComponentItem> ComponentItems { get; } = new();
 
@@ -41,11 +44,13 @@ public partial class ComponentListViewModel : InspectorViewModel
         ILogger<MarkdownInspectorViewModel> logger,
         IMessengerService messengerService,
         ICommandService commandService,
+        IFormService formService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
         _messengerService = messengerService;
         _commandService = commandService;
+        _formService = formService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _inspectorService = workspaceWrapper.WorkspaceService.InspectorService;
         _activityService = workspaceWrapper.WorkspaceService.ActivityService;
@@ -54,7 +59,6 @@ public partial class ComponentListViewModel : InspectorViewModel
     public void OnViewLoaded()
     {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
-        _messengerService.Register<ComponentAnnotationUpdatedMessage>(this, OnComponentAnnotationUpdatedMessage);
 
         PropertyChanged += ViewModel_PropertyChanged;
 
@@ -69,41 +73,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         _messengerService.UnregisterAll(this);
 
         PropertyChanged -= ViewModel_PropertyChanged;
-    }
-
-    private void OnComponentAnnotationUpdatedMessage(object recipient, ComponentAnnotationUpdatedMessage message)
-    {
-        var componentKey = message.ComponentKey;
-
-        if (componentKey.Resource != Resource)
-        {
-            // This message does not apply to the resource being presented by this ViewModel.
-            // This is probably because the user has just switched to inspecting a different resource and the ViewUnloaded
-            // callback has not yet been received to clean up this view model.
-            return;
-        }
-
-        var componentIndex = componentKey.ComponentIndex;
-        if (componentIndex < 0 || componentIndex >= ComponentItems.Count)
-        {
-            // Component index is out of range
-            _logger.LogError($"Component index '{componentIndex}' is out of range for resource '{componentKey.Resource}'");
-            return;
-        }
-
-        var componentItem = ComponentItems[componentIndex];
-
-        var getComponentResult = _entityService.GetComponent(componentKey);
-        if (getComponentResult.IsFailure)
-        {
-            _logger.LogError(getComponentResult.Error);
-            return;
-        }
-        var component = getComponentResult.Value;
-
-        componentItem.Description = component.Description;
-        componentItem.Status = component.Status;
-        componentItem.Tooltip = component.Tooltip;
     }
 
     public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);
@@ -289,6 +258,9 @@ public partial class ComponentListViewModel : InspectorViewModel
     private int _supressRefreshCount;
 
     public ICommand MoveComponentCommand => new AsyncRelayCommand<object?>(MoveComponent_Executed);
+
+    public IComponentListView ComponentListView { get; internal set; }
+
     private async Task MoveComponent_Executed(object? parameter)
     {
         if (parameter is not (int oldIndex, int newIndex))
@@ -406,12 +378,50 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             SelectedIndex = Math.Clamp(previousIndex, 0, componentCount - 1);
         }
+    }
 
-        // Notify running activities that the component list has been populated, so that
-        // they may now add annotations to present component information in the inspector.
+    public UIElement? CreateComponentSummaryForm(int componentIndex)
+    {
+        var componentKey = new ComponentKey(Resource, componentIndex);
 
-        var message = new PopulatedComponentListMessage(Resource);
-        _messengerService.Send(message);
+        // Acquire the component
+        var getComponentResult = _entityService.GetComponent(componentKey);
+        if (getComponentResult.IsFailure)
+        {
+            _logger.LogError($"Failed to get component at index: {componentIndex}. {getComponentResult.Error}");
+            return null;
+        }
+        var component = getComponentResult.Value;
+
+        // Create a component editor
+        var createEditorResult = _entityService.CreateComponentEditor(component);
+        if (createEditorResult.IsFailure)
+        {
+            _logger.LogError($"Failed to create component editor at index: {componentIndex}. {createEditorResult.Error}");
+            return null;
+        }
+        var componentEditor = createEditorResult.Value;
+
+        // Get the component summary from the editor
+        var getSummaryResult = componentEditor.GetComponentSummary();
+        if (getSummaryResult.IsFailure)
+        {
+            _logger.LogError($"Failed to get component summary at index: {componentIndex}. {getSummaryResult.Error}");
+            return null;
+        }
+        var summary = getSummaryResult.Value;
+
+        // Create the form to display the component summary
+        var formName = $"{component.Schema.ComponentType} {componentIndex}";
+        var createFormResult = _formService.CreateForm(formName, summary.summaryFormJSON, FormLayout.Horizontal);
+        if (createFormResult.IsFailure)
+        {
+            _logger.LogError($"Failed to create form for component summary at index: {componentIndex}. {createFormResult.Error}");
+            return null;
+        }
+        var form = createFormResult.Value;
+
+        return form as UIElement;
     }
 
     private void UpdateEditMode()

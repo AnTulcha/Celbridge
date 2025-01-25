@@ -3,13 +3,16 @@ using Celbridge.Inspector.ViewModels;
 using Celbridge.Logging;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
+using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Windows.System;
 using Windows.UI.Core;
 
 namespace Celbridge.Inspector.Views;
 
-public partial class ComponentListView : UserControl, IInspector
+public partial class ComponentListView : UserControl, IInspector, IComponentListView
 {
     private ILogger<ComponentListView> _logger;
     private IStringLocalizer _stringLocalizer;
@@ -37,6 +40,8 @@ public partial class ComponentListView : UserControl, IInspector
         _logger = ServiceLocator.AcquireService<ILogger<ComponentListView>>();
         _stringLocalizer = ServiceLocator.AcquireService<IStringLocalizer>();
 
+        ViewModel.ComponentListView = this;
+
         Loaded += (s, e) => ViewModel.OnViewLoaded();
         Unloaded += (s, e) => ViewModel.OnViewUnloaded();
 
@@ -50,6 +55,23 @@ public partial class ComponentListView : UserControl, IInspector
     {
         set => ViewModel.Resource = value;
         get => ViewModel.Resource;
+    }
+
+    public Result SetComponentSummaryForm(int componentIndex, object form)
+    {
+        var componentItem = ComponentList.ContainerFromIndex(componentIndex);
+
+        var listViewItem = componentItem as ListViewItem;
+        if (listViewItem != null)
+        {
+            int childrenCount = VisualTreeHelper.GetChildrenCount(listViewItem);
+            for (int i = 0; i < childrenCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(listViewItem, i);
+            }
+        }
+
+        return Result.Ok();
     }
 
     private void UserControl_KeyDown(object sender, KeyRoutedEventArgs e)
@@ -324,5 +346,55 @@ public partial class ComponentListView : UserControl, IInspector
             }
         }
         return null;
+    }
+
+    private void ComponentItem_Loaded(object sender, RoutedEventArgs e)
+    {
+        var grid = sender as Grid;
+        Guard.IsNotNull(grid);
+
+        // Get the index of the parent item in the list view.
+        var index = GetItemIndexFromChild(ComponentList, grid);
+        if (index != null)
+        {
+            // Construct a summary form for the component at this index
+            // Todo: Regenerate the form when the component changes (get a notification from the View Model)
+            // Todo: Populate the form with the component data.
+            var form = ViewModel.CreateComponentSummaryForm((int)index);
+            grid.Children.Clear();
+            grid.Children.Add(form);
+        }
+    }
+
+    private int? GetItemIndexFromChild(ListView listView, Grid childGrid)
+    {
+        // Find the parent ListViewItem
+        var listViewItem = FindParent<ListViewItem>(childGrid);
+
+        if (listViewItem != null)
+        {
+            // Get the associated item from the ListViewItem
+            var item = listView.ItemFromContainer(listViewItem);
+
+            // Get the index of the item in the ItemsSource
+            int index = listView.Items.IndexOf(item);
+
+            return index;
+        }
+
+        return null; // Return null if ListViewItem is not found
+    }
+
+    // Helper method to find a parent of a specific type in the visual tree
+    private T? FindParent<T>(DependencyObject child) where T : DependencyObject
+    {
+        DependencyObject parent = VisualTreeHelper.GetParent(child);
+
+        while (parent != null && !(parent is T))
+        {
+            parent = VisualTreeHelper.GetParent(parent);
+        }
+
+        return (T?)parent;
     }
 }

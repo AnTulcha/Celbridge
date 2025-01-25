@@ -14,13 +14,18 @@ public abstract class ComponentEditorBase : IComponentEditor
     protected IComponentProxy? _component;
     public IComponentProxy Component => _component!;
 
-    public virtual Result Initialize(IComponentProxy component)
+    public virtual Result Initialize(IComponentProxy component, bool observeComponentChanges)
     {
         _component = component;
-        _component.ComponentPropertyChanged += OnComponentPropertyChanged;
+        if (observeComponentChanges)
+        {
+            _component.ComponentPropertyChanged += OnComponentPropertyChanged;
+        }
 
         return Result.Ok();
     }
+
+    public abstract Result<ComponentSummary> GetComponentSummary();
 
     public virtual void OnFormUnloaded()
     {

@@ -706,7 +706,7 @@ public class EntityService : IEntityService, IDisposable
             return Result<IComponentEditor>.Fail($"Failed to created component editor for component type: {componentType}");
         }
 
-        var initResult = editor.Initialize(componentProxy);
+        var initResult = editor.Initialize(componentProxy, true);
         if (initResult.IsFailure)
         {
             return Result<IComponentEditor>.Fail($"Failed to initialize component editor")
