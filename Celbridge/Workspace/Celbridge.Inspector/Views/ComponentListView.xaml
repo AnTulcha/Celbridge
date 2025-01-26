@@ -56,88 +56,98 @@
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">
 
-          <Grid HorizontalAlignment="Stretch"
-                Margin="0"
-                Padding="0"
-                Background="Transparent"
-                ContextFlyout="{StaticResource ComponentContextMenu}">
+          <StackPanel Orientation="Vertical">
 
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="Auto"/>
-              <ColumnDefinition Width="*"/>
-              <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-
-            <Grid Grid.Column="0"
-                  Margin="0 0 6 0">
+            <Grid HorizontalAlignment="Stretch"
+                  Margin="0"
+                  Padding="0"
+                  Background="Transparent"
+                  ContextFlyout="{StaticResource ComponentContextMenu}">
 
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
 
-              <!-- TextBlock is displayed when component name does not have focus -->
-              <TextBlock x:Name="DisplayTextBlock"
+              <Grid Grid.Column="0"
+                    Margin="0 0 6 0">
+
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- TextBlock is displayed when component name does not have focus -->
+                <TextBlock x:Name="DisplayTextBlock"
+                           Grid.Column="0"
+                           Text="{x:Bind ComponentType, Mode=OneWay}"
+                           VerticalAlignment="Center"
+                           MinWidth="96"
+                           Tapped="ComponentItem_DisplayTextBlock_Tapped"
+                           Visibility="Visible"/>
+
+                <!-- TextBox is displayed when component name has focus -->
+                <TextBox x:Name="EditTextBox"
                          Grid.Column="0"
                          Text="{x:Bind ComponentType, Mode=OneWay}"
                          VerticalAlignment="Center"
-                         MinWidth="96"
-                         Tapped="ComponentItem_DisplayTextBlock_Tapped"
-                         Visibility="Visible"/>
+                         MinWidth="120"
+                         Visibility="Collapsed"
+                         TextChanged="EditTextBox_TextChanged"
+                         GotFocus="ComponentItem_EditTextBox_GotFocus"
+                         LostFocus="ComponentItem_EditTextBox_LostFocus"
+                         KeyDown="ComponentItem_EditTextBox_KeyDown"/>
+              </Grid>
 
-              <!-- TextBox is displayed when component name has focus -->
-              <TextBox x:Name="EditTextBox"
-                       Grid.Column="0"
-                       Text="{x:Bind ComponentType, Mode=OneWay}"
-                       VerticalAlignment="Center"
-                       MinWidth="120"
-                       Visibility="Collapsed"
-                       TextChanged="EditTextBox_TextChanged"
-                       GotFocus="ComponentItem_EditTextBox_GotFocus"
-                       LostFocus="ComponentItem_EditTextBox_LostFocus"
-                       KeyDown="ComponentItem_EditTextBox_KeyDown"/>
+              <Grid Grid.Column="1"
+                    Margin="6 0 0 0">
+                <StackPanel Orientation="Horizontal"
+                            ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
+
+                  <FontIcon FontFamily="Segoe MDL2 Assets"
+                            Glyph="&#xE783;"
+                            FontSize="22"
+                            Foreground="{ThemeResource ErrorTextColor}"
+                            Visibility="{x:Bind ShowErrorIcon, Mode=OneWay}"/>
+
+                  <FontIcon FontFamily="Segoe MDL2 Assets"
+                            Glyph="&#xE7BA;"
+                            FontSize="22"
+                            Foreground="{ThemeResource WarningTextColor}"
+                            Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
+
+                  <Grid x:Name="SummaryForm"
+                        Margin="6 0 0 0"
+                        Loaded="ComponentItem_Loaded" />
+                </StackPanel>
+              </Grid>
+
+              <Grid Grid.Column="2"
+                    Margin="6 0 0 0">
+                <!-- MenuButton is displayed when component name does not have focus -->
+                <Button x:Name="MenuButton"
+                        Grid.Column="1"
+                        Width="24"
+                        Height="24"
+                        Padding="0"
+                        BorderThickness="0"
+                        Background="Transparent"
+                        Click="ComponentMenuButton_Click"
+                        Visibility="Visible">
+                  <FontIcon FontFamily="Segoe MDL2 Assets"
+                            Glyph="&#xE712;"/>
+                </Button>
+              </Grid>
             </Grid>
 
-            <Grid Grid.Column="1"
-                  Margin="6 0 0 0">
-              <StackPanel Orientation="Horizontal"
-                          ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
-               
-                <FontIcon FontFamily="Segoe MDL2 Assets"
-                          Glyph="&#xE783;"
-                          FontSize="22"
-                          Foreground="{ThemeResource ErrorTextColor}"
-                          Visibility="{x:Bind ShowErrorIcon, Mode=OneWay}"/>
-                
-                <FontIcon FontFamily="Segoe MDL2 Assets"
-                          Glyph="&#xE7BA;"
-                          FontSize="22"
-                          Foreground="{ThemeResource WarningTextColor}"
-                          Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
-                
-                <Grid x:Name="SummaryForm"
-                      Margin="6 0 0 0"
-                      Loaded="ComponentItem_Loaded" />
-              </StackPanel>
-            </Grid>
+            <!-- Replacement control -->
 
-            <Grid Grid.Column="2"
-                  Margin="6 0 0 0">
-              <!-- MenuButton is displayed when component name does not have focus -->
-              <Button x:Name="MenuButton"
-                      Grid.Column="1"
-                      Width="24"
-                      Height="24"
-                      Padding="0"
-                      BorderThickness="0"
-                      Background="Transparent"
-                      Click="ComponentMenuButton_Click"
-                      Visibility="Visible">
-                <FontIcon FontFamily="Segoe MDL2 Assets"
-                          Glyph="&#xE712;"/>
-              </Button>
-            </Grid>
-          </Grid>
+            <!-- This way of binding values works, pass down the value to the control. We can make this work! Next up, bind to ComponentView.ViewModel-->
+            <local:ComponentView ComponentType="{x:Bind ComponentType, Mode=OneWay}"/>
+
+          </StackPanel>
+
         </DataTemplate>
       </ListView.ItemTemplate>
 
