@@ -1,23 +1,24 @@
 using System.ComponentModel;
+using Celbridge.Inspector.Models;
 
 namespace Celbridge.Inspector.Views;
 
 public sealed partial class ComponentView : UserControl, INotifyPropertyChanged
 {
-    private string _componentType = string.Empty;
-
-    public string ComponentType
+    public ComponentItem? _componentItem;
+    public ComponentItem? ComponentItem
     {
-        get => _componentType; 
+        get => _componentItem;
         set
         {
-            if (_componentType != value)
+            if (_componentItem != value)
             {
-                _componentType = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComponentType)));
+                _componentItem = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComponentItem)));
             }
         }
     }
+
 
     public ComponentView()
     {

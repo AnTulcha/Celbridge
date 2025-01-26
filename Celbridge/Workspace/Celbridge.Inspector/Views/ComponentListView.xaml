@@ -141,10 +141,8 @@
               </Grid>
             </Grid>
 
-            <!-- Replacement control -->
-
-            <!-- This way of binding values works, pass down the value to the control. We can make this work! Next up, bind to ComponentView.ViewModel-->
-            <local:ComponentView ComponentType="{x:Bind ComponentType, Mode=OneWay}"/>
+            <!-- Bind the ComponentView control to the data context for this list item -->
+            <local:ComponentView ComponentItem="{x:Bind}"/>
 
           </StackPanel>
 

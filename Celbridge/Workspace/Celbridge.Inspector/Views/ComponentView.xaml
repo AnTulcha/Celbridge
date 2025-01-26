@@ -7,6 +7,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006">
 
   <Grid>
-    <TextBlock Text="{x:Bind ComponentType, Mode=OneWay}" />
+    <TextBlock Text="{x:Bind ComponentItem.ComponentType, Mode=OneWay}" />
   </Grid>
 </UserControl>
