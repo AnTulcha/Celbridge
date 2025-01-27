@@ -15,7 +15,7 @@ public class EmptyEditor : ComponentEditorBase
         }
         var comment = getComment.Value;
 
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, comment);
+        var summary = new ComponentSummary(comment, comment);
 
         return Result<ComponentSummary>.Ok(summary);
     }

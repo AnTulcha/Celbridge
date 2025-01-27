@@ -43,107 +43,102 @@
   <StackPanel Orientation="Vertical">
 
     <ListView x:Name="ComponentList"
-            SelectionMode="Single"
-            CanReorderItems="True"
-            ItemsSource="{x:Bind ViewModel.ComponentItems}"
-            SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=TwoWay}"
-            CanDragItems="True"
-            AllowDrop="True"
-            PreviewKeyDown="ComponentList_PreviewKeyDown"              
-            DragItemsStarting="ComponentList_DragItemsStarting"
-            DragItemsCompleted="ComponentList_DragItemsCompleted">
+              SelectionMode="Single"
+              CanReorderItems="True"
+              ItemsSource="{x:Bind ViewModel.ComponentItems}"
+              SelectedIndex="{x:Bind ViewModel.SelectedIndex, Mode=TwoWay}"
+              CanDragItems="True"
+              AllowDrop="True"
+              PreviewKeyDown="ComponentList_PreviewKeyDown"              
+              DragItemsStarting="ComponentList_DragItemsStarting"
+              DragItemsCompleted="ComponentList_DragItemsCompleted">
 
       <ListView.ItemTemplate>
         <DataTemplate x:DataType="models:ComponentItem">
 
-          <StackPanel Orientation="Vertical">
+          <Grid HorizontalAlignment="Stretch"
+                Margin="0"
+                Padding="0"
+                Background="Transparent"
+                ContextFlyout="{StaticResource ComponentContextMenu}">
 
-            <Grid HorizontalAlignment="Stretch"
-                  Margin="0"
-                  Padding="0"
-                  Background="Transparent"
-                  ContextFlyout="{StaticResource ComponentContextMenu}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0"
+                  Margin="0 0 6 0">
 
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
               </Grid.ColumnDefinitions>
 
-              <Grid Grid.Column="0"
-                    Margin="0 0 6 0">
-
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- TextBlock is displayed when component name does not have focus -->
-                <TextBlock x:Name="DisplayTextBlock"
-                           Grid.Column="0"
-                           Text="{x:Bind ComponentType, Mode=OneWay}"
-                           VerticalAlignment="Center"
-                           MinWidth="96"
-                           Tapped="ComponentItem_DisplayTextBlock_Tapped"
-                           Visibility="Visible"/>
-
-                <!-- TextBox is displayed when component name has focus -->
-                <TextBox x:Name="EditTextBox"
+              <!-- TextBlock is displayed when component name does not have focus -->
+              <TextBlock x:Name="DisplayTextBlock"
                          Grid.Column="0"
                          Text="{x:Bind ComponentType, Mode=OneWay}"
                          VerticalAlignment="Center"
-                         MinWidth="120"
-                         Visibility="Collapsed"
-                         TextChanged="EditTextBox_TextChanged"
-                         GotFocus="ComponentItem_EditTextBox_GotFocus"
-                         LostFocus="ComponentItem_EditTextBox_LostFocus"
-                         KeyDown="ComponentItem_EditTextBox_KeyDown"/>
-              </Grid>
+                         MinWidth="96"
+                         Tapped="ComponentItem_DisplayTextBlock_Tapped"
+                         Visibility="Visible"/>
 
-              <Grid Grid.Column="1"
-                    Margin="6 0 0 0">
-                <StackPanel Orientation="Horizontal"
-                            ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
-
-                  <FontIcon FontFamily="Segoe MDL2 Assets"
-                            Glyph="&#xE783;"
-                            FontSize="22"
-                            Foreground="{ThemeResource ErrorTextColor}"
-                            Visibility="{x:Bind ShowErrorIcon, Mode=OneWay}"/>
-
-                  <FontIcon FontFamily="Segoe MDL2 Assets"
-                            Glyph="&#xE7BA;"
-                            FontSize="22"
-                            Foreground="{ThemeResource WarningTextColor}"
-                            Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
-
-                  <TextBlock Text="Old description" />
-                  
-                </StackPanel>
-              </Grid>
-
-              <Grid Grid.Column="2"
-                    Margin="6 0 0 0">
-                <!-- MenuButton is displayed when component name does not have focus -->
-                <Button x:Name="MenuButton"
-                        Grid.Column="1"
-                        Width="24"
-                        Height="24"
-                        Padding="0"
-                        BorderThickness="0"
-                        Background="Transparent"
-                        Click="ComponentMenuButton_Click"
-                        Visibility="Visible">
-                  <FontIcon FontFamily="Segoe MDL2 Assets"
-                            Glyph="&#xE712;"/>
-                </Button>
-              </Grid>
+              <!-- TextBox is displayed when component name has focus -->
+              <TextBox x:Name="EditTextBox"
+                       Grid.Column="0"
+                       Text="{x:Bind ComponentType, Mode=OneWay}"
+                       VerticalAlignment="Center"
+                       MinWidth="120"
+                       Visibility="Collapsed"
+                       TextChanged="EditTextBox_TextChanged"
+                       GotFocus="ComponentItem_EditTextBox_GotFocus"
+                       LostFocus="ComponentItem_EditTextBox_LostFocus"
+                       KeyDown="ComponentItem_EditTextBox_KeyDown"/>
             </Grid>
 
-            <!-- Bind the ComponentView control to the data context for this list item -->
-            <local:ComponentView ComponentKey="{x:Bind ComponentKey, Mode=OneWay}"/>
+            <!-- Background is needed for tooltip to work! -->
+            <Grid Grid.Column="1"
+                  Margin="6 0 0 0"
+                  Background="Transparent" 
+                  ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
+              <StackPanel Orientation="Horizontal">
 
-          </StackPanel>
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE783;"
+                          FontSize="22"
+                          Foreground="{ThemeResource ErrorTextColor}"
+                          Visibility="{x:Bind ShowErrorIcon, Mode=OneWay}"/>
+
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE7BA;"
+                          FontSize="22"
+                          Foreground="{ThemeResource WarningTextColor}"
+                          Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
+
+                <TextBlock Text="{x:Bind SummaryText, Mode=OneWay}" />
+
+              </StackPanel>
+            </Grid>
+
+            <Grid Grid.Column="2"
+                  Margin="6 0 0 0">
+              <!-- MenuButton is displayed when component name does not have focus -->
+              <Button x:Name="MenuButton"
+                      Grid.Column="1"
+                      Width="24"
+                      Height="24"
+                      Padding="0"
+                      BorderThickness="0"
+                      Background="Transparent"
+                      Click="ComponentMenuButton_Click"
+                      Visibility="Visible">
+                <FontIcon FontFamily="Segoe MDL2 Assets"
+                          Glyph="&#xE712;"/>
+              </Button>
+            </Grid>
+          </Grid>
 
         </DataTemplate>
       </ListView.ItemTemplate>

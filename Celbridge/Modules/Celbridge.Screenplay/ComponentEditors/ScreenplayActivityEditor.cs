@@ -8,7 +8,7 @@ public class ScreenplayActivityEditor : ComponentEditorBase
 
     public override Result<ComponentSummary> GetComponentSummary()
     {
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, string.Empty);
+        var summary = new ComponentSummary(string.Empty, string.Empty);
 
         return Result<ComponentSummary>.Ok(summary);
     }

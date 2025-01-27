@@ -27,7 +27,7 @@ public class LineEditor : ComponentEditorBase
         var sourceText = getSourceText.Value;
 
         var summaryText = $"{character}: {sourceText}";
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, summaryText);
+        var summary = new ComponentSummary(summaryText, summaryText);
 
         return Result<ComponentSummary>.Ok(summary);
     }

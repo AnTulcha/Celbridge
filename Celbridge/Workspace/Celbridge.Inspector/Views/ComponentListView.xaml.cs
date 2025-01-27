@@ -3,16 +3,13 @@ using Celbridge.Inspector.ViewModels;
 using Celbridge.Logging;
 using Microsoft.Extensions.Localization;
 using Microsoft.UI.Input;
-using Microsoft.UI.Xaml.Controls;
-using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using Windows.System;
 using Windows.UI.Core;
 
 namespace Celbridge.Inspector.Views;
 
-public partial class ComponentListView : UserControl, IInspector, IComponentListView
+public partial class ComponentListView : UserControl, IInspector
 {
     private ILogger<ComponentListView> _logger;
     private IStringLocalizer _stringLocalizer;
@@ -39,8 +36,6 @@ public partial class ComponentListView : UserControl, IInspector, IComponentList
 
         _logger = ServiceLocator.AcquireService<ILogger<ComponentListView>>();
         _stringLocalizer = ServiceLocator.AcquireService<IStringLocalizer>();
-
-        ViewModel.ComponentListView = this;
 
         Loaded += (s, e) => ViewModel.OnViewLoaded();
         Unloaded += (s, e) => ViewModel.OnViewUnloaded();

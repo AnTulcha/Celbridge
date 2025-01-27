@@ -27,7 +27,7 @@ public class SceneEditor : ComponentEditorBase
         var sceneDescription = getDescriptionText.Value;
 
         var summaryText = $"{sceneTitle}: {sceneDescription}";
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, summaryText);
+        var summary = new ComponentSummary(summaryText, summaryText);
 
         return Result<ComponentSummary>.Ok(summary);
     }

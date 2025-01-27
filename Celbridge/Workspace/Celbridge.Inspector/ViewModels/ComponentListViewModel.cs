@@ -3,7 +3,7 @@ using Celbridge.Commands;
 using Celbridge.Entities;
 using Celbridge.Forms;
 using Celbridge.Inspector.Models;
-using Celbridge.Inspector.Views;
+using Celbridge.Inspector.Services;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -34,6 +34,8 @@ public partial class ComponentListViewModel : InspectorViewModel
     [ObservableProperty]
     private bool _isEditingComponentType;
 
+    private bool _isUpdatePending;
+
     // Code gen requires a parameterless constructor
     public ComponentListViewModel()
     {
@@ -59,23 +61,15 @@ public partial class ComponentListViewModel : InspectorViewModel
     public void OnViewLoaded()
     {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+        _messengerService.Register<UpdateInspectorMessage>(this, OnUpdateInspectorMessage);
 
         PropertyChanged += ViewModel_PropertyChanged;
 
-        ComponentItems.CollectionChanged += ComponentItems_CollectionChanged;
-
+        // Update the list immediately on startup
         PopulateComponentList();
 
         // Send a message to populate the component editor in the inspector
         OnPropertyChanged(nameof(SelectedIndex)); 
-    }
-
-    private void ComponentItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-    {
-        for (int i = 0; i < ComponentItems.Count; i++)
-        {
-            ComponentItems[i].ComponentKey = new ComponentKey(Resource, i);
-        }
     }
 
     public void OnViewUnloaded()
@@ -118,8 +112,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         var emptyComponentItem = new ComponentItem();
         ComponentItems.Insert(addIndex, emptyComponentItem);
 
-        // Supress the refresh
-        _supressRefreshCount = 1;
 
         var executeResult = await _commandService.ExecuteAsync<IAddComponentCommand>(command => 
         {
@@ -131,8 +123,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             // Log the error and refresh the list to attempt to recover
             _logger.LogError(executeResult.Error);
-            _supressRefreshCount = 0;
-            PopulateComponentList();
             return;
         }
     }
@@ -160,10 +150,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Update the list view
         ComponentItems.RemoveAt(deleteIndex);
 
-        // Supress the refresh
-        _supressRefreshCount = 1;
-
-
         var executeResult = await _commandService.ExecuteAsync<IRemoveComponentCommand>(command =>
         {
             command.ComponentKey = new ComponentKey(Resource, deleteIndex);
@@ -173,8 +159,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             // Log the error and refresh the list to attempt to recover
             _logger.LogError(executeResult.Error);
-            _supressRefreshCount = 0;
-            PopulateComponentList();
             return;
         }
 
@@ -215,9 +199,6 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         ComponentItems.Insert(destIndex, newItem);
 
-        // Supress the refresh
-        _supressRefreshCount = 1;
-
         var executeResult = await _commandService.ExecuteAsync<ICopyComponentCommand>(command =>
         {
             command.Resource = Resource;
@@ -229,8 +210,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             // Log the error and refresh the list to attempt to recover
             _logger.LogError(executeResult.Error);
-            _supressRefreshCount = 0;
-            PopulateComponentList();
             return;
         }
 
@@ -265,11 +244,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         return allowMultipleComponents;
     }
 
-    private int _supressRefreshCount;
-
     public ICommand MoveComponentCommand => new AsyncRelayCommand<object?>(MoveComponent_Executed);
 
-    public IComponentListView ComponentListView { get; internal set; }
 
     private async Task MoveComponent_Executed(object? parameter)
     {
@@ -284,9 +260,6 @@ public partial class ComponentListViewModel : InspectorViewModel
             return;
         }
 
-        // A move consists of both a remove and add operation, so we need to supress the refresh twice
-        _supressRefreshCount = 2;
-
         var executeResult = await _commandService.ExecuteAsync<IMoveComponentCommand>(command => { 
             command.Resource = Resource;
             command.SourceComponentIndex = oldIndex;
@@ -297,8 +270,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             // Log the error and refresh the list to attempt to recover
             _logger.LogError(executeResult.Error);
-            _supressRefreshCount = 0;
-            PopulateComponentList();
             return;
         }
 
@@ -308,18 +279,18 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
-        if (message.ComponentKey.Resource == Resource &&
-            message.PropertyPath == "/")
+        if (message.ComponentKey.Resource == Resource)
         {
-            // Ignore the requested number of component change messages
-            if (_supressRefreshCount > 0)
-            {
-                _supressRefreshCount--;
-            }
-            else
-            {            
-                PopulateComponentList();
-            }
+            _isUpdatePending = true;
+        }
+    }
+
+    private void OnUpdateInspectorMessage(object recipient, UpdateInspectorMessage message)
+    {
+        if (_isUpdatePending)
+        {
+            PopulateComponentList();
+            _isUpdatePending = false;
         }
     }
 
@@ -340,12 +311,21 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void PopulateComponentList()
     {
+        // Note the previous selected index so we can try to set it again at the end
         int previousIndex = SelectedIndex;
         List<ComponentItem> componentItems = new();
 
         var componentCount = _entityService.GetComponentCount(Resource);
 
-        ComponentItems.Clear();
+        // Ensure the ComponentItems list is the correct size
+        while (ComponentItems.Count < componentCount)
+        {
+            ComponentItems.Add(new ComponentItem());
+        }
+        while (ComponentItems.Count > componentCount)
+        {
+            ComponentItems.RemoveAt(ComponentItems.Count - 1);
+        }
 
         for (int i = 0; i < componentCount; i++)
         {
@@ -372,17 +352,34 @@ public partial class ComponentListViewModel : InspectorViewModel
                 }
             }
 
-            var componentItem = new ComponentItem
-            {
-                ComponentKey = new ComponentKey(Resource, i),
-                ComponentType = componentType
-            };
+            var componentItem = ComponentItems[i];
+            componentItem.ComponentType = componentType;
 
-            ComponentItems.Add(componentItem);
+            // Create a component editor
+            var componentKey = new ComponentKey(Resource, i);
+            var createEditorResult = _entityService.CreateComponentEditor(componentKey);
+            if (createEditorResult.IsFailure)
+            {
+                _logger.LogError($"Failed to create component editor for component: '{componentKey}'");
+                continue;
+            }
+            var editor = createEditorResult.Value;
+
+            // Get the component summary from the editor
+            var getSummaryResult = editor.GetComponentSummary();
+            if (getSummaryResult.IsFailure)
+            {
+                _logger.LogError($"Failed to get component summary for component: '{componentKey}'");
+                continue;
+            }
+            var summary = getSummaryResult.Value;
+
+            // Populate the component summary
+            componentItem.SummaryText = summary.SummaryText;
+            componentItem.Tooltip = summary.Tooltip;
         }
 
-        //ComponentItems.ReplaceWith(componentItems);
-
+        // Select the previous index if it is still valid
         if (componentCount == 0)
         {
             SelectedIndex = -1;
