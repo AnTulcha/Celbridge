@@ -106,32 +106,32 @@ public class ScreenplayActivity : IActivity
                 continue;
             }
 
-            if (!schema.HasTag(ActivityName))
-            {
-                component.SetAnnotation(
-                    ComponentStatus.Error,
-                    "Not a screenplay component",
-                    "This component may not be used with the 'Screenplay' activity");
+            //if (!schema.HasTag(ActivityName))
+            //{
+            //    component.SetAnnotation(
+            //        ComponentStatus.Error,
+            //        "Not a screenplay component",
+            //        "This component may not be used with the 'Screenplay' activity");
 
-                continue;
-            }
+            //    continue;
+            //}
 
-            switch (schema.ComponentType)
-            {
-                case SceneEditor.ComponentType:
-                    var sceneTitle = component.GetString(SceneEditor.SceneTitle);
-                    var sceneDescription = component.GetString(SceneEditor.SceneDescription);
-                    var componentDescription = $"{sceneTitle}: {sceneDescription}";
-                    component.SetAnnotation(ComponentStatus.Valid, componentDescription, componentDescription);
-                    break;
+            //switch (schema.ComponentType)
+            //{
+            //    case SceneEditor.ComponentType:
+            //        var sceneTitle = component.GetString(SceneEditor.SceneTitle);
+            //        var sceneDescription = component.GetString(SceneEditor.SceneDescription);
+            //        var componentDescription = $"{sceneTitle}: {sceneDescription}";
+            //        component.SetAnnotation(ComponentStatus.Valid, componentDescription, componentDescription);
+            //        break;
 
-                case LineEditor.ComponentType:
-                    var character = component.GetString(LineEditor.Character);
-                    var sourceText = component.GetString(LineEditor.SourceText);
-                    var description = $"{character}: {sourceText}";
-                    component.SetAnnotation(ComponentStatus.Valid, description, description);
-                    break;
-            };
+            //    case LineEditor.ComponentType:
+            //        var character = component.GetString(LineEditor.Character);
+            //        var sourceText = component.GetString(LineEditor.SourceText);
+            //        var description = $"{character}: {sourceText}";
+            //        component.SetAnnotation(ComponentStatus.Valid, description, description);
+            //        break;
+            //};
         }
 
         var generateResult = GenerateScreenplayMarkdown(fileResource);

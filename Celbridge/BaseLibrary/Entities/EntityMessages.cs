@@ -1,3 +1,5 @@
+using Celbridge.Activities;
+
 namespace Celbridge.Entities;
 
 /// <summary>
@@ -8,7 +10,7 @@ public record ComponentChangedMessage(ComponentKey ComponentKey, string Componen
 /// <summary>
 /// A message sent when the component annotation data is updated.
 /// </summary>
-public record ComponentAnnotationUpdatedMessage(ComponentKey ComponentKey);
+public record AnnotatedResourceMessage(ResourceKey Resource, List<ComponentAnnotation> Annotations);
 
 /// <summary>
 /// A message sent when a new entity is created.

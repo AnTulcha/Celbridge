@@ -62,6 +62,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
         _messengerService.Register<UpdateInspectorMessage>(this, OnUpdateInspectorMessage);
+        _messengerService.Register<AnnotatedResourceMessage>(this, OnAnnotatedResourceMessage);
 
         PropertyChanged += ViewModel_PropertyChanged;
 
@@ -292,6 +293,29 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             PopulateComponentList();
             _isUpdatePending = false;
+        }
+    }
+
+    private void OnAnnotatedResourceMessage(object recipient, AnnotatedResourceMessage message)
+    {
+        var annotations = message.Annotations;
+
+        for (int i = 0; i < ComponentItems.Count; i++)
+        {
+            var componentItem = ComponentItems[i];
+
+            bool hasError = false;
+
+            if (i < annotations.Count)
+            {
+                var annotation = annotations[i];
+                if (!string.IsNullOrEmpty(annotation.Error))
+                {
+                    hasError = true;
+                }
+            }
+
+            componentItem.Status = hasError ? ComponentStatus.Error : ComponentStatus.Valid;
         }
     }
 
