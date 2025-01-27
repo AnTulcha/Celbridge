@@ -33,12 +33,5 @@ public interface IFormService
     /// Creates an instance of a previously registered form.
     /// The form data provider is used to populate the form and resolve bindings.
     /// </summary>
-    Result<object> CreateRegisteredForm(string formName, IFormDataProvider formDataProvider);
-
-    /// <summary>
-    /// Creates an instance of a form based on a JSON form configuration.
-    /// Property bindings are not supported.
-    /// The form layout specified the containter control to use for the form.
-    /// </summary>
-    Result<object> CreateForm(string formName, string formConfigJSON, FormLayout formLayout);
+    Result<object> CreateForm(string formName, IFormDataProvider formDataProvider);
 }

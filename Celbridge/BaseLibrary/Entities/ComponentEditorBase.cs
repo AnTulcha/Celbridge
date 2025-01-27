@@ -14,13 +14,10 @@ public abstract class ComponentEditorBase : IComponentEditor
     protected IComponentProxy? _component;
     public IComponentProxy Component => _component!;
 
-    public virtual Result Initialize(IComponentProxy component, bool observeComponentChanges)
+    public virtual Result Initialize(IComponentProxy component)
     {
         _component = component;
-        if (observeComponentChanges)
-        {
-            _component.ComponentPropertyChanged += OnComponentPropertyChanged;
-        }
+        _component.ComponentPropertyChanged += OnComponentPropertyChanged;
 
         return Result.Ok();
     }

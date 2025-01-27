@@ -20,10 +20,8 @@ public interface IComponentEditor : IFormDataProvider
 
     /// <summary>
     /// Initializes the component editor with the component to be edited.
-    /// If observeComponentChanges is true then the editor will listen for changes to the component 
-    /// and update the form accordingly.
     /// </summary>
-    Result Initialize(IComponentProxy component, bool observeComponentChanges);
+    Result Initialize(IComponentProxy component);
 
     /// <summary>
     /// Gets summary information for the edited component.

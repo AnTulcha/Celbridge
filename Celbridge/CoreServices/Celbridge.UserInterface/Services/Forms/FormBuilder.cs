@@ -27,14 +27,14 @@ public class FormBuilder
         _logger = logger;
     }
 
-    public Result<object> BuildForm(string formName, JsonElement formConfig, FormLayout formLayout, IFormDataProvider? formDataProvider = null)
+    public Result<object> BuildForm(string formName, JsonElement formConfig, IFormDataProvider formDataProvider)
     {
         _formDataProvider = formDataProvider;
         _buildErrors.Clear();
 
         var formPanel = new StackPanel
         {
-            Orientation = formLayout == FormLayout.Horizontal ? Orientation.Horizontal : Orientation.Vertical,
+            Orientation = Orientation.Vertical,
             DataContext = formDataProvider,
             Spacing = DefaultStackPanelSpacing
         };

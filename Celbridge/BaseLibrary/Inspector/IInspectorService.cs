@@ -44,9 +44,9 @@ public interface IInspectorService
     Result<object> CreateComponentEditorForm(IComponentEditor componentEditor);
 
     /// <summary>
-    /// Acquire a component editor for the specified component key.
+    /// Acquire a component editor for the specified component.
     /// The component key must be for the currently inspected resource.
     /// This method will cache the editor for subsequent requests.
     /// </summary>
-    Result<IComponentEditor> AcquireComponentEditor(ComponentKey componentKey);
+    Result<IComponentEditor> AcquireComponentEditor(ComponentKey component);
 }

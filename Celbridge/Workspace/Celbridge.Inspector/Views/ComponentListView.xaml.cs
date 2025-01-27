@@ -325,36 +325,4 @@ public partial class ComponentListView : UserControl, IInspector
         }
         return null;
     }
-
-    private int? GetItemIndexFromChild(ListView listView, Grid childGrid)
-    {
-        // Find the parent ListViewItem
-        var listViewItem = FindParent<ListViewItem>(childGrid);
-
-        if (listViewItem != null)
-        {
-            // Get the associated item from the ListViewItem
-            var item = listView.ItemFromContainer(listViewItem);
-
-            // Get the index of the item in the ItemsSource
-            int index = listView.Items.IndexOf(item);
-
-            return index;
-        }
-
-        return null; // Return null if ListViewItem is not found
-    }
-
-    // Helper method to find a parent of a specific type in the visual tree
-    private T? FindParent<T>(DependencyObject child) where T : DependencyObject
-    {
-        DependencyObject parent = VisualTreeHelper.GetParent(child);
-
-        while (parent != null && !(parent is T))
-        {
-            parent = VisualTreeHelper.GetParent(parent);
-        }
-
-        return (T?)parent;
-    }
 }
