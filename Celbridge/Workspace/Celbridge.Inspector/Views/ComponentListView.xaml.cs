@@ -52,23 +52,6 @@ public partial class ComponentListView : UserControl, IInspector
         get => ViewModel.Resource;
     }
 
-    public Result SetComponentSummaryForm(int componentIndex, object form)
-    {
-        var componentItem = ComponentList.ContainerFromIndex(componentIndex);
-
-        var listViewItem = componentItem as ListViewItem;
-        if (listViewItem != null)
-        {
-            int childrenCount = VisualTreeHelper.GetChildrenCount(listViewItem);
-            for (int i = 0; i < childrenCount; i++)
-            {
-                var child = VisualTreeHelper.GetChild(listViewItem, i);
-            }
-        }
-
-        return Result.Ok();
-    }
-
     private void UserControl_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         var key = e.Key;
