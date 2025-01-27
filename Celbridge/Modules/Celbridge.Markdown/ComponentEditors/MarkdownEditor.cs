@@ -10,16 +10,7 @@ public class MarkdownEditor : ComponentEditorBase
 
     public override Result<ComponentSummary> GetComponentSummary()
     {
-        string formJson = """
-        [
-            {
-              "element": "TextBlock",
-              "text": "Markdown summary"
-            }
-        ]
-        """;
-
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, formJson);
+        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, string.Empty);
 
         return Result<ComponentSummary>.Ok(summary);
     }

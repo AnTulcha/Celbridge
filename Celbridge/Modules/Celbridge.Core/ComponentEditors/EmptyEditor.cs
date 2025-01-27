@@ -15,16 +15,7 @@ public class EmptyEditor : ComponentEditorBase
         }
         var comment = getComment.Value;
 
-        string formJson = $$"""
-        [
-            {
-              "element": "TextBlock",
-              "text": "{{comment}}"
-            }
-        ]
-        """;
-
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, formJson);
+        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, comment);
 
         return Result<ComponentSummary>.Ok(summary);
     }

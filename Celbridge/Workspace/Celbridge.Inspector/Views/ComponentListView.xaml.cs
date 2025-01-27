@@ -348,24 +348,6 @@ public partial class ComponentListView : UserControl, IInspector, IComponentList
         return null;
     }
 
-    private void ComponentItem_Loaded(object sender, RoutedEventArgs e)
-    {
-        var grid = sender as Grid;
-        Guard.IsNotNull(grid);
-
-        // Get the index of the parent item in the list view.
-        var index = GetItemIndexFromChild(ComponentList, grid);
-        if (index != null)
-        {
-            // Construct a summary form for the component at this index
-            // Todo: Regenerate the form when the component changes (get a notification from the View Model)
-            // Todo: Populate the form with the component data.
-            var form = ViewModel.CreateComponentSummaryForm((int)index);
-            grid.Children.Clear();
-            grid.Children.Add(form);
-        }
-    }
-
     private int? GetItemIndexFromChild(ListView listView, Grid childGrid)
     {
         // Find the parent ListViewItem

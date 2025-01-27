@@ -34,6 +34,7 @@ public static class ServiceConfiguration
         services.AddTransient<EntityEditorViewModel>();
         services.AddTransient<ComponentValueEditorViewModel>();
         services.AddTransient<ComponentTypeEditorViewModel>();
+        services.AddTransient<ComponentViewModel>();
     }
 
     public static Result Initialize()

@@ -1,3 +1,4 @@
+using Celbridge.Entities;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Celbridge.Inspector.Models;
@@ -7,6 +8,9 @@ namespace Celbridge.Inspector.Models;
 /// </summary>
 public partial class ComponentItem : ObservableObject
 {
+    [ObservableProperty]
+    private ComponentKey _componentKey;
+
     [ObservableProperty]
     private string _componentType = string.Empty;
 

@@ -117,9 +117,8 @@
                             Foreground="{ThemeResource WarningTextColor}"
                             Visibility="{x:Bind ShowWarningIcon, Mode=OneWay}"/>
 
-                  <Grid x:Name="SummaryForm"
-                        Margin="6 0 0 0"
-                        Loaded="ComponentItem_Loaded" />
+                  <TextBlock Text="Old description" />
+                  
                 </StackPanel>
               </Grid>
 
@@ -142,7 +141,7 @@
             </Grid>
 
             <!-- Bind the ComponentView control to the data context for this list item -->
-            <local:ComponentView ComponentItem="{x:Bind}"/>
+            <local:ComponentView ComponentKey="{x:Bind ComponentKey, Mode=OneWay}"/>
 
           </StackPanel>
 

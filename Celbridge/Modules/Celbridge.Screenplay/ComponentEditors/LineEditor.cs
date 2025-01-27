@@ -12,16 +12,22 @@ public class LineEditor : ComponentEditorBase
 
     public override Result<ComponentSummary> GetComponentSummary()
     {
-        string formJson = """
-        [
-            {
-              "element": "TextBlock",
-              "text": "Line summary"
-            }
-        ]
-        """;
+        var getCharacter = GetProperty("/character");
+        if (getCharacter.IsFailure)
+        {
+            return Result<ComponentSummary>.Fail(getCharacter.Error);
+        }
+        var character = getCharacter.Value;
 
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, formJson);
+        var getSourceText = GetProperty("/sourceText");
+        if (getSourceText.IsFailure)
+        {
+            return Result<ComponentSummary>.Fail(getSourceText.Error);
+        }
+        var sourceText = getSourceText.Value;
+
+        var summaryText = $"{character}: {sourceText}";
+        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, summaryText);
 
         return Result<ComponentSummary>.Ok(summary);
     }

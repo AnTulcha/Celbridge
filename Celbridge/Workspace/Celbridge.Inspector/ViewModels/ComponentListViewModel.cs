@@ -62,10 +62,20 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         PropertyChanged += ViewModel_PropertyChanged;
 
+        ComponentItems.CollectionChanged += ComponentItems_CollectionChanged;
+
         PopulateComponentList();
 
         // Send a message to populate the component editor in the inspector
         OnPropertyChanged(nameof(SelectedIndex)); 
+    }
+
+    private void ComponentItems_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        for (int i = 0; i < ComponentItems.Count; i++)
+        {
+            ComponentItems[i].ComponentKey = new ComponentKey(Resource, i);
+        }
     }
 
     public void OnViewUnloaded()
@@ -335,6 +345,8 @@ public partial class ComponentListViewModel : InspectorViewModel
 
         var componentCount = _entityService.GetComponentCount(Resource);
 
+        ComponentItems.Clear();
+
         for (int i = 0; i < componentCount; i++)
         {
             // Get the component type
@@ -362,13 +374,14 @@ public partial class ComponentListViewModel : InspectorViewModel
 
             var componentItem = new ComponentItem
             {
+                ComponentKey = new ComponentKey(Resource, i),
                 ComponentType = componentType
             };
 
-            componentItems.Add(componentItem);
+            ComponentItems.Add(componentItem);
         }
 
-        ComponentItems.ReplaceWith(componentItems);
+        //ComponentItems.ReplaceWith(componentItems);
 
         if (componentCount == 0)
         {
@@ -378,50 +391,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         {
             SelectedIndex = Math.Clamp(previousIndex, 0, componentCount - 1);
         }
-    }
-
-    public UIElement? CreateComponentSummaryForm(int componentIndex)
-    {
-        var componentKey = new ComponentKey(Resource, componentIndex);
-
-        // Acquire the component
-        var getComponentResult = _entityService.GetComponent(componentKey);
-        if (getComponentResult.IsFailure)
-        {
-            _logger.LogError($"Failed to get component at index: {componentIndex}. {getComponentResult.Error}");
-            return null;
-        }
-        var component = getComponentResult.Value;
-
-        // Create a component editor
-        var createEditorResult = _entityService.CreateComponentEditor(component);
-        if (createEditorResult.IsFailure)
-        {
-            _logger.LogError($"Failed to create component editor at index: {componentIndex}. {createEditorResult.Error}");
-            return null;
-        }
-        var componentEditor = createEditorResult.Value;
-
-        // Get the component summary from the editor
-        var getSummaryResult = componentEditor.GetComponentSummary();
-        if (getSummaryResult.IsFailure)
-        {
-            _logger.LogError($"Failed to get component summary at index: {componentIndex}. {getSummaryResult.Error}");
-            return null;
-        }
-        var summary = getSummaryResult.Value;
-
-        // Create the form to display the component summary
-        var formName = $"{component.Schema.ComponentType} {componentIndex}";
-        var createFormResult = _formService.CreateForm(formName, summary.summaryFormJSON, FormLayout.Horizontal);
-        if (createFormResult.IsFailure)
-        {
-            _logger.LogError($"Failed to create form for component summary at index: {componentIndex}. {createFormResult.Error}");
-            return null;
-        }
-        var form = createFormResult.Value;
-
-        return form as UIElement;
     }
 
     private void UpdateEditMode()

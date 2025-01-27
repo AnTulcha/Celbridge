@@ -12,16 +12,22 @@ public class SceneEditor : ComponentEditorBase
 
     public override Result<ComponentSummary> GetComponentSummary()
     {
-        string formJson = """
-        [
-            {
-              "element": "TextBlock",
-              "text": "Scene summary"
-            }
-        ]
-        """;
+        var getTitle = GetProperty("/sceneTitle");
+        if (getTitle.IsFailure)
+        {
+            return Result<ComponentSummary>.Fail(getTitle.Error);
+        }
+        var sceneTitle = getTitle.Value;
 
-        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, formJson);
+        var getDescriptionText = GetProperty("/sceneDescription");
+        if (getDescriptionText.IsFailure)
+        {
+            return Result<ComponentSummary>.Fail(getDescriptionText.Error);
+        }
+        var sceneDescription = getDescriptionText.Value;
+
+        var summaryText = $"{sceneTitle}: {sceneDescription}";
+        var summary = new ComponentSummary(0, string.Empty, ComponentStatus.Valid, summaryText);
 
         return Result<ComponentSummary>.Ok(summary);
     }
