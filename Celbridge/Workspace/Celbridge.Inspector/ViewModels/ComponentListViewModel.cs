@@ -36,6 +36,8 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private bool _isUpdatePending;
 
+    private Dictionary<ComponentKey, IComponentEditor> _editorCache = new();
+
     // Code gen requires a parameterless constructor
     public ComponentListViewModel()
     {
@@ -77,6 +79,8 @@ public partial class ComponentListViewModel : InspectorViewModel
         _messengerService.UnregisterAll(this);
 
         PropertyChanged -= ViewModel_PropertyChanged;
+
+        _editorCache.Clear();
     }
 
     public ICommand AddComponentCommand => new AsyncRelayCommand<object?>(AddComponent_Executed);
@@ -111,7 +115,6 @@ public partial class ComponentListViewModel : InspectorViewModel
         // Update the list view
         var emptyComponentItem = new ComponentItem();
         ComponentItems.Insert(addIndex, emptyComponentItem);
-
 
         var executeResult = await _commandService.ExecuteAsync<IAddComponentCommand>(command => 
         {
@@ -246,7 +249,6 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     public ICommand MoveComponentCommand => new AsyncRelayCommand<object?>(MoveComponent_Executed);
 
-
     private async Task MoveComponent_Executed(object? parameter)
     {
         if (parameter is not (int oldIndex, int newIndex))
@@ -279,8 +281,17 @@ public partial class ComponentListViewModel : InspectorViewModel
 
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
-        if (message.ComponentKey.Resource == Resource)
+        var resource = message.ComponentKey.Resource;
+        var propertyPath = message.PropertyPath;
+
+        if (resource == Resource)
         {
+            if (propertyPath == "/")
+            {
+                // Reset the editor cache on entity structure changes
+                _editorCache.Clear();
+            }
+
             _isUpdatePending = true;
         }
     }
@@ -357,13 +368,13 @@ public partial class ComponentListViewModel : InspectorViewModel
 
             // Create a component editor
             var componentKey = new ComponentKey(Resource, i);
-            var createEditorResult = _entityService.CreateComponentEditor(componentKey);
-            if (createEditorResult.IsFailure)
+            var acquireEditorResult = AcquireComponentEditor(componentKey);
+            if (acquireEditorResult.IsFailure)
             {
-                _logger.LogError($"Failed to create component editor for component: '{componentKey}'");
+                _logger.LogError($"Failed to acquire component editor for component: '{componentKey}'");
                 continue;
             }
-            var editor = createEditorResult.Value;
+            var editor = acquireEditorResult.Value;
 
             // Get the component summary from the editor
             var getSummaryResult = editor.GetComponentSummary();
@@ -436,5 +447,25 @@ public partial class ComponentListViewModel : InspectorViewModel
     {
         var message = new ComponentTypeTextEnteredMessage();
         _messengerService.Send(message);
+    }
+
+    private Result<IComponentEditor> AcquireComponentEditor(ComponentKey componentKey)
+    {
+        if (_editorCache.TryGetValue(componentKey, out var cachedEditor))
+        {
+            return Result<IComponentEditor>.Ok(cachedEditor);
+        }
+
+        var createEditorResult = _entityService.CreateComponentEditor(componentKey);
+        if (createEditorResult.IsFailure)
+        {
+            return Result<IComponentEditor>.Fail($"Failed to create component editor for component: '{componentKey}'")
+                .WithErrors(createEditorResult);
+        }
+        var editor = createEditorResult.Value;
+
+        _editorCache.Add(componentKey, editor);
+
+        return Result<IComponentEditor>.Ok(editor);
     }
 }
