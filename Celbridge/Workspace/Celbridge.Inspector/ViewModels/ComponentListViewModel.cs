@@ -62,7 +62,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     {
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
         _messengerService.Register<UpdateInspectorMessage>(this, OnUpdateInspectorMessage);
-        _messengerService.Register<AnnotatedResourceMessage>(this, OnAnnotatedResourceMessage);
+        _messengerService.Register<AnnotatedEntityMessage>(this, OnAnnotatedEntityMessage);
 
         PropertyChanged += ViewModel_PropertyChanged;
 
@@ -296,26 +296,39 @@ public partial class ComponentListViewModel : InspectorViewModel
         }
     }
 
-    private void OnAnnotatedResourceMessage(object recipient, AnnotatedResourceMessage message)
+    private void OnAnnotatedEntityMessage(object recipient, AnnotatedEntityMessage message)
     {
-        var annotations = message.Annotations;
+        var entityAnnotation = message.EntityAnnotation;
 
         for (int i = 0; i < ComponentItems.Count; i++)
         {
             var componentItem = ComponentItems[i];
 
             bool hasError = false;
-
-            if (i < annotations.Count)
+            if (i < entityAnnotation.Count)
             {
-                var annotation = annotations[i];
-                if (!string.IsNullOrEmpty(annotation.Error))
+                var annotation = entityAnnotation.GetAnnotation(i);
+                if (annotation.Errors.Count > 0)
                 {
-                    hasError = true;
+                    var firstError = annotation.Errors[0];
+                    if (firstError.Severity == ComponentErrorSeverity.Critical ||
+                        firstError.Severity == ComponentErrorSeverity.Error)
+                    {
+                        componentItem.Status = ComponentStatus.Error;
+                        hasError = true;
+                    }
+                    else if (firstError.Severity == ComponentErrorSeverity.Warning)
+                    {
+                        componentItem.Status = ComponentStatus.Warning;
+                        hasError = true;
+                    }
                 }
             }
 
-            componentItem.Status = hasError ? ComponentStatus.Error : ComponentStatus.Valid;
+            if (!hasError)
+            {
+               componentItem.Status = ComponentStatus.Valid;
+            }
         }
     }
 
@@ -400,7 +413,7 @@ public partial class ComponentListViewModel : InspectorViewModel
             var summary = getSummaryResult.Value;
 
             // Populate the component summary
-            componentItem.SummaryText = summary.SummaryText;
+            componentItem.Description = summary.SummaryText;
             componentItem.Tooltip = summary.Tooltip;
         }
 
