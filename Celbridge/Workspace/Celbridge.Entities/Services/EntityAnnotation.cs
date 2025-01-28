@@ -16,8 +16,8 @@ public class EntityAnnotation : IEntityAnnotation
         {
             new ComponentError(
                 ComponentErrorSeverity.Critical, 
-                "Invalid location", 
-                "This component may not be used in this location. Move it to a valid location or delete it.")
+                "Invalid component", 
+                "This component is not valid in this position.")
         };
 
         _invalidAnnotation = new ComponentAnnotation(0, errors);
@@ -90,7 +90,7 @@ public class EntityAnnotation : IEntityAnnotation
         });
     }
 
-    public ComponentAnnotation GetAnnotation(int componentIndex)
+    public ComponentAnnotation GetComponentAnnotation(int componentIndex)
     {
         if (componentIndex < 0 || componentIndex >= _annotations.Count)
         {

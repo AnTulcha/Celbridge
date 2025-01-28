@@ -184,7 +184,7 @@ public class ActivityDispatcher
                     var error = new ComponentError(
                         ComponentErrorSeverity.Critical,
                         "Invalid root component",
-                        "The first component in the list must be a valid root component for this resource type.");
+                        "This component is not a valid root component for this resource type.");
 
                     entityAnnotation.AddError(0, error);
 

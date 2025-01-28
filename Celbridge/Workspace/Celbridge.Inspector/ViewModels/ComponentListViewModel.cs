@@ -303,31 +303,13 @@ public partial class ComponentListViewModel : InspectorViewModel
         for (int i = 0; i < ComponentItems.Count; i++)
         {
             var componentItem = ComponentItems[i];
-
-            bool hasError = false;
             if (i < entityAnnotation.Count)
             {
-                var annotation = entityAnnotation.GetAnnotation(i);
-                if (annotation.Errors.Count > 0)
-                {
-                    var firstError = annotation.Errors[0];
-                    if (firstError.Severity == ComponentErrorSeverity.Critical ||
-                        firstError.Severity == ComponentErrorSeverity.Error)
-                    {
-                        componentItem.Status = ComponentStatus.Error;
-                        hasError = true;
-                    }
-                    else if (firstError.Severity == ComponentErrorSeverity.Warning)
-                    {
-                        componentItem.Status = ComponentStatus.Warning;
-                        hasError = true;
-                    }
-                }
+                componentItem.Annotation = entityAnnotation.GetComponentAnnotation(i);
             }
-
-            if (!hasError)
+            else
             {
-               componentItem.Status = ComponentStatus.Valid;
+                componentItem.Annotation = null;
             }
         }
     }
@@ -413,8 +395,7 @@ public partial class ComponentListViewModel : InspectorViewModel
             var summary = getSummaryResult.Value;
 
             // Populate the component summary
-            componentItem.Description = summary.SummaryText;
-            componentItem.Tooltip = summary.Tooltip;
+            componentItem.Summary = summary;
         }
 
         // Select the previous index if it is still valid
