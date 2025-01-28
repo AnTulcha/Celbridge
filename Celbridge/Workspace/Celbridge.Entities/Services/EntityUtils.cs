@@ -9,6 +9,21 @@ namespace Celbridge.Entities.Services;
 
 public static class EntityUtils
 {
+    /// <summary>
+    /// JSON key for components array.
+    /// </summary>
+    public const string ComponentsKey = "_components";
+
+    /// <summary>
+    /// JSON key for component type string.
+    /// </summary>
+    public const string ComponentTypeKey = "_type";
+
+    /// <summary>
+    /// JSON key for allowMultipleComponents attribute.
+    /// </summary>
+    public const string AllowMultipleComponentsKey = "allowMultipleComponents";
+
     public static Result<EntityData> CreateEntityData(ResourceKey resource, ComponentConfigRegistry configRegistry, JsonSchema entitySchema)
     {
         var entityJsonObject = new JsonObject

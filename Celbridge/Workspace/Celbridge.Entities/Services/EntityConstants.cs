@@ -28,7 +28,7 @@ public static class EntityConstants
     /// <summary>
     /// JSON key for component type string.
     /// </summary>
-    public const string ComponentTypeKey = "_componentType";
+    public const string ComponentTypeKey = "_type";
 
     /// <summary>
     /// JSON key for allowMultipleComponents attribute.
