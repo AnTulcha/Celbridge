@@ -107,7 +107,7 @@ public class ScreenplayActivity : IActivity
             var error = new ComponentError(
                 ComponentErrorSeverity.Critical,
                 "Invalid component position",
-                "This component must be the first component in the list");
+                "This component must be the first component.");
 
             entityAnnotation.AddError(0, error);
         }

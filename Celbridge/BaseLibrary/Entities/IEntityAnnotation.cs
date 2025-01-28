@@ -1,7 +1,7 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Stores the annotations for the components in an entity.
+/// Stores the annotations for the components of an entity.
 /// </summary>
 public interface IEntityAnnotation
 {
@@ -16,18 +16,18 @@ public interface IEntityAnnotation
     int Count { get; }
 
     /// <summary>
-    /// Set a flag to indicate that the specified component has been recognised by the activity system.
+    /// Sets a flag to indicate that the specified component has been recognised by the activity system.
     /// Unrecognized activities are automatically flagged as invalid.
     /// </summary>
     void SetIsRecognized(int componentIndex);
 
     /// <summary>
-    /// Set the indent level for the specified component in the inspector.
+    /// Sets the indent level for the specified component in the inspector.
     /// </summary>
     void SetIndent(int componentIndex, int indentLevel);
 
     /// <summary>
-    /// Associate an error message with the specified component.
+    /// Associates an error message with the specified component.
     /// </summary>
     void AddError(int componentIndex, ComponentError error);
 

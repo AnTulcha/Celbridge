@@ -300,6 +300,7 @@ public partial class ComponentListViewModel : InspectorViewModel
     {
         var entityAnnotation = message.EntityAnnotation;
 
+        // Apply the annotation data to the corresponding component item
         for (int i = 0; i < ComponentItems.Count; i++)
         {
             var componentItem = ComponentItems[i];

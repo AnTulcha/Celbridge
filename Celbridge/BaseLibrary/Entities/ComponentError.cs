@@ -1,12 +1,12 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Error states for misconfigured components.
+/// Error states for reporting component configuration issues.
 /// </summary>
 public enum ComponentErrorSeverity
 {
     /// <summary>
-    /// A major configuration issue that should be addressed immediately.
+    /// A major issue that should be addressed immediately.
     /// </summary>
     Critical,
 
@@ -22,6 +22,6 @@ public enum ComponentErrorSeverity
 }
 
 /// <summary>
-/// An error condition for a component.
+/// Describes an error condition for a component.
 /// </summary>
 public record ComponentError(ComponentErrorSeverity Severity, string Message, string Description);

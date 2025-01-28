@@ -176,9 +176,9 @@ public class ActivityDispatcher
                 var activityName = rootComponent.Schema.GetStringAttribute("rootActivity");
                 if (string.IsNullOrEmpty(activityName))
                 {
-                    // This as an invalid component at the root position.
-                    // We set it to recognized however, so that it will display the more informative error message
-                    // below, rather than the generic invalid component error message.
+                    // This component is not valid at the root position.
+                    // We set it to "recognized" however, so that it will display the more informative
+                    // error message below, rather than the generic invalid component error message.
                     entityAnnotation.SetIsRecognized(0);
 
                     var error = new ComponentError(
@@ -231,6 +231,7 @@ public class ActivityDispatcher
             }
         }
 
+        // Send a message to the inspector to apply the annotations
         foreach (var kv in entityAnnotations)
         {
             var entity = kv.Key;

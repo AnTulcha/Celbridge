@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 namespace Celbridge.Inspector.Models;
 
 /// <summary>
-/// Model class for a component item.
+/// An item to display in the component list view.
 /// </summary>
 public partial class ComponentItem : ObservableObject
 {
