@@ -107,7 +107,7 @@ public static class EntityUtils
     /// </summary>
     public static Result<List<int>> GetComponentsOfType(JsonObject entityData, string componentType)
     {
-        if (entityData[EntityConstants.ComponentsKey] is not JsonArray components)
+        if (entityData[ComponentsKey] is not JsonArray components)
         {
             return Result<List<int>>.Fail("Entity data does not contain any components");
         }
@@ -115,7 +115,7 @@ public static class EntityUtils
         var indices = new List<int>();
         for (int i = 0; i < components.Count; i++)
         {
-            var propertyPath = JsonPointer.Create(EntityConstants.ComponentsKey, i, EntityConstants.ComponentTypeKey);
+            var propertyPath = JsonPointer.Create(ComponentsKey, i, ComponentTypeKey);
             if (!propertyPath.TryEvaluate(entityData, out var componentTypeNode) ||
                 componentTypeNode is null ||
                 componentTypeNode.GetValueKind() != JsonValueKind.String)
@@ -147,16 +147,16 @@ public static class EntityUtils
     /// </summary>
     public static Result ValidateMultipleComponents(JsonObject entityData, ComponentConfigRegistry configRegistry)
     {
-        if (entityData[EntityConstants.ComponentsKey] is not JsonArray components)
+        if (entityData[ComponentsKey] is not JsonArray components)
         {
-            return Result.Fail($"Entity data does not contain a '{EntityConstants.ComponentsKey}' property.");
+            return Result.Fail($"Entity data does not contain a '{ComponentsKey}' property.");
         }
 
         var checkedComponentTypes = new HashSet<string>();
 
         for (int i = 0; i < components.Count; i++)
         {
-            var componentTypePointer = JsonPointer.Parse($"/{EntityConstants.ComponentsKey}/{i}/{EntityConstants.ComponentTypeKey}");
+            var componentTypePointer = JsonPointer.Parse($"/{ComponentsKey}/{i}/{ComponentTypeKey}");
 
             if (!componentTypePointer.TryEvaluate(entityData, out var componentTypeNode) ||
                 componentTypeNode is null ||
@@ -211,7 +211,7 @@ public static class EntityUtils
 
         // Check if the component type allows multiple components
 
-        var allowMultiple = schema.GetBooleanAttribute(EntityConstants.AllowMultipleComponentsKey); 
+        var allowMultiple = schema.GetBooleanAttribute(AllowMultipleComponentsKey); 
         if (!allowMultiple)
         {
             // Check if the entity data already contains a component of the same type
@@ -273,7 +273,7 @@ public static class EntityUtils
     {
         // Get the component at specified index
 
-        var componentPointer = JsonPointer.Parse($"/{EntityConstants.ComponentsKey}/{componentIndex}");
+        var componentPointer = JsonPointer.Parse($"/{ComponentsKey}/{componentIndex}");
         if (!componentPointer.TryEvaluate(entityData, out var componentNode))
         {
             return Result<(JsonObject, ComponentConfig)>.Fail($"Failed to get component at index: {componentIndex}");
@@ -286,7 +286,7 @@ public static class EntityUtils
 
         // Get the component type
 
-        var componentTypePointer = JsonPointer.Parse($"/{EntityConstants.ComponentTypeKey}");
+        var componentTypePointer = JsonPointer.Parse($"/{ComponentTypeKey}");
         if (!componentTypePointer.TryEvaluate(componentObject, out var componentTypeNode) ||
             componentTypeNode is null ||
             componentTypeNode.GetValueKind() != JsonValueKind.String)
@@ -323,7 +323,7 @@ public static class EntityUtils
     /// </summary>
     public static Result ValidateEntityComponents(JsonObject entityData, ComponentConfigRegistry configRegistry)
     {
-        var componentsPointer = JsonPointer.Parse($"/{EntityConstants.ComponentsKey}");
+        var componentsPointer = JsonPointer.Parse($"/{ComponentsKey}");
 
         if (!componentsPointer.TryEvaluate(entityData, out var componentsNode) ||
             componentsNode is not JsonArray componentsArray ||
@@ -351,7 +351,7 @@ public static class EntityUtils
     /// </summary>
     public static Result<HashSet<string>> GetAllComponentTags(JsonObject entityData, ComponentConfigRegistry configRegistry)
     {
-        var componentsPointer = JsonPointer.Parse($"/{EntityConstants.ComponentsKey}");
+        var componentsPointer = JsonPointer.Parse($"/{ComponentsKey}");
 
         if (!componentsPointer.TryEvaluate(entityData, out var componentsNode) ||
             componentsNode is not JsonArray componentsArray ||
