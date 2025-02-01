@@ -22,7 +22,7 @@ public abstract class ComponentEditorBase : IComponentEditor
         return Result.Ok();
     }
 
-    public abstract Result<ComponentSummary> GetComponentSummary();
+    public abstract ComponentSummary GetComponentSummary();
 
     public virtual void OnFormUnloaded()
     {
@@ -31,6 +31,8 @@ public abstract class ComponentEditorBase : IComponentEditor
             _component.ComponentPropertyChanged -= OnComponentPropertyChanged;
         }
     }
+
+    public string GetString(string propertyPath) => Component.GetString(propertyPath);
 
     public virtual Result<string> GetProperty(string propertyPath)
     {

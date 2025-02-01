@@ -203,7 +203,7 @@ public class ScreenplayActivity : IActivity
         foreach (var lineComponent in lineComponents)
         {
             var character = lineComponent.GetString(LineEditor.Character);
-            var sourceText = lineComponent.GetString(LineEditor.SourceText);
+            var sourceText = lineComponent.GetString(LineEditor.SourceTextProperty);
 
             if (string.IsNullOrWhiteSpace(character) || string.IsNullOrWhiteSpace(sourceText))
             {

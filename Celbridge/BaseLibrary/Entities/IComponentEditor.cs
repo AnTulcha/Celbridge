@@ -26,5 +26,5 @@ public interface IComponentEditor : IFormDataProvider
     /// <summary>
     /// Gets summary information for the edited component.
     /// </summary>
-    Result<ComponentSummary> GetComponentSummary();
+    ComponentSummary GetComponentSummary();
 }

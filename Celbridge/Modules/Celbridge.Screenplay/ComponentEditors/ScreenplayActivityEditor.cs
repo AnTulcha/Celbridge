@@ -6,10 +6,9 @@ public class ScreenplayActivityEditor : ComponentEditorBase
 {
     public override string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.ScreenplayActivity.json";
 
-    public override Result<ComponentSummary> GetComponentSummary()
+    public override ComponentSummary GetComponentSummary()
     {
         var summary = new ComponentSummary(string.Empty, string.Empty);
-
-        return Result<ComponentSummary>.Ok(summary);
+        return summary;
     }
 }
