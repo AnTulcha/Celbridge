@@ -12,13 +12,17 @@ public interface IComponentEditorHelper
     /// Initializes the helper with the component to be edited.
     /// </summary>
     /// <param name="component"></param>
-    /// <returns></returns>
     Result Initialize(IComponentProxy component);
 
     /// <summary>
     /// Called when the component editor is shutting down.
     /// </summary>
     void Uninitialize();
+
+    /// <summary>
+    /// Loads an embedded resource at resourcePath from the assembly containing the specified type.
+    /// </summary>
+    string LoadEmbeddedResource(Type type, string resourcePath);
 
     /// <summary>
     /// The component being edited.

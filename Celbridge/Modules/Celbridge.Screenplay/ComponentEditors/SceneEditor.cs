@@ -4,11 +4,16 @@ namespace Celbridge.Screenplay.Components;
 
 public class SceneEditor : ComponentEditorBase
 {
+    private const string _configPath = "Celbridge.Screenplay.Assets.Components.Scene.json";
+
     public const string ComponentType = "Screenplay.Scene";
     public const string SceneTitle = "/sceneTitle";
     public const string SceneDescription = "/sceneDescription";
 
-    public override string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.Scene.json";
+    public override string GetComponentConfig()
+    {
+        return LoadEmbeddedResource(_configPath);
+    }
 
     public override ComponentSummary GetComponentSummary()
     {
@@ -16,8 +21,6 @@ public class SceneEditor : ComponentEditorBase
         var sceneDescription = GetString(SceneDescription);
 
         var summaryText = $"{sceneTitle}: {sceneDescription}";
-        var summary = new ComponentSummary(summaryText, summaryText);
-
-        return summary;
+        return new ComponentSummary(summaryText, summaryText);
     }
 }

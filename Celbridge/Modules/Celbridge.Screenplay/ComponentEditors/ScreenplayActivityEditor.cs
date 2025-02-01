@@ -4,11 +4,15 @@ namespace Celbridge.Screenplay.Components;
 
 public class ScreenplayActivityEditor : ComponentEditorBase
 {
-    public override string ComponentConfigPath => "Celbridge.Screenplay.Assets.Components.ScreenplayActivity.json";
+    private const string _configPath = "Celbridge.Screenplay.Assets.Components.ScreenplayActivity.json";
+
+    public override string GetComponentConfig()
+    {
+        return LoadEmbeddedResource(_configPath);
+    }
 
     public override ComponentSummary GetComponentSummary()
     {
-        var summary = new ComponentSummary(string.Empty, string.Empty);
-        return summary;
+        return new ComponentSummary(string.Empty, string.Empty);
     }
 }

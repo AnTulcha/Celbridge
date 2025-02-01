@@ -7,7 +7,6 @@ namespace Celbridge.Entities;
 /// </summary>
 public abstract class ComponentEditorBase : IComponentEditor
 {
-    public abstract string ComponentConfigPath { get; }
     private IComponentEditorHelper? _helper;
 
     public event Action<string>? FormPropertyChanged;
@@ -29,6 +28,8 @@ public abstract class ComponentEditorBase : IComponentEditor
         FormPropertyChanged?.Invoke(propertyPath);
     }
 
+    public abstract string GetComponentConfig();
+
     public abstract ComponentSummary GetComponentSummary();
 
     public virtual void OnFormUnloaded()
@@ -37,6 +38,23 @@ public abstract class ComponentEditorBase : IComponentEditor
 
         _helper.ComponentPropertyChanged -= OnComponentPropertyChanged;
         _helper.Uninitialize();
+    }
+
+    public string LoadEmbeddedResource(string resourcePath)
+    {
+        var helper = _helper;
+
+        if (helper is null)
+        {
+            // This happens when the config registry is populated during startup.
+            // We can't initalize the helper because there's no component, but that's fine
+            // because we only need to access LoadEmbeddedResource()
+            helper = ServiceLocator.AcquireService<IComponentEditorHelper>();
+        }
+
+        // Get the type of the component editor class.
+        // The embedded resource must be in the same assembly as this type.
+        return helper.LoadEmbeddedResource(GetType(), resourcePath);
     }
 
     public string GetString(string propertyPath) => Component.GetString(propertyPath);
