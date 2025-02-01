@@ -8,64 +8,46 @@ namespace Celbridge.Entities;
 public abstract class ComponentEditorBase : IComponentEditor
 {
     public abstract string ComponentConfigPath { get; }
+    private IComponentEditorHelper? _helper;
 
     public event Action<string>? FormPropertyChanged;
 
-    protected IComponentProxy? _component;
-    public IComponentProxy Component => _component!;
+    public IComponentProxy Component => _helper!.Component;
 
     public virtual Result Initialize(IComponentProxy component)
     {
-        _component = component;
-        _component.ComponentPropertyChanged += OnComponentPropertyChanged;
+        _helper = ServiceLocator.AcquireService<IComponentEditorHelper>();
+        _helper.Initialize(component);
+        _helper.ComponentPropertyChanged += OnComponentPropertyChanged;
 
         return Result.Ok();
+    }
+
+    private void OnComponentPropertyChanged(string propertyPath)
+    {
+        // Forward component property changes to the form
+        FormPropertyChanged?.Invoke(propertyPath);
     }
 
     public abstract ComponentSummary GetComponentSummary();
 
     public virtual void OnFormUnloaded()
     {
-        if (_component is not null)
-        {
-            _component.ComponentPropertyChanged -= OnComponentPropertyChanged;
-        }
+        Guard.IsNotNull(_helper);
+
+        _helper.ComponentPropertyChanged -= OnComponentPropertyChanged;
+        _helper.Uninitialize();
     }
 
     public string GetString(string propertyPath) => Component.GetString(propertyPath);
 
     public virtual Result<string> GetProperty(string propertyPath)
     {
-        if (_component is null)
-        {
-            return Result<string>.Fail("Component is null");
-        }
-
-        var value = Component.GetString(propertyPath);
-
-        return Result<string>.Ok(value);
+        return Component.GetProperty<string>(propertyPath);
     }
 
     public virtual Result SetProperty(string propertyPath, string newValue, bool insert)
     {
-        if (_component is null)
-        {
-            return Result<string>.Fail("Component is null");
-        }
-
-        var setResult = Component.SetProperty(propertyPath, newValue);
-        if (setResult.IsFailure)
-        {
-            return Result.Fail($"SetProperty failed: {propertyPath}")
-                .WithErrors(setResult);
-        }
-
-        return Result.Ok();
-    }
-
-    protected virtual void OnComponentPropertyChanged(string propertyPath)
-    {
-        // Forward the property changed event so the editor view can update itself
-        FormPropertyChanged?.Invoke(propertyPath);
+        return Component.SetProperty<string>(propertyPath, newValue, insert);
     }
 }

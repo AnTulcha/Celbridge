@@ -13,8 +13,7 @@ public class SceneEditor : ComponentEditorBase
     public override ComponentSummary GetComponentSummary()
     {
         var sceneTitle = GetString(SceneTitle);
-
-        var sceneDescription = GetProperty(SceneDescription);
+        var sceneDescription = GetString(SceneDescription);
 
         var summaryText = $"{sceneTitle}: {sceneDescription}";
         var summary = new ComponentSummary(summaryText, summaryText);
