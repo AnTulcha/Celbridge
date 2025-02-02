@@ -105,7 +105,8 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
         var component = getComponentResult.Value;
 
         // Set the property
-        var setResult = component.SetProperty(MarkdownComponentConstants.EditorMode, editorMode);
+        var serializedMode = editorMode.ToString();
+        var setResult = component.SetPropertyAsJson(MarkdownComponentConstants.EditorMode, serializedMode);
         if (setResult.IsFailure)
         {
             _logger.LogError(setResult.Error);
@@ -126,7 +127,15 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
             var component = getComponentResult.Value;
 
             // Get the property
-            EditorMode = component.GetProperty(MarkdownComponentConstants.EditorMode, EditorMode.Editor);
+            var getResult = component.GetPropertyAsJson(MarkdownComponentConstants.EditorMode);
+            if (getResult.IsSuccess)
+            {
+                var editorModeJson = getResult.Value;
+                if (Enum.TryParse(editorModeJson, out EditorMode editorMode))
+                {
+                    EditorMode = editorMode;
+                }
+            }
         }
         catch (Exception ex)
         {

@@ -57,15 +57,13 @@ public abstract class ComponentEditorBase : IComponentEditor
         return helper.LoadEmbeddedResource(GetType(), resourcePath);
     }
 
-    public string GetString(string propertyPath) => Component.GetString(propertyPath);
-
-    public virtual Result<string> GetProperty(string propertyPath)
+    public Result<string> GetPropertyAsJson(string propertyPath)
     {
-        return Component.GetProperty<string>(propertyPath);
+        return Component.GetPropertyAsJson(propertyPath);
     }
 
-    public virtual Result SetProperty(string propertyPath, string newValue, bool insert)
+    public Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false)
     {
-        return Component.SetProperty<string>(propertyPath, newValue, insert);
+        return Component.SetPropertyAsJson(propertyPath, jsonValue, insert);
     }
 }

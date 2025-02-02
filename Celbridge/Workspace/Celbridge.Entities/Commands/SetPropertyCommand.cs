@@ -1,5 +1,4 @@
 using Celbridge.Commands;
-using Celbridge.Core;
 using Celbridge.Workspace;
 
 namespace Celbridge.Entities.Commands;
@@ -23,7 +22,7 @@ public class SetPropertyCommand : CommandBase, ISetPropertyCommand
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        var applyResult = entityService.SetProperty(ComponentKey, PropertyPath, JsonValue, Insert);
+        var applyResult = entityService.SetPropertyAsJson(ComponentKey, PropertyPath, JsonValue, Insert);
 
         await Task.CompletedTask;
 
