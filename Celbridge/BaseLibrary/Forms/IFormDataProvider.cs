@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Celbridge.Forms;
 
 /// <summary>
@@ -19,10 +21,10 @@ public interface IFormDataProvider
     /// <summary>
     /// Gets the property at the specified path.
     /// </summary>
-    Result<string> GetProperty(string propertyPath);
+    Result<string> GetPropertyAsJson(string propertyPath);
 
     /// <summary>
     /// Sets the property at the specified path.
     /// </summary>
-    Result SetProperty(string propertyPath, string newValue, bool insert);
+    Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false);
 }

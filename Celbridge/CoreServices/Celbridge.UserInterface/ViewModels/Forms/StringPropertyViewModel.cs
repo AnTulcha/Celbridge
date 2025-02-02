@@ -65,7 +65,7 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
             // Stop listening for component property changes while we update the component
             _formDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
 
-            _formDataProvider.SetProperty(_propertyPath, Value, false);
+            _formDataProvider.SetPropertyAsJson(_propertyPath, Value, false);
 
             // Start listening for component property changes again
             _formDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
@@ -77,7 +77,7 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
         Guard.IsNotNull(_formDataProvider);
 
         // Sync the value member variable with the property
-        var getResult = _formDataProvider.GetProperty(_propertyPath);
+        var getResult = _formDataProvider.GetPropertyAsJson(_propertyPath);
         if (getResult.IsFailure)
         {
             return Result.Fail($"Failed to get property: {_propertyPath}")

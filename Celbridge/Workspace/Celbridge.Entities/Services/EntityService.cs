@@ -418,6 +418,73 @@ public class EntityService : IEntityService, IDisposable
         return _componentProxyService.GetComponents(resource, componentType);
     }
 
+    public Result<string> GetPropertyAsJson(ComponentKey componentKey, string propertyPath)
+    {
+        var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return Result<string>.Fail($"Failed to acquire entity: '{componentKey}'")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        var propertyPointer = GetPropertyPointer(componentKey.ComponentIndex, propertyPath);
+
+        var getResult = entity.EntityData.GetPropertyAsJsonNode(propertyPointer);
+        if (getResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get property '{propertyPath}' for component '{componentKey}'")
+                .WithErrors(getResult);
+        }
+
+        var jsonNode = getResult.Value;
+        var jsonString = jsonNode.ToJsonString();
+
+        return Result<string>.Ok(jsonString);
+    }
+
+    public Result SetPropertyAsJson(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert)
+    {
+        var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
+        if (acquireResult.IsFailure)
+        {
+            _logger.LogError(acquireResult.Error);
+            return Result<string>.Fail($"Failed to acquire entity: '{componentKey}'")
+                .WithErrors(acquireResult);
+        }
+        var entity = acquireResult.Value;
+        Guard.IsNotNull(entity);
+
+        // Construct a patch operation to set the property
+
+        //JsonNode? jsonNode = JsonNode.Parse(jsonValue);
+
+        var propertyPointer = GetPropertyPointer(componentKey.ComponentIndex, propertyPath);
+
+        PatchOperation operation;
+        if (insert)
+        {
+            operation = PatchOperation.Add(propertyPointer, jsonValue);
+        }
+        else
+        {
+            operation = PatchOperation.Replace(propertyPointer, jsonValue);
+        }
+
+        var applyResult = ApplyPatchOperation(entity, operation, 0);
+        if (applyResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply entity patch for component: '{componentKey}'")
+                .WithErrors(applyResult);
+        }
+
+        _logger.LogDebug($"Set property '{propertyPath}' for component '{componentKey}'");
+
+        return Result.Ok();
+    }
+
     public T? GetProperty<T>(ComponentKey componentKey, string propertyPath, T? defaultValue) where T : notnull
     {
         var getResult = GetProperty<T>(componentKey, propertyPath);
@@ -451,33 +518,6 @@ public class EntityService : IEntityService, IDisposable
         }
 
         return getResult;
-    }
-
-    public Result<string> GetPropertyAsJson(ComponentKey componentKey, string propertyPath)
-    {
-        var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
-        if (acquireResult.IsFailure)
-        {
-            _logger.LogError(acquireResult.Error);
-            return Result<string>.Fail($"Failed to acquire entity: '{componentKey}'")
-                .WithErrors(acquireResult);
-        }
-        var entity = acquireResult.Value;
-        Guard.IsNotNull(entity);
-
-        var propertyPointer = GetPropertyPointer(componentKey.ComponentIndex, propertyPath);
-
-        var getResult = entity.EntityData.GetPropertyAsJsonNode(propertyPointer);
-        if (getResult.IsFailure)
-        {
-            return Result<string>.Fail($"Failed to get property '{propertyPath}' for component '{componentKey}'")
-                .WithErrors(getResult);
-        }
-
-        var jsonNode = getResult.Value;
-        var jsonString = jsonNode.ToJsonString();
-
-        return Result<string>.Ok(jsonString);
     }
 
     public Result SetProperty<T>(ComponentKey componentKey, string propertyPath, T newValue, bool insert) where T : notnull

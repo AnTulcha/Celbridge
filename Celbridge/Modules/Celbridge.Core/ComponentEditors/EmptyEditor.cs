@@ -15,7 +15,7 @@ public class EmptyEditor : ComponentEditorBase
 
     public override ComponentSummary GetComponentSummary()
     {
-        var comment = GetString("/comment");
+        var comment = Component.GetString("/comment");
         return new ComponentSummary(comment, comment);
     }
 }
