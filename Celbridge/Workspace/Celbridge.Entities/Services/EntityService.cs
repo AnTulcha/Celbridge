@@ -8,6 +8,7 @@ using Json.More;
 using Json.Patch;
 using Json.Pointer;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
 namespace Celbridge.Entities.Services;
@@ -358,16 +359,18 @@ public class EntityService : IEntityService, IDisposable
         }
         var entity = acquireResult.Value;
 
-        // Get the component type
+        // Get the component type and version
 
         var componentTypePointer = JsonPointer.Create(EntityUtils.ComponentsKey, componentKey.ComponentIndex, EntityUtils.ComponentTypeKey);
-        var getTypeResult = entity.EntityData.GetProperty<string>(componentTypePointer);
-        if (getTypeResult.IsFailure)
+        var getPropertyResult = entity.EntityData.GetPropertyAsJsonNode(componentTypePointer);
+        if (getPropertyResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get component type: '{componentKey}'")
-                .WithErrors(getTypeResult);
+                .WithErrors(getPropertyResult);
         }
-        var typeAndVersion = getTypeResult.Value;
+        var jsonNode = getPropertyResult.Value;
+
+        var typeAndVersion = jsonNode.GetValue<string>();
 
         var parseResult = EntityUtils.ParseComponentTypeAndVersion(typeAndVersion);
         if (parseResult.IsFailure)
@@ -459,18 +462,17 @@ public class EntityService : IEntityService, IDisposable
 
         // Construct a patch operation to set the property
 
-        //JsonNode? jsonNode = JsonNode.Parse(jsonValue);
-
         var propertyPointer = GetPropertyPointer(componentKey.ComponentIndex, propertyPath);
+        var jsonNode = JsonNode.Parse(jsonValue);
 
         PatchOperation operation;
         if (insert)
         {
-            operation = PatchOperation.Add(propertyPointer, jsonValue);
+            operation = PatchOperation.Add(propertyPointer, jsonNode);
         }
         else
         {
-            operation = PatchOperation.Replace(propertyPointer, jsonValue);
+            operation = PatchOperation.Replace(propertyPointer, jsonNode);
         }
 
         var applyResult = ApplyPatchOperation(entity, operation, 0);

@@ -25,38 +25,6 @@ public class EntityData
         return new EntityData(jsonObject, entitySchema, tags);
     }
 
-    public Result<T> GetProperty<T>(JsonPointer propertyPointer)
-        where T : notnull
-    {
-        try
-        {
-            if (!propertyPointer.TryEvaluate(EntityJsonObject, out var valueNode))
-            {
-                return Result<T>.Fail($"Property was not found at: '{propertyPointer}'");
-            }
-
-            if (valueNode is null)
-            {
-                // The property was found but it is a JSON null value.
-                // We treat this as an error for Entity Data.
-                return Result<T>.Fail($"Property is a JSON null value: '{propertyPointer}'");
-            }
-
-            var value = valueNode.Deserialize<T>(EntityService.SerializerOptions);
-            if (value is null)
-            {
-                return Result<T>.Fail($"Failed to deserialize property at '{propertyPointer}' to type '{nameof(T)}'");
-            }
-            
-            return Result<T>.Ok(value);
-        }
-        catch (Exception ex)
-        {
-            return Result<T>.Fail($"An exception occurred when getting entity property '{propertyPointer}'")
-                .WithException(ex);
-        }
-    }
-
     public Result<JsonNode> GetPropertyAsJsonNode(JsonPointer propertyPointer)
     {
         try

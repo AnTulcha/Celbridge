@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Celbridge.Commands;
 using Celbridge.Documents;
 using Celbridge.Entities;
@@ -105,8 +107,9 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
         var component = getComponentResult.Value;
 
         // Set the property
-        var serializedMode = editorMode.ToString();
-        var setResult = component.SetPropertyAsJson(MarkdownComponentConstants.EditorMode, serializedMode);
+        var modeJson = JsonSerializer.Serialize(editorMode.ToString());       
+
+        var setResult = component.SetPropertyAsJson(MarkdownComponentConstants.EditorMode, modeJson);
         if (setResult.IsFailure)
         {
             _logger.LogError(setResult.Error);
@@ -130,8 +133,16 @@ public partial class MarkdownInspectorViewModel : InspectorViewModel
             var getResult = component.GetPropertyAsJson(MarkdownComponentConstants.EditorMode);
             if (getResult.IsSuccess)
             {
-                var editorModeJson = getResult.Value;
-                if (Enum.TryParse(editorModeJson, out EditorMode editorMode))
+                var modeJson = getResult.Value;
+                var jsonNode = JsonNode.Parse(modeJson);
+                if (jsonNode is null)
+                {
+                    _logger.LogError($"Failed to parse json node: '{modeJson}'");
+                    return;
+                }
+
+                var modeString = jsonNode.ToString();
+                if (Enum.TryParse(modeString, out EditorMode editorMode))
                 {
                     EditorMode = editorMode;
                 }
