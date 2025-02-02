@@ -8,6 +8,11 @@ namespace Celbridge.Forms;
 public interface IFormDataProvider
 {
     /// <summary>
+    /// Callback called when the form UI is loaded.
+    /// </summary>
+    void OnFormLoaded();
+
+    /// <summary>
     /// Callback called when the form UI is unloaded.
     /// </summary>
     void OnFormUnloaded();
