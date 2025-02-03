@@ -45,19 +45,18 @@ public interface IComponentProxy
     /// <summary>
     /// Gets the value of a string property as a JSON string.
     /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Fails if the property cannot be found, or is of the wrong type.
     /// </summary>
     Result<string> GetPropertyAsJson(string propertyPath);
 
     /// <summary>
     /// Sets the value of an entity property for a component.
-    /// If insert is true then the value is inserted at the specified key/index, rather than replacing the existing entry.
-    /// propertyPath is a JSON Pointer (RFC 6901).
+    /// If insert is true then the value is inserted at the specified key/index, rather than replacing 
+    /// the existing entry. propertyPath is a JSON Pointer (RFC 6901).
     /// </summary>
     Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false);
 
     /// <summary>
-    /// Convenience method to get a string property with minimal boilerplate.
+    /// Convenience method to get a string comopnent property.
     /// Returns the default value if the property cannot be found.
     /// </summary>
     string GetString(string propertyPath, string defaultValue = "");

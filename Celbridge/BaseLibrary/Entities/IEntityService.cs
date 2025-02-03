@@ -98,17 +98,17 @@ public interface IEntityService
     Result<IReadOnlyList<IComponentProxy>> GetComponentsOfType(ResourceKey resource, string componentType);
 
     /// <summary>
-    /// Gets the value of a property from a component, returned as a JSON encoded string.
+    /// Gets the value of a component property, returned as a JSON encoded string.
     /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Fails if the property cannot be found.
+    /// Fails if the property is not found.
     /// </summary>
     Result<string> GetPropertyAsJson(ComponentKey componentKey, string propertyPath);
 
     /// <summary>
-    /// Sets the value of a component property from a component.
-    /// The value is as a JSON encoded string.
+    /// Sets the value of a component property.
+    /// The value is encoded as JSON.
     /// propertyPath is a JSON Pointer (RFC 6901).
-    /// Fails if the property is not specified in the component schema.
+    /// Fails if the property path or value do not comply with the component schema.
     /// </summary>
     Result SetPropertyAsJson(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert);
 

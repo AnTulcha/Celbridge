@@ -453,7 +453,6 @@ public class EntityService : IEntityService, IDisposable
         var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
         if (acquireResult.IsFailure)
         {
-            _logger.LogError(acquireResult.Error);
             return Result<string>.Fail($"Failed to acquire entity: '{componentKey}'")
                 .WithErrors(acquireResult);
         }
