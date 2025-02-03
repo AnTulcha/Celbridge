@@ -22,7 +22,7 @@ public class SetPropertyCommand : CommandBase, ISetPropertyCommand
     {
         var entityService = _workspaceWrapper.WorkspaceService.EntityService;
 
-        var setResult = entityService.SetPropertyAsJson(ComponentKey, PropertyPath, JsonValue, Insert);
+        var setResult = entityService.SetProperty(ComponentKey, PropertyPath, JsonValue, Insert);
 
         await Task.CompletedTask;
 

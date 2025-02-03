@@ -107,7 +107,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
                 // Get the editor mode from the markdown component.
                 var component = getComponentResult.Value;
                 
-                var getPropertyResult = component.GetPropertyAsJson(MarkdownComponentConstants.EditorMode);
+                var getPropertyResult = component.GetProperty(MarkdownComponentConstants.EditorMode);
                 if (getPropertyResult.IsSuccess)
                 {
                     var editorModeJson = getPropertyResult.Value;

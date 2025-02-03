@@ -70,17 +70,17 @@ public abstract class ComponentEditorBase : IComponentEditor
         return content;
     }
 
-    public Result<string> GetPropertyAsJson(string propertyPath)
+    public Result<string> GetProperty(string propertyPath)
     {
         // Todo: Add property override mechanism
 
-        return Component.GetPropertyAsJson(propertyPath);
+        return Component.GetProperty(propertyPath);
     }
 
-    public Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false)
+    public Result SetProperty(string propertyPath, string jsonValue, bool insert = false)
     {
         // Todo: Add property override mechanism
 
-        return Component.SetPropertyAsJson(propertyPath, jsonValue, insert);
+        return Component.SetProperty(propertyPath, jsonValue, insert);
     }
 }

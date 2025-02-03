@@ -25,7 +25,7 @@ public class EntityData
         return new EntityData(jsonObject, entitySchema, tags);
     }
 
-    public Result<JsonNode> GetPropertyAsJsonNode(JsonPointer propertyPointer)
+    public Result<JsonNode> EvaluateJsonPointer(JsonPointer propertyPointer)
     {
         try
         {

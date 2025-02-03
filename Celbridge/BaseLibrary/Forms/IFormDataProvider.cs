@@ -22,12 +22,12 @@ public interface IFormDataProvider
     event Action<string>? FormPropertyChanged;
 
     /// <summary>
-    /// Gets the property at the specified path.
+    /// Gets the property at the specified path as JSON.
     /// </summary>
-    Result<string> GetPropertyAsJson(string propertyPath);
+    Result<string> GetProperty(string propertyPath);
 
     /// <summary>
-    /// Sets the property at the specified path.
+    /// Sets the property at the specified path as JSON.
     /// </summary>
-    Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false);
+    Result SetProperty(string propertyPath, string jsonValue, bool insert = false);
 }

@@ -69,7 +69,7 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
 
             var jsonValue = JsonSerializer.Serialize(Value);
 
-            _formDataProvider.SetPropertyAsJson(_propertyPath, jsonValue, false);
+            _formDataProvider.SetProperty(_propertyPath, jsonValue, false);
 
             // Start listening for component property changes again
             _formDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
@@ -81,7 +81,7 @@ public partial class StringPropertyViewModel : ObservableObject, IPropertyViewMo
         Guard.IsNotNull(_formDataProvider);
 
         // Sync the value member variable with the property
-        var getResult = _formDataProvider.GetPropertyAsJson(_propertyPath);
+        var getResult = _formDataProvider.GetProperty(_propertyPath);
         if (getResult.IsFailure)
         {
             return Result.Fail($"Failed to get property: '{_propertyPath}'")

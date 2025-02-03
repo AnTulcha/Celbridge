@@ -242,13 +242,13 @@ public class EntityService : IEntityService, IDisposable
         // Get the component at the source index
 
         var sourceComponentPointer = JsonPointer.Create("_components", sourceComponentIndex);
-        var getComponentResult = entity.EntityData.GetPropertyAsJsonNode(sourceComponentPointer);
-        if (getComponentResult.IsFailure)
+        var evaluateResult = entity.EntityData.EvaluateJsonPointer(sourceComponentPointer);
+        if (evaluateResult.IsFailure)
         {
             return Result.Fail($"Failed to get component at index '{sourceComponentIndex}' for resource: {resource}")
-                .WithErrors(getComponentResult);
+                .WithErrors(evaluateResult);
         }
-        var sourceComponentNode = getComponentResult.Value;
+        var sourceComponentNode = evaluateResult.Value;
 
         // Apply a patch operation to add the component to the entity
 
@@ -288,13 +288,13 @@ public class EntityService : IEntityService, IDisposable
         // Get the component at the source index
 
         var sourceComponentPointer = JsonPointer.Create("_components", sourceComponentIndex);
-        var getComponentResult = entity.EntityData.GetPropertyAsJsonNode(sourceComponentPointer);
-        if (getComponentResult.IsFailure)
+        var evaluateResult = entity.EntityData.EvaluateJsonPointer(sourceComponentPointer);
+        if (evaluateResult.IsFailure)
         {
             return Result.Fail($"Failed to get component at index '{sourceComponentIndex}' for resource: {resource}")
-                .WithErrors(getComponentResult);
+                .WithErrors(evaluateResult);
         }
-        var sourceComponentNode = getComponentResult.Value;
+        var sourceComponentNode = evaluateResult.Value;
 
         // Both operations have the same non-zero undo group, so they will be undone together
         _undoGroupId++;
@@ -362,13 +362,13 @@ public class EntityService : IEntityService, IDisposable
         // Get the component type and version
 
         var componentTypePointer = JsonPointer.Create(EntityUtils.ComponentsKey, componentKey.ComponentIndex, EntityUtils.ComponentTypeKey);
-        var getPropertyResult = entity.EntityData.GetPropertyAsJsonNode(componentTypePointer);
-        if (getPropertyResult.IsFailure)
+        var evaluateResult = entity.EntityData.EvaluateJsonPointer(componentTypePointer);
+        if (evaluateResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get component type: '{componentKey}'")
-                .WithErrors(getPropertyResult);
+                .WithErrors(evaluateResult);
         }
-        var jsonNode = getPropertyResult.Value;
+        var jsonNode = evaluateResult.Value;
 
         var typeAndVersion = jsonNode.GetValue<string>();
 
@@ -421,7 +421,7 @@ public class EntityService : IEntityService, IDisposable
         return _componentProxyService.GetComponents(resource, componentType);
     }
 
-    public Result<string> GetPropertyAsJson(ComponentKey componentKey, string propertyPath)
+    public Result<string> GetProperty(ComponentKey componentKey, string propertyPath)
     {
         var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
         if (acquireResult.IsFailure)
@@ -435,20 +435,20 @@ public class EntityService : IEntityService, IDisposable
 
         var propertyPointer = GetPropertyPointer(componentKey.ComponentIndex, propertyPath);
 
-        var getResult = entity.EntityData.GetPropertyAsJsonNode(propertyPointer);
-        if (getResult.IsFailure)
+        var evaluateResult = entity.EntityData.EvaluateJsonPointer(propertyPointer);
+        if (evaluateResult.IsFailure)
         {
             return Result<string>.Fail($"Failed to get property '{propertyPath}' for component '{componentKey}'")
-                .WithErrors(getResult);
+                .WithErrors(evaluateResult);
         }
 
-        var jsonNode = getResult.Value;
+        var jsonNode = evaluateResult.Value;
         var jsonString = jsonNode.ToJsonString();
 
         return Result<string>.Ok(jsonString);
     }
 
-    public Result SetPropertyAsJson(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert)
+    public Result SetProperty(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert)
     {
         var acquireResult = _entityRegistry.AcquireEntity(componentKey.Resource);
         if (acquireResult.IsFailure)

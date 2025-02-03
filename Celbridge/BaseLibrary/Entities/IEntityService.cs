@@ -98,19 +98,18 @@ public interface IEntityService
     Result<IReadOnlyList<IComponentProxy>> GetComponentsOfType(ResourceKey resource, string componentType);
 
     /// <summary>
-    /// Gets the value of a component property, returned as a JSON encoded string.
+    /// Gets the value of a component property as JSON.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Fails if the property is not found.
     /// </summary>
-    Result<string> GetPropertyAsJson(ComponentKey componentKey, string propertyPath);
+    Result<string> GetProperty(ComponentKey componentKey, string propertyPath);
 
     /// <summary>
-    /// Sets the value of a component property.
-    /// The value is encoded as JSON.
+    /// Sets the value of a component property as JSON.
     /// propertyPath is a JSON Pointer (RFC 6901).
     /// Fails if the property path or value do not comply with the component schema.
     /// </summary>
-    Result SetPropertyAsJson(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert);
+    Result SetProperty(ComponentKey componentKey, string propertyPath, string jsonValue, bool insert);
 
     /// <summary>
     /// Returns the number of available undo operations for an entity.

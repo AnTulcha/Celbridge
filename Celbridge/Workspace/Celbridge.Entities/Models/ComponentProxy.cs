@@ -37,21 +37,21 @@ public class ComponentProxy : IComponentProxy
 
     // Property accessors
 
-    public Result<string> GetPropertyAsJson(string propertyPath)
+    public Result<string> GetProperty(string propertyPath)
     {
-        return _entityService.GetPropertyAsJson(Key, propertyPath);
+        return _entityService.GetProperty(Key, propertyPath);
     }
 
-    public Result SetPropertyAsJson(string propertyPath, string jsonValue, bool insert = false)
+    public Result SetProperty(string propertyPath, string jsonValue, bool insert = false)
     {
-        return _entityService.SetPropertyAsJson(Key, propertyPath, jsonValue, insert);
+        return _entityService.SetProperty(Key, propertyPath, jsonValue, insert);
     }
 
     public string GetString(string propertyPath, string defaultValue = "")
     {
         Guard.IsNotNull(defaultValue);
 
-        var getResult = _entityService.GetPropertyAsJson(Key, propertyPath);
+        var getResult = _entityService.GetProperty(Key, propertyPath);
         if (getResult.IsFailure)
         {
             return defaultValue;
