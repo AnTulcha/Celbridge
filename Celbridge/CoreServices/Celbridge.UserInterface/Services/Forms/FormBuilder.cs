@@ -328,6 +328,8 @@ public class FormBuilder
 
     private Button? CreateButton(JsonElement jsonElement)
     {
+        Guard.IsNotNull(_formDataProvider);
+
         var button = new Button();
 
         if (!ApplyAlignmentConfig(button, jsonElement))
@@ -342,13 +344,26 @@ public class FormBuilder
             button.Content = text.GetString();
         }
 
-        //if (element.TryGetProperty("command", out var command))
-        //{
-        //    button.Click += (sender, args) =>
-        //    {
-        //        Console.WriteLine($"Button command: {command.GetString()}");
-        //    };
-        //}
+        // Set the buttonId
+        string buttonId = string.Empty;
+        if (jsonElement.TryGetProperty("buttonId", out var buttonIdElement))
+        {
+            buttonId = buttonIdElement.GetString() ?? string.Empty;
+        }
+
+        // Create and assign a button view model
+        var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
+        viewModel.Initialize(_formDataProvider, buttonId);
+        button.DataContext = viewModel;
+
+        if (!string.IsNullOrEmpty(buttonId))
+        {
+            // Bind the button click handler to the button view model
+            button.Click += (sender, args) =>
+            {
+                viewModel.OnButtonClicked();
+            };
+        }
 
         return button;
     }

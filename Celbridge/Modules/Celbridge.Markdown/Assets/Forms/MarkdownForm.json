@@ -3,5 +3,10 @@
     "element": "TextBox",
     "header": "Editor Mode",
     "textBinding": "/editorMode"
+  },
+  {
+    "element": "Button",
+    "text": "Press me",
+    "buttonId": "ButtonA"
   }
 ]
