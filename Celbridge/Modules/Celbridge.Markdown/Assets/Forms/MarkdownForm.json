@@ -5,8 +5,24 @@
     "textBinding": "/editorMode"
   },
   {
-    "element": "Button",
-    "text": "Press me",
-    "buttonId": "ButtonA"
+    "element": "StackPanel",
+    "orientation": "Horizontal",
+    "children": [
+      {
+        "element": "Button",
+        "text": "A",
+        "buttonId": "ButtonA"
+      },
+      {
+        "element": "Button",
+        "text": "B",
+        "buttonId": "ButtonB"
+      },
+      {
+        "element": "Button",
+        "text": "C",
+        "buttonId": "ButtonC"
+      }
+    ]
   }
 ]
