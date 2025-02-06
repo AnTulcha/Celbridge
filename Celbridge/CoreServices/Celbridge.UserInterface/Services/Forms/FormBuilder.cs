@@ -148,6 +148,12 @@ public class FormBuilder
     {
         var stackPanel = new StackPanel();
 
+        if (!ApplyAlignmentConfig(stackPanel, jsonElement))
+        {
+            _buildErrors.Add($"Failed to apply alignment configuration to StackPanel");
+            return null;
+        }
+
         // Set the spacing between elements
         if (jsonElement.TryGetProperty("spacing", out var spacing))
         {
@@ -529,7 +535,8 @@ public class FormBuilder
                 if (configKey == "element" ||
                     configKey == "horizontalAlignment" ||
                     configKey == "verticalAlignment" ||
-                    configKey == "tooltip")
+                    configKey == "tooltip" ||
+                    configKey == "alignment")
                 {
                     // Skip general config properties that apply to all elements
                     continue;
