@@ -10,22 +10,26 @@
     "children": [
       {
         "element": "Button",
-        "text": "Open",
+        "tooltip": "Open document",
+        "icon": "OpenFile",
         "buttonId": "OpenDocument"
       },
       {
         "element": "Button",
-        "text": "Editor",
+        "tooltip": "Editor view",
+        "icon": "DockLeft",
         "buttonId": "Editor"
       },
       {
         "element": "Button",
-        "text": "EditorAndPreview",
+        "tooltip": "Split view",
+        "icon": "DockBottom",
         "buttonId": "EditorAndPreview"
       },
       {
         "element": "Button",
-        "text": "Preview",
+        "tooltip": "Preview view",
+        "icon": "DockRight",
         "buttonId": "Preview"
       }
     ]

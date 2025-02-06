@@ -115,7 +115,7 @@ public class FormBuilder
         }
         var elementName = element.GetString();
 
-        UIElement? uiElement = null;        
+        UIElement? uiElement = null;
         switch (elementName)
         {
             case "StackPanel":
@@ -188,7 +188,7 @@ public class FormBuilder
                     _buildErrors.Add("Failed to create child control");
                     continue;
                 }
-                
+
                 stackPanel.Children.Add(childControl);
             }
         }
@@ -210,12 +210,12 @@ public class FormBuilder
 
         // Check for unsupported config properties
 
-        var validConfigKeys = new HashSet<string>() 
-        { 
-            "textBinding", 
-            "header", 
-            "placeholder", 
-            "checkSpelling" 
+        var validConfigKeys = new HashSet<string>()
+        {
+            "textBinding",
+            "header",
+            "placeholder",
+            "checkSpelling"
         };
         if (!ValidateConfigKeys(jsonElement, validConfigKeys))
         {
@@ -338,13 +338,81 @@ public class FormBuilder
             return null;
         }
 
-        // Set the button text
-        if (jsonElement.TryGetProperty("text", out var text))
+        ApplyTooltip(button, jsonElement);
+
+        // Check all specified properties are supported
+
+        var validConfigKeys = new HashSet<string>()
         {
-            button.Content = text.GetString();
+            "icon",
+            "text",
+            "buttonId"
+        };
+        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
+        {
+            _buildErrors.Add("Invalid Button configuration");
+            return null;
         }
 
-        // Set the buttonId
+        var buttonPanel = new StackPanel();
+        button.Content = buttonPanel;
+
+        //
+        // Set the button icon (optional)
+        //
+
+        var buttonIcon = string.Empty;
+        if (jsonElement.TryGetProperty("icon", out var icon))
+        {
+            buttonIcon = icon.GetString();
+        }
+
+        buttonPanel.Orientation = Orientation.Horizontal;
+        if (!string.IsNullOrEmpty(buttonIcon))
+        {
+            string glyph = string.Empty;
+            if (Enum.TryParse(buttonIcon, out Symbol symbol))
+            {
+                // String is a valid Symbol enum value
+                glyph = ((char)symbol).ToString();
+            }
+            else
+            {
+                // Try the string as a unicode character
+                glyph = buttonIcon;
+            }
+
+            var fontIcon = new FontIcon()
+                .Glyph(glyph);
+
+            buttonPanel.Children.Add(fontIcon);
+        }
+
+        //
+        // Set the button text (optional)
+        //
+
+        var buttonText = string.Empty;
+        if (jsonElement.TryGetProperty("text", out var text))
+        {
+            buttonText = text.GetString();
+        }
+
+        if (!string.IsNullOrEmpty(buttonText))
+        {
+            var textBlock = new TextBlock()
+                .Text(buttonText);
+
+            if (buttonPanel.Children.Count > 0)
+            {
+                // Add a gap between the icon and the text
+                textBlock.Margin = new Thickness(8, 0, 0, 0);
+            }
+
+            buttonPanel.Children.Add(textBlock);
+        }
+
+        // Get the buttonId
         string buttonId = string.Empty;
         if (jsonElement.TryGetProperty("buttonId", out var buttonIdElement))
         {
@@ -460,11 +528,12 @@ public class FormBuilder
                 var configKey = property.Name;
                 if (configKey == "element" ||
                     configKey == "horizontalAlignment" ||
-                    configKey == "verticalAlignment")
+                    configKey == "verticalAlignment" ||
+                    configKey == "tooltip")
                 {
                     // Skip general config properties that apply to all elements
                     continue;
-                }    
+                }
 
                 if (!validConfigKeys.Contains(configKey))
                 {
@@ -524,5 +593,13 @@ public class FormBuilder
         }
 
         return true;
+    }
+
+    private void ApplyTooltip(FrameworkElement frameworkElement, JsonElement config)
+    {
+        if (config.TryGetProperty("tooltip", out var tooltipText))
+        {
+            ToolTipService.SetToolTip(frameworkElement, tooltipText);
+        }
     }
 }
