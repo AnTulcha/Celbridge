@@ -10,18 +10,23 @@
     "children": [
       {
         "element": "Button",
-        "text": "A",
-        "buttonId": "ButtonA"
+        "text": "Open",
+        "buttonId": "OpenDocument"
       },
       {
         "element": "Button",
-        "text": "B",
-        "buttonId": "ButtonB"
+        "text": "Editor",
+        "buttonId": "Editor"
       },
       {
         "element": "Button",
-        "text": "C",
-        "buttonId": "ButtonC"
+        "text": "EditorAndPreview",
+        "buttonId": "EditorAndPreview"
+      },
+      {
+        "element": "Button",
+        "text": "Preview",
+        "buttonId": "Preview"
       }
     ]
   }
