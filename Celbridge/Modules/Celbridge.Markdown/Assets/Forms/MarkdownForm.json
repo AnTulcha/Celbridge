@@ -12,6 +12,7 @@
       {
         "element": "Button",
         "tooltip": "Open document",
+        "enabledBinding": "/openDocumentEnabled",
         "icon": "OpenFile",
         "buttonId": "OpenDocument"
       },

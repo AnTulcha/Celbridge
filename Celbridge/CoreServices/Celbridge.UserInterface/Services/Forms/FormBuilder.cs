@@ -251,7 +251,7 @@ public class FormBuilder
 
         if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
         {
-            ApplyBinding<StringPropertyViewModel>(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
+            ApplyBinding<TextBoxViewModel>(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
         }
 
         textBox.KeyDown += (sender, e) =>
@@ -326,7 +326,7 @@ public class FormBuilder
 
         if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
         {
-            ApplyBinding<StringPropertyViewModel>(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath);
+            ApplyBinding<TextBlockViewModel>(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath);
         }
 
         return textBlock;
@@ -352,6 +352,7 @@ public class FormBuilder
         {
             "icon",
             "text",
+            "enabledBinding",
             "buttonId"
         };
         if (!ValidateConfigKeys(jsonElement, validConfigKeys))
@@ -429,7 +430,9 @@ public class FormBuilder
 
         // Create and assign a button view model to handle clicks
         var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
-        viewModel.Initialize(_formDataProvider, buttonId);
+        viewModel.Initialize(_formDataProvider, string.Empty);
+        viewModel.ButtonId = buttonId;
+
         button.DataContext = viewModel;
 
         if (!string.IsNullOrEmpty(buttonId))

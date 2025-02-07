@@ -8,15 +8,15 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 /// <summary>
 /// Binds a UI element to a string property accessed via a form data provider.
 /// </summary>
-public partial class StringPropertyViewModel : ObservableObject, IPropertyViewModel
+public partial class ElementViewModel : ObservableObject, IPropertyViewModel
 {
     [ObservableProperty]
     private string _value = string.Empty;
 
     public string BoundPropertyName => nameof(Value);
 
-    private IFormDataProvider? _formDataProvider;
-    private string _propertyPath = string.Empty;
+    protected IFormDataProvider? _formDataProvider;
+    protected string _propertyPath = string.Empty;
 
     public Result Initialize(IFormDataProvider formDataProvider, string propertyPath)
     {
