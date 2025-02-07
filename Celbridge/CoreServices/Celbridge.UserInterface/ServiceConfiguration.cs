@@ -44,6 +44,7 @@ public static class ServiceConfiguration
         services.AddTransient<NewProjectDialogViewModel>();
         services.AddTransient<InputTextDialogViewModel>();
         services.AddTransient<ElementViewModel>();
+        services.AddTransient<StackPanelViewModel>();
         services.AddTransient<TextBoxViewModel>();
         services.AddTransient<TextBlockViewModel>();
         services.AddTransient<ButtonViewModel>();

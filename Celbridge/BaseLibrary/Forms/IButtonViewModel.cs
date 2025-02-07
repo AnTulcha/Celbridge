@@ -6,11 +6,6 @@ namespace Celbridge.Forms;
 public interface IButtonViewModel
 {
     /// <summary>
-    /// Initializes the view model with the form data provider and a buttonId.
-    /// </summary>
-    Result Initialize(IFormDataProvider formDataProvider, string buttonId);
-    
-    /// <summary>
     /// Called when the use clicks the button.
     /// </summary>
     void OnButtonClicked();

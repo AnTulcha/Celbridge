@@ -146,9 +146,16 @@ public class FormBuilder
 
     private StackPanel? CreateStackPanel(JsonElement jsonElement)
     {
+        Guard.IsNotNull(_formDataProvider);
+
         var stackPanel = new StackPanel();
 
-        if (!ApplyAlignmentConfig(stackPanel, jsonElement))
+        var viewModel = _serviceProvider.GetRequiredService<StackPanelViewModel>();
+        viewModel.FormDataProvider = _formDataProvider;
+
+        stackPanel.DataContext = viewModel;
+
+        if (!viewModel.ApplyAlignmentConfig(stackPanel, jsonElement, _buildErrors))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to StackPanel");
             return null;
@@ -199,16 +206,25 @@ public class FormBuilder
             }
         }
 
+        viewModel.Initialize();
+
         return stackPanel;
     }
 
     private TextBox? CreateTextBox(JsonElement jsonElement)
     {
+        Guard.IsNotNull(_formDataProvider);
+
         var textBox = new TextBox();
+
+        var viewModel = _serviceProvider.GetRequiredService<TextBoxViewModel>();
+        viewModel.FormDataProvider = _formDataProvider;
+
+        textBox.DataContext = viewModel;
 
         textBox.TextWrapping = TextWrapping.Wrap;
 
-        if (!ApplyAlignmentConfig(textBox, jsonElement))
+        if (!viewModel.ApplyAlignmentConfig(textBox, jsonElement, _buildErrors))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
             return null;
@@ -223,7 +239,7 @@ public class FormBuilder
             "placeholder",
             "checkSpelling"
         };
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
+        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
         {
             _buildErrors.Add("Invalid TextBox configuration");
             return null;
@@ -249,9 +265,9 @@ public class FormBuilder
 
         // Apply property bindings
 
-        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
+        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, _buildErrors))
         {
-            ApplyBinding<TextBoxViewModel>(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
+            viewModel.ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath, _buildErrors);
         }
 
         textBox.KeyDown += (sender, e) =>
@@ -270,14 +286,23 @@ public class FormBuilder
             }
         };
 
+        viewModel.Initialize();
+
         return textBox;
     }
 
     private TextBlock? CreateTextBlock(JsonElement jsonElement)
     {
+        Guard.IsNotNull(_formDataProvider);
+
         var textBlock = new TextBlock();
 
-        if (!ApplyAlignmentConfig(textBlock, jsonElement))
+        var viewModel = _serviceProvider.GetRequiredService<TextBlockViewModel>();
+        viewModel.FormDataProvider = _formDataProvider;
+
+        textBlock.DataContext = viewModel;
+
+        if (!viewModel.ApplyAlignmentConfig(textBlock, jsonElement, _buildErrors))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
             return null;
@@ -292,7 +317,7 @@ public class FormBuilder
             "italic",
             "bold"
         };
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
+        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
         {
             _buildErrors.Add("Invalid TextBlock configuration");
             return null;
@@ -324,10 +349,12 @@ public class FormBuilder
 
         // Apply bound properties
 
-        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath))
+        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, _buildErrors))
         {
-            ApplyBinding<TextBlockViewModel>(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath);
+            viewModel.ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath, _buildErrors);
         }
+
+        viewModel.Initialize();
 
         return textBlock;
     }
@@ -338,13 +365,18 @@ public class FormBuilder
 
         var button = new Button();
 
-        if (!ApplyAlignmentConfig(button, jsonElement))
+        var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
+        viewModel.FormDataProvider = _formDataProvider;
+
+        button.DataContext = viewModel;
+
+        if (!viewModel.ApplyAlignmentConfig(button, jsonElement, _buildErrors))
         {
             _buildErrors.Add($"Failed to apply alignment configuration to Button");
             return null;
         }
 
-        ApplyTooltip(button, jsonElement);
+        viewModel.ApplyTooltip(button, jsonElement);
 
         // Check all specified properties are supported
 
@@ -355,7 +387,7 @@ public class FormBuilder
             "enabledBinding",
             "buttonId"
         };
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys))
+        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
         {
             _buildErrors.Add("Invalid Button configuration");
             return null;
@@ -428,9 +460,6 @@ public class FormBuilder
             buttonId = buttonIdElement.GetString() ?? string.Empty;
         }
 
-        // Create and assign a button view model to handle clicks
-        var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
-        viewModel.Initialize(_formDataProvider, string.Empty);
         viewModel.ButtonId = buttonId;
 
         button.DataContext = viewModel;
@@ -444,174 +473,8 @@ public class FormBuilder
             };
         }
 
+        viewModel.Initialize();
+
         return button;
-    }
-
-    private bool GetBindingPropertyPath(JsonElement jsonElement, string configPropertyName, out string bindingPropertyPath)
-    {
-        bindingPropertyPath = string.Empty;
-
-        if (!jsonElement.TryGetProperty(configPropertyName, out var bindingConfig))
-        {
-            // Config does not contain the specified property.
-            // The client decides if this is an error or not.
-            return false;
-        }
-
-        var path = bindingConfig.GetString();
-        if (string.IsNullOrEmpty(path))
-        {
-            _buildErrors.Add($"Binding property '{configPropertyName}' is empty");
-            return false;
-        }
-
-        // Parsed the binding info successfully
-        bindingPropertyPath = path;
-        return true;
-    }
-
-    private void ApplyBinding<T>(
-        FrameworkElement frameworkElement,
-        DependencyProperty dependencyProperty,
-        BindingMode bindingMode,
-        string propertyPath) where T : IPropertyViewModel
-    {
-        if (_formDataProvider is null)
-        {
-            _buildErrors.Add($"Failed to apply property binding: '{propertyPath}'. Form data provider is null");
-            return;
-        }
-
-        try
-        {
-            // Instantiate the property view model
-            var viewModel = _serviceProvider.GetService<T>();
-            if (viewModel is null)
-            {
-                _buildErrors.Add($"Failed to instantiate property view model: '{typeof(T).Name}'");
-                return;
-            }
-
-            // Initialize the property view model
-            var initResult = viewModel.Initialize(_formDataProvider, propertyPath);
-            if (initResult.IsFailure)
-            {
-                _buildErrors.Add($"Failed to initialize property view model: '{typeof(T).Name}'");
-                return;
-            }
-
-            // The DataContext will be used automatically as the binding source
-            frameworkElement.DataContext = viewModel;
-
-            // Tell the view model to stop listening for property changes when the view is unloaded
-            frameworkElement.Unloaded += (s, e) =>
-            {
-                var vm = frameworkElement.DataContext as IPropertyViewModel;
-                if (vm is not null)
-                {
-                    vm.OnViewUnloaded();
-                    frameworkElement.DataContext = null;
-                }
-            };
-
-            // Bind the dependency property to the property view model
-            var binding = new Binding()
-            {
-                Path = new PropertyPath(viewModel.BoundPropertyName),
-                Mode = bindingMode
-            };
-            frameworkElement.SetBinding(dependencyProperty, binding);
-        }
-        catch (Exception ex)
-        {
-            _buildErrors.Add($"An exception occurred when applying property binding: '{propertyPath}'. {ex}");
-        }
-    }
-
-    private bool ValidateConfigKeys(JsonElement jsonElement, HashSet<string> validConfigKeys)
-    {
-        bool valid = true;
-        var keys = new List<string>();
-        if (jsonElement.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var property in jsonElement.EnumerateObject())
-            {
-                var configKey = property.Name;
-                if (configKey == "element" ||
-                    configKey == "horizontalAlignment" ||
-                    configKey == "verticalAlignment" ||
-                    configKey == "tooltip" ||
-                    configKey == "alignment")
-                {
-                    // Skip general config properties that apply to all elements
-                    continue;
-                }
-
-                if (!validConfigKeys.Contains(configKey))
-                {
-                    _buildErrors.Add($"Invalid form element property: '{configKey}'");
-                    valid = false;
-                }
-            }
-        }
-
-        return valid;
-    }
-
-    private bool ApplyAlignmentConfig(FrameworkElement frameworkElement, JsonElement config)
-    {
-        if (config.TryGetProperty("horizontalAlignment", out var horizontalAlignment))
-        {
-            switch (horizontalAlignment.GetString())
-            {
-                case "Left":
-                    frameworkElement.HorizontalAlignment = HorizontalAlignment.Left;
-                    break;
-                case "Center":
-                    frameworkElement.HorizontalAlignment = HorizontalAlignment.Center;
-                    break;
-                case "Right":
-                    frameworkElement.HorizontalAlignment = HorizontalAlignment.Right;
-                    break;
-                case "Stretch":
-                    frameworkElement.HorizontalAlignment = HorizontalAlignment.Stretch;
-                    break;
-                default:
-                    _buildErrors.Add($"Invalid horizontal alignment value: '{horizontalAlignment.GetString()}'");
-                    return false;
-            }
-        }
-
-        if (config.TryGetProperty("verticalAlignment", out var verticalAlignment))
-        {
-            switch (verticalAlignment.GetString())
-            {
-                case "Top":
-                    frameworkElement.VerticalAlignment = VerticalAlignment.Top;
-                    break;
-                case "Center":
-                    frameworkElement.VerticalAlignment = VerticalAlignment.Center;
-                    break;
-                case "Bottom":
-                    frameworkElement.VerticalAlignment = VerticalAlignment.Bottom;
-                    break;
-                case "Stretch":
-                    frameworkElement.VerticalAlignment = VerticalAlignment.Stretch;
-                    break;
-                default:
-                    _buildErrors.Add($"Invalid vertical alignment value: '{horizontalAlignment.GetString()}'");
-                    return false;
-            }
-        }
-
-        return true;
-    }
-
-    private void ApplyTooltip(FrameworkElement frameworkElement, JsonElement config)
-    {
-        if (config.TryGetProperty("tooltip", out var tooltipText))
-        {
-            ToolTipService.SetToolTip(frameworkElement, tooltipText);
-        }
     }
 }

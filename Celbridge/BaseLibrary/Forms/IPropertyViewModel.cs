@@ -11,9 +11,19 @@ public interface IPropertyViewModel
     string BoundPropertyName { get; }
 
     /// <summary>
-    /// Initializes the view model with the form data provider and the property path.
+    /// The form data provider that provides access to the form data.
     /// </summary>
-    Result Initialize(IFormDataProvider formDataProvider, string propertyPath);
+    IFormDataProvider? FormDataProvider { get; set; }
+
+    /// <summary>
+    /// The property path to bind to via the form data provider.
+    /// </summary>
+    string PropertyPath { get; set; }
+
+    /// <summary>
+    /// Initializes the view model with the form data provider.
+    /// </summary>
+    Result Initialize();
 
     /// <summary>
     /// A callback called when the view is unloaded.

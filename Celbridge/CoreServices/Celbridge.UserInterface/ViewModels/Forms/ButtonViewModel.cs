@@ -8,6 +8,6 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
 
     public void OnButtonClicked()
     {
-        _formDataProvider?.OnButtonClicked(ButtonId);
+        FormDataProvider?.OnButtonClicked(ButtonId);
     }
 }
