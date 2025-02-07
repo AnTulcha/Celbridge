@@ -360,7 +360,10 @@ public class FormBuilder
             return null;
         }
 
+        // Add a horizontal panel for the button content
+
         var buttonPanel = new StackPanel();
+        buttonPanel.Orientation = Orientation.Horizontal;
         button.Content = buttonPanel;
 
         //
@@ -373,7 +376,6 @@ public class FormBuilder
             buttonIcon = icon.GetString();
         }
 
-        buttonPanel.Orientation = Orientation.Horizontal;
         if (!string.IsNullOrEmpty(buttonIcon))
         {
             string glyph = string.Empty;
@@ -425,7 +427,7 @@ public class FormBuilder
             buttonId = buttonIdElement.GetString() ?? string.Empty;
         }
 
-        // Create and assign a button view model
+        // Create and assign a button view model to handle clicks
         var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
         viewModel.Initialize(_formDataProvider, buttonId);
         button.DataContext = viewModel;
