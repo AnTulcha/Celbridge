@@ -6,9 +6,9 @@ using Celbridge.Forms;
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
 /// <summary>
-/// Binds a UI element to a string property accessed via a form data provider.
+/// Base class for element view models that bind to a form data provider.
 /// </summary>
-public partial class ElementViewModel : ObservableObject, IPropertyViewModel
+public abstract partial class ElementViewModel : ObservableObject
 {
     [ObservableProperty]
     private string _value = string.Empty;
@@ -21,6 +21,11 @@ public partial class ElementViewModel : ObservableObject, IPropertyViewModel
 
     public Result Initialize()
     {
+        if (FormDataProvider is null)
+        {
+            return Result.Fail("Form data provider is null");
+        }
+
         // Read the current property value from the component
         var updateResult = UpdateValue();
         if (updateResult.IsFailure)
@@ -33,7 +38,7 @@ public partial class ElementViewModel : ObservableObject, IPropertyViewModel
         FormDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
 
         // Listen for property changes on this view model (via ObservableObject)
-        PropertyChanged += OnViewModelPropertyChanged;
+        PropertyChanged += OnMemberPropertyChanged;
 
         return Result.Ok();
     }
@@ -44,7 +49,7 @@ public partial class ElementViewModel : ObservableObject, IPropertyViewModel
         {
             // Unregister listeners
             FormDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
-            PropertyChanged -= OnViewModelPropertyChanged;
+            PropertyChanged -= OnMemberPropertyChanged;
         }
     }
 
@@ -56,7 +61,7 @@ public partial class ElementViewModel : ObservableObject, IPropertyViewModel
         }
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnMemberPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         Guard.IsNotNull(FormDataProvider);
 
@@ -144,7 +149,7 @@ public partial class ElementViewModel : ObservableObject, IPropertyViewModel
             // Tell the view model to stop listening for property changes when the view is unloaded
             frameworkElement.Unloaded += (s, e) =>
             {
-                var vm = frameworkElement.DataContext as IPropertyViewModel;
+                var vm = frameworkElement.DataContext as ElementViewModel;
                 if (vm is not null)
                 {
                     vm.OnViewUnloaded();
