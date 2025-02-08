@@ -5,6 +5,10 @@
     "textBinding": "/editorMode"
   },
   {
+    "element": "TextBlock",
+    "text": "Select editor mode"
+  },
+  {
     "element": "StackPanel",
     "orientation": "Horizontal",
     "horizontalAlignment": "Center",

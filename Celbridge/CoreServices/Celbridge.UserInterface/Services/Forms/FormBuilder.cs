@@ -102,6 +102,8 @@ public class FormBuilder
 
     private UIElement? CreateUIElementFromJsonElement(JsonElement jsonElement)
     {
+        Guard.IsNotNull(_formDataProvider);
+
         if (jsonElement.ValueKind != JsonValueKind.Object)
         {
             _buildErrors.Add("Form array element is not an object");
@@ -127,7 +129,15 @@ public class FormBuilder
                 break;
 
             case "TextBlock":
-                uiElement = CreateTextBlock(jsonElement);
+                var createResult = TextBlockViewModel.CreateTextBlock(jsonElement, _formDataProvider);
+                if (createResult.IsFailure)
+                {
+                    _buildErrors.Add(createResult.Error);
+                }
+                else
+                {
+                    uiElement = createResult.Value;
+                }
                 break;
 
             case "Button":
@@ -289,74 +299,6 @@ public class FormBuilder
         viewModel.Initialize();
 
         return textBox;
-    }
-
-    private TextBlock? CreateTextBlock(JsonElement jsonElement)
-    {
-        Guard.IsNotNull(_formDataProvider);
-
-        var textBlock = new TextBlock();
-
-        var viewModel = _serviceProvider.GetRequiredService<TextBlockViewModel>();
-        viewModel.FormDataProvider = _formDataProvider;
-
-        textBlock.DataContext = viewModel;
-
-        if (!viewModel.ApplyAlignmentConfig(textBlock, jsonElement, _buildErrors))
-        {
-            _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
-            return null;
-        }
-
-        // Check all specified properties are supported
-
-        var validConfigKeys = new HashSet<string>()
-        {
-            "textBinding",
-            "text",
-            "italic",
-            "bold"
-        };
-        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
-        {
-            _buildErrors.Add("Invalid TextBlock configuration");
-            return null;
-        }
-
-        // Apply property bindings
-
-        if (jsonElement.TryGetProperty("text", out var text))
-        {
-            // Todo: Support localization
-            textBlock.Text = text.GetString();
-        }
-
-        if (jsonElement.TryGetProperty("italic", out var italic))
-        {
-            if (italic.GetBoolean())
-            {
-                textBlock.FontStyle = FontStyle.Italic;
-            }
-        }
-
-        if (jsonElement.TryGetProperty("bold", out var bold))
-        {
-            if (bold.GetBoolean())
-            {
-                textBlock.FontWeight = FontWeights.Bold;
-            }
-        }
-
-        // Apply bound properties
-
-        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, _buildErrors))
-        {
-            viewModel.ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath, _buildErrors);
-        }
-
-        viewModel.Initialize();
-
-        return textBlock;
     }
 
     private Button? CreateButton(JsonElement jsonElement)

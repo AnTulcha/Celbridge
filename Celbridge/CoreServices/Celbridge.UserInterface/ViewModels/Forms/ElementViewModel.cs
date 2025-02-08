@@ -26,12 +26,15 @@ public abstract partial class ElementViewModel : ObservableObject
             return Result.Fail("Form data provider is null");
         }
 
-        // Read the current property value from the component
-        var updateResult = UpdateValue();
-        if (updateResult.IsFailure)
+        if (!string.IsNullOrEmpty(PropertyPath))
         {
-            return Result.Fail($"Failed to update value for element view model")
-                .WithErrors(updateResult);
+            // Read the current property value from the component
+            var updateResult = UpdateValue();
+            if (updateResult.IsFailure)
+            {
+                return Result.Fail($"Failed to update value for element view model")
+                    .WithErrors(updateResult);
+            }
         }
 
         // Listen for property changes on the component (via the form data provider)
