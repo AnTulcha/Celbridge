@@ -125,18 +125,26 @@ public class FormBuilder
                 break;
 
             case "TextBox":
-                uiElement = CreateTextBox(jsonElement);
-                break;
-
-            case "TextBlock":
-                var createResult = TextBlockViewModel.CreateTextBlock(jsonElement, _formDataProvider);
-                if (createResult.IsFailure)
+                var textBoxResult = TextBoxViewModel.CreateTextBox(jsonElement, _formDataProvider);
+                if (textBoxResult.IsFailure)
                 {
-                    _buildErrors.Add(createResult.Error);
+                    _buildErrors.Add(textBoxResult.Error);
                 }
                 else
                 {
-                    uiElement = createResult.Value;
+                    uiElement = textBoxResult.Value;
+                }
+                break;
+
+            case "TextBlock":
+                var textBlockResult = TextBlockViewModel.CreateTextBlock(jsonElement, _formDataProvider);
+                if (textBlockResult.IsFailure)
+                {
+                    _buildErrors.Add(textBlockResult.Error);
+                }
+                else
+                {
+                    uiElement = textBlockResult.Value;
                 }
                 break;
 
@@ -219,86 +227,6 @@ public class FormBuilder
         viewModel.Initialize();
 
         return stackPanel;
-    }
-
-    private TextBox? CreateTextBox(JsonElement jsonElement)
-    {
-        Guard.IsNotNull(_formDataProvider);
-
-        var textBox = new TextBox();
-
-        var viewModel = _serviceProvider.GetRequiredService<TextBoxViewModel>();
-        viewModel.FormDataProvider = _formDataProvider;
-
-        textBox.DataContext = viewModel;
-
-        textBox.TextWrapping = TextWrapping.Wrap;
-
-        if (!viewModel.ApplyAlignmentConfig(textBox, jsonElement, _buildErrors))
-        {
-            _buildErrors.Add($"Failed to apply alignment configuration to TextBox");
-            return null;
-        }
-
-        // Check for unsupported config properties
-
-        var validConfigKeys = new HashSet<string>()
-        {
-            "textBinding",
-            "header",
-            "placeholder",
-            "checkSpelling"
-        };
-        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
-        {
-            _buildErrors.Add("Invalid TextBox configuration");
-            return null;
-        }
-
-        // Apply unbound properties
-
-        if (jsonElement.TryGetProperty("header", out var header))
-        {
-            // Todo: Support localization
-            textBox.Header = header.GetString();
-        }
-
-        if (jsonElement.TryGetProperty("placeholder", out var placeholder))
-        {
-            textBox.PlaceholderText = placeholder.GetString();
-        }
-
-        if (jsonElement.TryGetProperty("checkSpelling", out var checkSpelling))
-        {
-            textBox.IsSpellCheckEnabled = checkSpelling.GetBoolean();
-        }
-
-        // Apply property bindings
-
-        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, _buildErrors))
-        {
-            viewModel.ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath, _buildErrors);
-        }
-
-        textBox.KeyDown += (sender, e) =>
-        {
-            if (e.Key == VirtualKey.Enter)
-            {
-                // Pressing enter moves focus to next focusable element
-                var options = new FindNextElementOptions
-                {
-                    SearchRoot = ((UIElement)sender).XamlRoot!.Content
-                };
-
-                FocusManager.TryMoveFocus(FocusNavigationDirection.Next, options);
-
-                e.Handled = true;
-            }
-        };
-
-        viewModel.Initialize();
-
-        return textBox;
     }
 
     private Button? CreateButton(JsonElement jsonElement)

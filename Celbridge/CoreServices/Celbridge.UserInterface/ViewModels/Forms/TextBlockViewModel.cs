@@ -17,7 +17,7 @@ public class TextBlockViewModel : ElementViewModel
         var textBlock = new TextBlock();
         textBlock.DataContext = viewModel;
 
-        // Todo: Return an error result instead of populating the list
+        // Todo: Use result pattern instead of populating this list
         var buildErrors = new List<string>();
 
         if (!viewModel.ApplyAlignmentConfig(textBlock, jsonElement, buildErrors))
