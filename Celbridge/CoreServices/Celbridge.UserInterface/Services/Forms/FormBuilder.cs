@@ -153,7 +153,15 @@ public class FormBuilder
                 break;
 
             case "Button":
-                uiElement = CreateButton(jsonElement);
+                var buttonResult = ButtonViewModel.CreateButton(jsonElement, _formDataProvider);
+                if (buttonResult.IsFailure)
+                {
+                    _buildErrors.Add(buttonResult.Error);
+                }
+                else
+                {
+                    uiElement = buttonResult.Value;
+                }
                 break;
         }
 
@@ -164,124 +172,5 @@ public class FormBuilder
         }
 
         return uiElement;
-    }
-
-    private Button? CreateButton(JsonElement jsonElement)
-    {
-        Guard.IsNotNull(_formDataProvider);
-
-        var button = new Button();
-
-        var viewModel = _serviceProvider.GetRequiredService<ButtonViewModel>();
-        viewModel.FormDataProvider = _formDataProvider;
-
-        button.DataContext = viewModel;
-
-        if (!viewModel.ApplyAlignmentConfig(button, jsonElement, _buildErrors))
-        {
-            _buildErrors.Add($"Failed to apply alignment configuration to Button");
-            return null;
-        }
-
-        viewModel.ApplyTooltip(button, jsonElement);
-
-        // Check all specified properties are supported
-
-        var validConfigKeys = new HashSet<string>()
-        {
-            "icon",
-            "text",
-            "enabledBinding",
-            "buttonId"
-        };
-        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, _buildErrors))
-        {
-            _buildErrors.Add("Invalid Button configuration");
-            return null;
-        }
-
-        // Add a horizontal panel for the button content
-
-        var buttonPanel = new StackPanel();
-        buttonPanel.Orientation = Orientation.Horizontal;
-        button.Content = buttonPanel;
-
-        //
-        // Set the button icon (optional)
-        //
-
-        var buttonIcon = string.Empty;
-        if (jsonElement.TryGetProperty("icon", out var icon))
-        {
-            buttonIcon = icon.GetString();
-        }
-
-        if (!string.IsNullOrEmpty(buttonIcon))
-        {
-            string glyph = string.Empty;
-            if (Enum.TryParse(buttonIcon, out Symbol symbol))
-            {
-                // String is a valid Symbol enum value
-                glyph = ((char)symbol).ToString();
-            }
-            else
-            {
-                // Try the string as a unicode character
-                glyph = buttonIcon;
-            }
-
-            var fontIcon = new FontIcon()
-                .Glyph(glyph);
-
-            buttonPanel.Children.Add(fontIcon);
-        }
-
-        //
-        // Set the button text (optional)
-        //
-
-        var buttonText = string.Empty;
-        if (jsonElement.TryGetProperty("text", out var text))
-        {
-            buttonText = text.GetString();
-        }
-
-        if (!string.IsNullOrEmpty(buttonText))
-        {
-            var textBlock = new TextBlock()
-                .Text(buttonText);
-
-            if (buttonPanel.Children.Count > 0)
-            {
-                // Add a gap between the icon and the text
-                textBlock.Margin = new Thickness(8, 0, 0, 0);
-            }
-
-            buttonPanel.Children.Add(textBlock);
-        }
-
-        // Get the buttonId
-        string buttonId = string.Empty;
-        if (jsonElement.TryGetProperty("buttonId", out var buttonIdElement))
-        {
-            buttonId = buttonIdElement.GetString() ?? string.Empty;
-        }
-
-        viewModel.ButtonId = buttonId;
-
-        button.DataContext = viewModel;
-
-        if (!string.IsNullOrEmpty(buttonId))
-        {
-            // Bind the button click handler to the button view model
-            button.Click += (sender, args) =>
-            {
-                viewModel.OnButtonClicked();
-            };
-        }
-
-        viewModel.Initialize();
-
-        return button;
     }
 }

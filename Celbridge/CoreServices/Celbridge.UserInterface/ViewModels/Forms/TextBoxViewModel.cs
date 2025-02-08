@@ -8,13 +8,17 @@ public class TextBoxViewModel : ElementViewModel
 {
     public static Result<UIElement> CreateTextBox(JsonElement jsonElement, IFormDataProvider formDataProvider)
     {
-        // Create the TextBox view model
         var viewModel = ServiceLocator.AcquireService<TextBoxViewModel>();
         viewModel.FormDataProvider = formDataProvider;
 
+        return viewModel.InitializeElement(jsonElement);
+    }
+
+    private Result<UIElement> InitializeElement(JsonElement jsonElement)
+    {
         // Create the TextBox view
         var textBox = new TextBox();
-        textBox.DataContext = viewModel;
+        textBox.DataContext = this;
 
         // Todo: Set this from a property
         textBox.TextWrapping = TextWrapping.Wrap;
@@ -22,7 +26,7 @@ public class TextBoxViewModel : ElementViewModel
         // Todo: Use result pattern instead of populating this list
         var buildErrors = new List<string>();
 
-        if (!viewModel.ApplyAlignmentConfig(textBox, jsonElement, buildErrors))
+        if (!ApplyAlignmentConfig(textBox, jsonElement, buildErrors))
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to TextBox");
         }
@@ -36,7 +40,7 @@ public class TextBoxViewModel : ElementViewModel
             "placeholder",
             "checkSpelling"
         };
-        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
+        if (!ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
         {
             return Result<UIElement>.Fail("Invalid TextBox configuration");
         }
@@ -61,9 +65,9 @@ public class TextBoxViewModel : ElementViewModel
 
         // Apply property bindings
 
-        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
+        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
         {
-            viewModel.ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath, buildErrors);
+            ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath, buildErrors);
         }
 
         textBox.KeyDown += (sender, e) =>
@@ -82,11 +86,11 @@ public class TextBoxViewModel : ElementViewModel
             }
         };
 
-        var initResult = viewModel.Initialize();
-        if (initResult.IsFailure)
+        var applyResult = ApplyBindings();
+        if (applyResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to initialize TextBox view model")
-                .WithErrors(initResult);
+            return Result<UIElement>.Fail($"Failed to apply bindings")
+                .WithErrors(applyResult);
         }
 
         return Result<UIElement>.Ok(textBox);

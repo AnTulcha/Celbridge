@@ -19,7 +19,7 @@ public abstract partial class ElementViewModel : ObservableObject
 
     public string PropertyPath { get; set; } = string.Empty;
 
-    public Result Initialize()
+    public Result ApplyBindings()
     {
         if (FormDataProvider is null)
         {

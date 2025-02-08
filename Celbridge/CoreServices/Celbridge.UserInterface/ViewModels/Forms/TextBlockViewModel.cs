@@ -13,14 +13,19 @@ public class TextBlockViewModel : ElementViewModel
         var viewModel = ServiceLocator.AcquireService<TextBlockViewModel>();
         viewModel.FormDataProvider = formDataProvider;
 
+        return viewModel.InitializeElement(jsonElement);
+    }
+
+    private Result<UIElement> InitializeElement(JsonElement jsonElement)
+    {
         // Create the TextBlock view
         var textBlock = new TextBlock();
-        textBlock.DataContext = viewModel;
+        textBlock.DataContext = this;
 
         // Todo: Use result pattern instead of populating this list
         var buildErrors = new List<string>();
 
-        if (!viewModel.ApplyAlignmentConfig(textBlock, jsonElement, buildErrors))
+        if (!ApplyAlignmentConfig(textBlock, jsonElement, buildErrors))
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration");
         }
@@ -35,7 +40,7 @@ public class TextBlockViewModel : ElementViewModel
             "bold"
         };
 
-        if (!viewModel.ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
+        if (!ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
         {
             return Result<UIElement>.Fail("Invalid TextBlock configuration");
         }
@@ -66,9 +71,9 @@ public class TextBlockViewModel : ElementViewModel
 
         // Apply bound properties
 
-        if (viewModel.GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
+        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
         {
-            viewModel.ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath, buildErrors);
+            ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath, buildErrors);
         }
 
         if (buildErrors.Count != 0)
@@ -77,11 +82,11 @@ public class TextBlockViewModel : ElementViewModel
             return Result<UIElement>.Fail(buildError);
         }
 
-        var initResult = viewModel.Initialize();
-        if (initResult.IsFailure)
+        var applyResult = ApplyBindings();
+        if (applyResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Failed to initialize TextBlock view model")
-                .WithErrors(initResult);
+            return Result<UIElement>.Fail("Failed to apply bindings")
+                .WithErrors(applyResult);
         }
 
         return Result<UIElement>.Ok(textBlock);

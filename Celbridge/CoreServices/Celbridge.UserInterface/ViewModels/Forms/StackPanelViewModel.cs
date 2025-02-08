@@ -12,13 +12,18 @@ public class StackPanelViewModel : ElementViewModel
         var viewModel = ServiceLocator.AcquireService<StackPanelViewModel>();
         viewModel.FormDataProvider = formBuilder.FormDataProvider;
 
+        return viewModel.InitializeElement(jsonElement, formBuilder);
+    }
+
+    private Result<UIElement> InitializeElement(JsonElement jsonElement, FormBuilder formBuilder)
+    {
         var stackPanel = new StackPanel();
-        stackPanel.DataContext = viewModel;
+        stackPanel.DataContext = this;
 
         // Todo: Use result pattern instead of populating this list
         var buildErrors = new List<string>();
 
-        if (!viewModel.ApplyAlignmentConfig(stackPanel, jsonElement, buildErrors))
+        if (!ApplyAlignmentConfig(stackPanel, jsonElement, buildErrors))
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to StackPanel");
         }
@@ -68,7 +73,7 @@ public class StackPanelViewModel : ElementViewModel
             }
         }
 
-        var initResult = viewModel.Initialize();
+        var initResult = ApplyBindings();
         if (initResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to initialize StackPanel view model");
