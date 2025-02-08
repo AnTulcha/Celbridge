@@ -1,21 +1,17 @@
 using Celbridge.Forms;
 using Celbridge.Logging;
 using Celbridge.UserInterface.ViewModels.Forms;
-using Microsoft.UI.Text;
 using System.Text.Json;
-using Windows.System;
-using Windows.UI.Text;
 
 namespace Celbridge.UserInterface.Services.Forms;
 
 public class FormBuilder
 {
-    private const int DefaultStackPanelSpacing = 8;
-
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<FormBuilder> _logger;
 
     private IFormDataProvider? _formDataProvider;
+    public IFormDataProvider FormDataProvider => _formDataProvider!;
 
     private List<string> _buildErrors = new();
 
@@ -36,7 +32,7 @@ public class FormBuilder
         {
             Orientation = Orientation.Vertical,
             DataContext = formDataProvider,
-            Spacing = DefaultStackPanelSpacing
+            Spacing = StackPanelViewModel.DefaultStackPanelSpacing
         };
 
         try
@@ -100,7 +96,7 @@ public class FormBuilder
         return Result<object>.Ok(formPanel);
     }
 
-    private UIElement? CreateUIElementFromJsonElement(JsonElement jsonElement)
+    public UIElement? CreateUIElementFromJsonElement(JsonElement jsonElement)
     {
         Guard.IsNotNull(_formDataProvider);
 
@@ -121,7 +117,15 @@ public class FormBuilder
         switch (elementName)
         {
             case "StackPanel":
-                uiElement = CreateStackPanel(jsonElement);
+                var stackPanelResult = StackPanelViewModel.CreateStackPanel(jsonElement, this);
+                if (stackPanelResult.IsFailure)
+                {
+                    _buildErrors.Add(stackPanelResult.Error);
+                }
+                else
+                {
+                    uiElement = stackPanelResult.Value;
+                }
                 break;
 
             case "TextBox":
@@ -160,73 +164,6 @@ public class FormBuilder
         }
 
         return uiElement;
-    }
-
-    private StackPanel? CreateStackPanel(JsonElement jsonElement)
-    {
-        Guard.IsNotNull(_formDataProvider);
-
-        var stackPanel = new StackPanel();
-
-        var viewModel = _serviceProvider.GetRequiredService<StackPanelViewModel>();
-        viewModel.FormDataProvider = _formDataProvider;
-
-        stackPanel.DataContext = viewModel;
-
-        if (!viewModel.ApplyAlignmentConfig(stackPanel, jsonElement, _buildErrors))
-        {
-            _buildErrors.Add($"Failed to apply alignment configuration to StackPanel");
-            return null;
-        }
-
-        // Set the spacing between elements
-        if (jsonElement.TryGetProperty("spacing", out var spacing))
-        {
-            stackPanel.Spacing = spacing.GetInt32();
-        }
-        else
-        {
-            stackPanel.Spacing = DefaultStackPanelSpacing;
-        }
-
-        // Set the orientation
-        if (jsonElement.TryGetProperty("orientation", out var orientation))
-        {
-            var orientationString = orientation.GetString();
-            if (orientationString == "Horizontal")
-            {
-                stackPanel.Orientation = Orientation.Horizontal;
-            }
-            else if (orientationString == "Vertical")
-            {
-                stackPanel.Orientation = Orientation.Vertical;
-            }
-            else
-            {
-                // Log the error and default to vertical
-                _buildErrors.Add($"Invalid orientation value: '{orientationString}'");
-            }
-        }
-
-        // Add child controls
-        if (jsonElement.TryGetProperty("children", out var children))
-        {
-            foreach (var child in children.EnumerateArray())
-            {
-                var childControl = CreateUIElementFromJsonElement(child);
-                if (childControl is null)
-                {
-                    _buildErrors.Add("Failed to create child control");
-                    continue;
-                }
-
-                stackPanel.Children.Add(childControl);
-            }
-        }
-
-        viewModel.Initialize();
-
-        return stackPanel;
     }
 
     private Button? CreateButton(JsonElement jsonElement)
