@@ -10,13 +10,13 @@ public class StackPanelViewModel : ElementViewModel
     public static Result<UIElement> CreateStackPanel(JsonElement jsonElement, FormBuilder formBuilder)
     {
         var viewModel = ServiceLocator.AcquireService<StackPanelViewModel>();
-        viewModel.FormDataProvider = formBuilder.FormDataProvider;
-
-        return viewModel.InitializeElement(jsonElement, formBuilder);
+        return viewModel.CreateElement(jsonElement, formBuilder);
     }
 
-    private Result<UIElement> InitializeElement(JsonElement jsonElement, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
     {
+        FormDataProvider = formBuilder.FormDataProvider;
+
         var stackPanel = new StackPanel();
         stackPanel.DataContext = this;
 
@@ -61,7 +61,7 @@ public class StackPanelViewModel : ElementViewModel
         {
             foreach (var child in children.EnumerateArray())
             {
-                var childControl = formBuilder.CreateUIElementFromJsonElement(child);
+                var childControl = formBuilder.CreateFormElement(child);
                 if (childControl is null)
                 {
                     return Result<UIElement>.Fail("Failed to create child control");

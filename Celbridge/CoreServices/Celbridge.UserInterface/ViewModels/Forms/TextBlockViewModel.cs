@@ -1,4 +1,4 @@
-using Celbridge.Forms;
+using Celbridge.UserInterface.Services.Forms;
 using Microsoft.UI.Text;
 using System.Text.Json;
 using Windows.UI.Text;
@@ -7,17 +7,17 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 
 public class TextBlockViewModel : ElementViewModel
 {
-    public static Result<UIElement> CreateTextBlock(JsonElement jsonElement, IFormDataProvider formDataProvider)
+    public static Result<UIElement> CreateTextBlock(JsonElement jsonElement, FormBuilder formBuilder)
     {
         // Create the TextBlock view model
         var viewModel = ServiceLocator.AcquireService<TextBlockViewModel>();
-        viewModel.FormDataProvider = formDataProvider;
-
-        return viewModel.InitializeElement(jsonElement);
+        return viewModel.CreateElement(jsonElement, formBuilder);
     }
 
-    private Result<UIElement> InitializeElement(JsonElement jsonElement)
+    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
     {
+        FormDataProvider = formBuilder.FormDataProvider;
+
         // Create the TextBlock view
         var textBlock = new TextBlock();
         textBlock.DataContext = this;

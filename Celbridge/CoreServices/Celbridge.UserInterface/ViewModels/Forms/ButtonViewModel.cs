@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Celbridge.Forms;
+using Celbridge.UserInterface.Services.Forms;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
@@ -12,16 +13,16 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
         FormDataProvider?.OnButtonClicked(ButtonId);
     }
 
-    public static Result<UIElement> CreateButton(JsonElement jsonElement, IFormDataProvider formDataProvider)
+    public static Result<UIElement> CreateButton(JsonElement jsonElement, FormBuilder formBuilder)
     {
         var viewModel = ServiceLocator.AcquireService<ButtonViewModel>();
-        viewModel.FormDataProvider = formDataProvider;
-
-        return viewModel.InitializeElement(jsonElement);
+        return viewModel.CreateElement(jsonElement, formBuilder);
     }
 
-    private Result<UIElement> InitializeElement(JsonElement jsonElement)
+    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
     {
+        FormDataProvider = formBuilder.FormDataProvider;
+
         var button = new Button();
         button.DataContext = this;
 

@@ -1,21 +1,21 @@
 using System.Text.Json;
-using Celbridge.Forms;
+using Celbridge.UserInterface.Services.Forms;
 using Windows.System;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
 public class TextBoxViewModel : ElementViewModel
 {
-    public static Result<UIElement> CreateTextBox(JsonElement jsonElement, IFormDataProvider formDataProvider)
+    public static Result<UIElement> CreateTextBox(JsonElement jsonElement, FormBuilder formBuilder)
     {
         var viewModel = ServiceLocator.AcquireService<TextBoxViewModel>();
-        viewModel.FormDataProvider = formDataProvider;
-
-        return viewModel.InitializeElement(jsonElement);
+        return viewModel.CreateElement(jsonElement, formBuilder);
     }
 
-    private Result<UIElement> InitializeElement(JsonElement jsonElement)
+    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
     {
+        FormDataProvider = formBuilder.FormDataProvider;
+
         // Create the TextBox view
         var textBox = new TextBox();
         textBox.DataContext = this;

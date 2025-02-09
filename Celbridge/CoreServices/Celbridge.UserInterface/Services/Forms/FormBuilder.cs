@@ -39,7 +39,7 @@ public class FormBuilder
         {
             foreach (var jsonElement in formConfig.EnumerateArray())
             {
-                var uiElement = CreateUIElementFromJsonElement(jsonElement);
+                var uiElement = CreateFormElement(jsonElement);
                 if (uiElement is null)
                 {
                     // The build has failed, but continue to report all the errors we can find
@@ -96,13 +96,13 @@ public class FormBuilder
         return Result<object>.Ok(formPanel);
     }
 
-    public UIElement? CreateUIElementFromJsonElement(JsonElement jsonElement)
+    public UIElement? CreateFormElement(JsonElement jsonElement)
     {
         Guard.IsNotNull(_formDataProvider);
 
         if (jsonElement.ValueKind != JsonValueKind.Object)
         {
-            _buildErrors.Add("Form array element is not an object");
+            _buildErrors.Add("Form element config is not an object");
             return null;
         }
 
@@ -129,7 +129,7 @@ public class FormBuilder
                 break;
 
             case "TextBox":
-                var textBoxResult = TextBoxViewModel.CreateTextBox(jsonElement, _formDataProvider);
+                var textBoxResult = TextBoxViewModel.CreateTextBox(jsonElement, this);
                 if (textBoxResult.IsFailure)
                 {
                     _buildErrors.Add(textBoxResult.Error);
@@ -141,7 +141,7 @@ public class FormBuilder
                 break;
 
             case "TextBlock":
-                var textBlockResult = TextBlockViewModel.CreateTextBlock(jsonElement, _formDataProvider);
+                var textBlockResult = TextBlockViewModel.CreateTextBlock(jsonElement, this);
                 if (textBlockResult.IsFailure)
                 {
                     _buildErrors.Add(textBlockResult.Error);
@@ -153,7 +153,7 @@ public class FormBuilder
                 break;
 
             case "Button":
-                var buttonResult = ButtonViewModel.CreateButton(jsonElement, _formDataProvider);
+                var buttonResult = ButtonViewModel.CreateButton(jsonElement, this);
                 if (buttonResult.IsFailure)
                 {
                     _buildErrors.Add(buttonResult.Error);

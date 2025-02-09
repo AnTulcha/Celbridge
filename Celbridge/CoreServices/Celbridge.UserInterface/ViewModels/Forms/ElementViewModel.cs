@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Celbridge.Forms;
+using Celbridge.UserInterface.Services.Forms;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
@@ -18,6 +19,8 @@ public abstract partial class ElementViewModel : ObservableObject
     public IFormDataProvider? FormDataProvider { get; set; }
 
     public string PropertyPath { get; set; } = string.Empty;
+
+    protected abstract Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder);
 
     public Result Finalize()
     {
