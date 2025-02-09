@@ -2,11 +2,11 @@
   {
     "element": "TextBox",
     "header": "Editor Mode",
-    "textBinding": "/editorMode"
+    "text": "/editorMode"
   },
   {
     "element": "TextBlock",
-    "text": "Select editor mode"
+    "text": "/editorMode"
   },
   {
     "element": "StackPanel",

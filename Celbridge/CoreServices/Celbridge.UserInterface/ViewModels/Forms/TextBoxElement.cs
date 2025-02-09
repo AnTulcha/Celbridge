@@ -33,7 +33,7 @@ public class TextBoxElement : FormElement
 
         var validConfigKeys = new HashSet<string>()
         {
-            "textBinding",
+            "text",
             "header",
             "placeholder",
             "checkSpelling"
@@ -66,21 +66,26 @@ public class TextBoxElement : FormElement
 
         // Apply property bindings
 
-        var pathResult = GetBindingPropertyPath(config, "textBinding");
-        if (pathResult.IsFailure)
+        if (config.TryGetProperty("text", out var textProperty))
         {
-            return Result<UIElement>.Fail($"Failed to get text binding property path")
-                .WithErrors(pathResult);
-        }
-        var (hasBinding, propertyPath) = pathResult.Value;
-
-        if (hasBinding)
-        {
-            var bindingResult = ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
-            if (bindingResult.IsFailure)
+            if (textProperty.ValueKind != JsonValueKind.String)
             {
-                return Result<UIElement>.Fail($"Failed to apply text binding")
-                    .WithErrors(bindingResult);
+                return Result<UIElement>.Fail("'text' property must be a string");
+            }
+            var text = textProperty.GetString()!;
+
+            if (text.StartsWith('/'))
+            {
+                var bindingResult = ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, text);
+                if (bindingResult.IsFailure)
+                {
+                    return Result<UIElement>.Fail("Failed to apply text binding")
+                        .WithErrors(bindingResult);
+                }
+            }
+            else
+            {
+                return Result<UIElement>.Fail("'text' property must specify a binding");
             }
         }
 
