@@ -23,10 +23,8 @@ public class TextBoxViewModel : ElementViewModel
         // Todo: Set this from a property
         textBox.TextWrapping = TextWrapping.Wrap;
 
-        // Todo: Use result pattern instead of populating this list
-        var buildErrors = new List<string>();
-
-        if (!ApplyAlignmentConfig(textBox, jsonElement, buildErrors))
+        var alignmentResult = ApplyAlignmentConfig(textBox, jsonElement);
+        if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to TextBox");
         }
@@ -40,9 +38,12 @@ public class TextBoxViewModel : ElementViewModel
             "placeholder",
             "checkSpelling"
         };
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
+
+        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid TextBox configuration");
+            return Result<UIElement>.Fail("Invalid TextBox configuration")
+                .WithErrors(validateResult);
         }
 
         // Apply unbound properties
@@ -65,9 +66,22 @@ public class TextBoxViewModel : ElementViewModel
 
         // Apply property bindings
 
-        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
+        var pathResult = GetBindingPropertyPath(jsonElement, "textBinding");
+        if (pathResult.IsFailure)
         {
-            ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath, buildErrors);
+            return Result<UIElement>.Fail($"Failed to get text binding property path")
+                .WithErrors(pathResult);
+        }
+        var (hasBinding, propertyPath) = pathResult.Value;
+
+        if (hasBinding)
+        {
+            var bindingResult = ApplyBinding(textBox, TextBox.TextProperty, BindingMode.TwoWay, propertyPath);
+            if (bindingResult.IsFailure)
+            {
+                return Result<UIElement>.Fail($"Failed to apply text binding")
+                    .WithErrors(bindingResult);
+            }
         }
 
         textBox.KeyDown += (sender, e) =>
@@ -86,11 +100,11 @@ public class TextBoxViewModel : ElementViewModel
             }
         };
 
-        var applyResult = ApplyBindings();
-        if (applyResult.IsFailure)
+        var finalizeResult = Finalize();
+        if (finalizeResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply bindings")
-                .WithErrors(applyResult);
+            return Result<UIElement>.Fail($"Failed to finalize TextBox element")
+                .WithErrors(finalizeResult);
         }
 
         return Result<UIElement>.Ok(textBox);

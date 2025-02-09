@@ -22,12 +22,11 @@ public class TextBlockViewModel : ElementViewModel
         var textBlock = new TextBlock();
         textBlock.DataContext = this;
 
-        // Todo: Use result pattern instead of populating this list
-        var buildErrors = new List<string>();
-
-        if (!ApplyAlignmentConfig(textBlock, jsonElement, buildErrors))
+        var alignmentResult = ApplyAlignmentConfig(textBlock, jsonElement);
+        if (alignmentResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply alignment configuration");
+            return Result<UIElement>.Fail($"Failed to apply alignment configuration")
+                .WithErrors(alignmentResult);
         }
 
         // Check all specified properties are supported
@@ -40,9 +39,11 @@ public class TextBlockViewModel : ElementViewModel
             "bold"
         };
 
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
+        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid TextBlock configuration");
+            return Result<UIElement>.Fail("Invalid TextBlock configuration")
+                .WithErrors(validateResult);
         }
 
         // Apply property bindings
@@ -71,22 +72,29 @@ public class TextBlockViewModel : ElementViewModel
 
         // Apply bound properties
 
-        if (GetBindingPropertyPath(jsonElement, "textBinding", out var propertyPath, buildErrors))
+        var pathResult = GetBindingPropertyPath(jsonElement, "textBinding");
+        if (pathResult.IsFailure)
         {
-            ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath, buildErrors);
+            return Result<UIElement>.Fail("Failed to get binding property path")
+                .WithErrors(pathResult);
+        }
+        var (hasBinding, propertyPath) = pathResult.Value;
+
+        if (hasBinding)
+        {
+            var bindingResult = ApplyBinding(textBlock, TextBlock.TextProperty, BindingMode.OneWay, propertyPath);
+            if (bindingResult.IsFailure)
+            {
+                return Result<UIElement>.Fail("Failed to apply text binding")
+                    .WithErrors(bindingResult);
+            }
         }
 
-        if (buildErrors.Count != 0)
+        var finalizeResult = Finalize();
+        if (finalizeResult.IsFailure)
         {
-            var buildError = buildErrors[0];
-            return Result<UIElement>.Fail(buildError);
-        }
-
-        var applyResult = ApplyBindings();
-        if (applyResult.IsFailure)
-        {
-            return Result<UIElement>.Fail("Failed to apply bindings")
-                .WithErrors(applyResult);
+            return Result<UIElement>.Fail("Failed to finalize TextBlock element")
+                .WithErrors(finalizeResult);
         }
 
         return Result<UIElement>.Ok(textBlock);

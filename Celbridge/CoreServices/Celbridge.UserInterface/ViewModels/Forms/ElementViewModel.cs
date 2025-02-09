@@ -19,7 +19,7 @@ public abstract partial class ElementViewModel : ObservableObject
 
     public string PropertyPath { get; set; } = string.Empty;
 
-    public Result ApplyBindings()
+    public Result Finalize()
     {
         if (FormDataProvider is null)
         {
@@ -82,7 +82,7 @@ public abstract partial class ElementViewModel : ObservableObject
         }
     }
 
-    private Result UpdateValue()
+    protected Result UpdateValue()
     {
         Guard.IsNotNull(FormDataProvider);
 
@@ -106,40 +106,33 @@ public abstract partial class ElementViewModel : ObservableObject
         return Result.Ok();
     }
 
-    public bool GetBindingPropertyPath(JsonElement jsonElement, string configPropertyName, out string bindingPropertyPath, List<string> buildErrors)
+    protected Result<(bool, string)> GetBindingPropertyPath(JsonElement jsonElement, string configPropertyName)
     {
-        bindingPropertyPath = string.Empty;
-
         if (!jsonElement.TryGetProperty(configPropertyName, out var bindingConfig))
         {
-            // Config does not contain the specified property.
-            // The client decides if this is an error or not.
-            return false;
+            // Call succeeds, but result bool is false to indicate property is not present
+            return Result<(bool, string)>.Ok((false, string.Empty));
         }
 
-        var path = bindingConfig.GetString();
-        if (string.IsNullOrEmpty(path))
+        var bindingPropertyPath = bindingConfig.GetString();
+        if (string.IsNullOrEmpty(bindingPropertyPath))
         {
-            buildErrors.Add($"Binding property '{configPropertyName}' is empty");
-            return false;
+            return Result<(bool, string)>.Fail($"Binding property '{configPropertyName}' is empty");
         }
 
         // Parsed the binding info successfully
-        bindingPropertyPath = path;
-        return true;
+        return Result<(bool, string)>.Ok((true, bindingPropertyPath));
     }
 
-    public void ApplyBinding(
+    protected Result ApplyBinding(
         FrameworkElement frameworkElement,
         DependencyProperty dependencyProperty,
         BindingMode bindingMode,
-        string propertyPath,
-        List<string> buildErrors)
+        string propertyPath)
     {
         if (FormDataProvider is null)
         {
-            buildErrors.Add($"Failed to apply property binding: '{propertyPath}'. Form data provider is null");
-            return;
+            return Result.Fail($"Form data provider is null");
         }
 
         try
@@ -170,11 +163,13 @@ public abstract partial class ElementViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            buildErrors.Add($"An exception occurred when applying property binding: '{propertyPath}'. {ex}");
+            return Result.Fail($"An exception occurred when applying property binding: '{propertyPath}'. {ex}");
         }
+
+        return Result.Ok();
     }
 
-    public bool ValidateConfigKeys(JsonElement jsonElement, HashSet<string> validConfigKeys, List<string> buildErrors)
+    protected Result ValidateConfigKeys(JsonElement jsonElement, HashSet<string> validConfigKeys)
     {
         bool valid = true;
         var keys = new List<string>();
@@ -195,42 +190,46 @@ public abstract partial class ElementViewModel : ObservableObject
 
                 if (!validConfigKeys.Contains(configKey))
                 {
-                    buildErrors.Add($"Invalid form element property: '{configKey}'");
-                    valid = false;
+                    return Result.Fail($"Invalid form element property: '{configKey}'");
                 }
             }
         }
 
-        return valid;
+        return Result.Ok();
     }
 
-    public bool ApplyAlignmentConfig(FrameworkElement frameworkElement, JsonElement config, List<string> buildErrors)
+    protected Result ApplyAlignmentConfig(FrameworkElement frameworkElement, JsonElement config)
     {
-        if (config.TryGetProperty("horizontalAlignment", out var horizontalAlignment))
+        if (config.TryGetProperty("horizontalAlignment", out var horizontalProperty))
         {
-            switch (horizontalAlignment.GetString())
+            var horizontalAlignment = horizontalProperty.GetString();
+            switch (horizontalAlignment)
             {
                 case "Left":
                     frameworkElement.HorizontalAlignment = HorizontalAlignment.Left;
                     break;
+
                 case "Center":
                     frameworkElement.HorizontalAlignment = HorizontalAlignment.Center;
                     break;
+
                 case "Right":
                     frameworkElement.HorizontalAlignment = HorizontalAlignment.Right;
                     break;
+
                 case "Stretch":
                     frameworkElement.HorizontalAlignment = HorizontalAlignment.Stretch;
                     break;
+
                 default:
-                    buildErrors.Add($"Invalid horizontal alignment value: '{horizontalAlignment.GetString()}'");
-                    return false;
+                    return Result.Fail($"Invalid horizontal alignment value: '{horizontalAlignment}'");
             }
         }
 
-        if (config.TryGetProperty("verticalAlignment", out var verticalAlignment))
+        if (config.TryGetProperty("verticalAlignment", out var verticalAlignmentProperty))
         {
-            switch (verticalAlignment.GetString())
+            var verticalAlignment = verticalAlignmentProperty.GetString();
+            switch (verticalAlignment)
             {
                 case "Top":
                     frameworkElement.VerticalAlignment = VerticalAlignment.Top;
@@ -245,20 +244,18 @@ public abstract partial class ElementViewModel : ObservableObject
                     frameworkElement.VerticalAlignment = VerticalAlignment.Stretch;
                     break;
                 default:
-                    buildErrors.Add($"Invalid vertical alignment value: '{horizontalAlignment.GetString()}'");
-                    return false;
+                    return Result.Fail($"Invalid vertical alignment value: '{verticalAlignment}'");
             }
         }
 
-        return true;
+        return Result.Ok();
     }
 
-    public void ApplyTooltip(FrameworkElement frameworkElement, JsonElement config)
+    protected void ApplyTooltip(FrameworkElement frameworkElement, JsonElement config)
     {
         if (config.TryGetProperty("tooltip", out var tooltipText))
         {
             ToolTipService.SetToolTip(frameworkElement, tooltipText);
         }
     }
-
 }

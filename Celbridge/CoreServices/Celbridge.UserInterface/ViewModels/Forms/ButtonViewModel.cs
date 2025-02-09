@@ -25,12 +25,11 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
         var button = new Button();
         button.DataContext = this;
 
-        // Todo: Use result pattern instead of populating this list
-        var buildErrors = new List<string>();
-
-        if (!ApplyAlignmentConfig(button, jsonElement, buildErrors))
+        var alignmentResult = ApplyAlignmentConfig(button, jsonElement);
+        if (alignmentResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply alignment configuration to Button");
+            return Result<UIElement>.Fail($"Failed to apply alignment configuration to Button")
+                .WithErrors(alignmentResult);
         }
 
         ApplyTooltip(button, jsonElement);
@@ -44,9 +43,12 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
             "enabledBinding",
             "buttonId"
         };
-        if (!ValidateConfigKeys(jsonElement, validConfigKeys, buildErrors))
+
+        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid Button configuration");
+            return Result<UIElement>.Fail("Invalid Button configuration")
+                .WithErrors(validateResult);
         }
 
         // Add a horizontal panel for the button content
@@ -127,11 +129,11 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
             };
         }
 
-        var initResult = ApplyBindings();
-        if (initResult.IsFailure)
+        var finalizeResult = Finalize();
+        if (finalizeResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Failed to initialize Button view model")
-                .WithErrors(initResult);
+            return Result<UIElement>.Fail("Failed to finalize Button element")
+                .WithErrors(finalizeResult);
         }
 
         return Result<UIElement>.Ok(button);

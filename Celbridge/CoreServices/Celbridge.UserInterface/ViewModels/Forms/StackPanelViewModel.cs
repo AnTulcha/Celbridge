@@ -20,12 +20,11 @@ public class StackPanelViewModel : ElementViewModel
         var stackPanel = new StackPanel();
         stackPanel.DataContext = this;
 
-        // Todo: Use result pattern instead of populating this list
-        var buildErrors = new List<string>();
-
-        if (!ApplyAlignmentConfig(stackPanel, jsonElement, buildErrors))
+        var alignmentResult = ApplyAlignmentConfig(stackPanel, jsonElement);
+        if (alignmentResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply alignment configuration to StackPanel");
+            return Result<UIElement>.Fail($"Failed to apply alignment configuration to StackPanel")
+                .WithErrors(alignmentResult);
         }
 
         // Set the spacing between elements
@@ -53,7 +52,7 @@ public class StackPanelViewModel : ElementViewModel
             else
             {
                 // Log the error and default to vertical
-                buildErrors.Add($"Invalid orientation value: '{orientationString}'");
+                return Result<UIElement>.Fail($"Invalid orientation value: '{orientationString}'");
             }
         }
 
@@ -65,18 +64,17 @@ public class StackPanelViewModel : ElementViewModel
                 var childControl = formBuilder.CreateUIElementFromJsonElement(child);
                 if (childControl is null)
                 {
-                    buildErrors.Add("Failed to create child control");
-                    continue;
+                    return Result<UIElement>.Fail("Failed to create child control");
                 }
 
                 stackPanel.Children.Add(childControl);
             }
         }
 
-        var initResult = ApplyBindings();
-        if (initResult.IsFailure)
+        var finalizeResult = Finalize();
+        if (finalizeResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to initialize StackPanel view model");
+            return Result<UIElement>.Fail($"Failed to finalize StackPanel element");
         }
 
         return Result<UIElement>.Ok(stackPanel);
