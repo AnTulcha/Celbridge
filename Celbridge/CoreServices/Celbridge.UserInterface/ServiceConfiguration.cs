@@ -43,10 +43,10 @@ public static class ServiceConfiguration
         services.AddTransient<ProgressDialogViewModel>();
         services.AddTransient<NewProjectDialogViewModel>();
         services.AddTransient<InputTextDialogViewModel>();
-        services.AddTransient<StackPanelViewModel>();
-        services.AddTransient<TextBoxViewModel>();
-        services.AddTransient<TextBlockViewModel>();
-        services.AddTransient<ButtonViewModel>();
+        services.AddTransient<StackPanelElement>();
+        services.AddTransient<TextBoxElement>();
+        services.AddTransient<TextBlockElement>();
+        services.AddTransient<ButtonElement>();
     }
 
     public static void Initialize()

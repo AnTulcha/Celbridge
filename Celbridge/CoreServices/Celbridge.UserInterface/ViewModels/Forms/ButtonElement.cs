@@ -4,7 +4,7 @@ using Celbridge.UserInterface.Services.Forms;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
-public class ButtonViewModel : ElementViewModel, IButtonViewModel
+public class ButtonElement : FormElement, IButtonElement
 {
     public string ButtonId = string.Empty;
 
@@ -13,27 +13,27 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
         FormDataProvider?.OnButtonClicked(ButtonId);
     }
 
-    public static Result<UIElement> CreateButton(JsonElement jsonElement, FormBuilder formBuilder)
+    public static Result<UIElement> CreateButton(JsonElement config, FormBuilder formBuilder)
     {
-        var viewModel = ServiceLocator.AcquireService<ButtonViewModel>();
-        return viewModel.CreateElement(jsonElement, formBuilder);
+        var formElement = ServiceLocator.AcquireService<ButtonElement>();
+        return formElement.CreateElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
         var button = new Button();
         button.DataContext = this;
 
-        var alignmentResult = ApplyAlignmentConfig(button, jsonElement);
+        var alignmentResult = ApplyAlignmentConfig(button, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to Button")
                 .WithErrors(alignmentResult);
         }
 
-        ApplyTooltip(button, jsonElement);
+        ApplyTooltip(button, config);
 
         // Check all specified properties are supported
 
@@ -45,7 +45,7 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
             "buttonId"
         };
 
-        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        var validateResult = ValidateConfigKeys(config, validConfigKeys);
         if (validateResult.IsFailure)
         {
             return Result<UIElement>.Fail("Invalid Button configuration")
@@ -63,7 +63,7 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
         //
 
         var buttonIcon = string.Empty;
-        if (jsonElement.TryGetProperty("icon", out var icon))
+        if (config.TryGetProperty("icon", out var icon))
         {
             buttonIcon = icon.GetString();
         }
@@ -93,7 +93,7 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
         //
 
         var buttonText = string.Empty;
-        if (jsonElement.TryGetProperty("text", out var text))
+        if (config.TryGetProperty("text", out var text))
         {
             buttonText = text.GetString();
         }
@@ -114,7 +114,7 @@ public class ButtonViewModel : ElementViewModel, IButtonViewModel
 
         // Get the buttonId
         string buttonId = string.Empty;
-        if (jsonElement.TryGetProperty("buttonId", out var buttonIdElement))
+        if (config.TryGetProperty("buttonId", out var buttonIdElement))
         {
             buttonId = buttonIdElement.GetString() ?? string.Empty;
         }

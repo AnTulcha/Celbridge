@@ -4,15 +4,15 @@ using Windows.System;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
-public class TextBoxViewModel : ElementViewModel
+public class TextBoxElement : FormElement
 {
-    public static Result<UIElement> CreateTextBox(JsonElement jsonElement, FormBuilder formBuilder)
+    public static Result<UIElement> CreateTextBox(JsonElement config, FormBuilder formBuilder)
     {
-        var viewModel = ServiceLocator.AcquireService<TextBoxViewModel>();
-        return viewModel.CreateElement(jsonElement, formBuilder);
+        var formElement = ServiceLocator.AcquireService<TextBoxElement>();
+        return formElement.CreateElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
@@ -23,7 +23,7 @@ public class TextBoxViewModel : ElementViewModel
         // Todo: Set this from a property
         textBox.TextWrapping = TextWrapping.Wrap;
 
-        var alignmentResult = ApplyAlignmentConfig(textBox, jsonElement);
+        var alignmentResult = ApplyAlignmentConfig(textBox, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to TextBox");
@@ -39,7 +39,7 @@ public class TextBoxViewModel : ElementViewModel
             "checkSpelling"
         };
 
-        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        var validateResult = ValidateConfigKeys(config, validConfigKeys);
         if (validateResult.IsFailure)
         {
             return Result<UIElement>.Fail("Invalid TextBox configuration")
@@ -48,25 +48,25 @@ public class TextBoxViewModel : ElementViewModel
 
         // Apply unbound properties
 
-        if (jsonElement.TryGetProperty("header", out var header))
+        if (config.TryGetProperty("header", out var header))
         {
             // Todo: Support localization
             textBox.Header = header.GetString();
         }
 
-        if (jsonElement.TryGetProperty("placeholder", out var placeholder))
+        if (config.TryGetProperty("placeholder", out var placeholder))
         {
             textBox.PlaceholderText = placeholder.GetString();
         }
 
-        if (jsonElement.TryGetProperty("checkSpelling", out var checkSpelling))
+        if (config.TryGetProperty("checkSpelling", out var checkSpelling))
         {
             textBox.IsSpellCheckEnabled = checkSpelling.GetBoolean();
         }
 
         // Apply property bindings
 
-        var pathResult = GetBindingPropertyPath(jsonElement, "textBinding");
+        var pathResult = GetBindingPropertyPath(config, "textBinding");
         if (pathResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to get text binding property path")

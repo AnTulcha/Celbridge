@@ -3,24 +3,24 @@ using Celbridge.UserInterface.Services.Forms;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
-public class StackPanelViewModel : ElementViewModel
+public class StackPanelElement : FormElement
 {
     public const int DefaultStackPanelSpacing = 8;
 
-    public static Result<UIElement> CreateStackPanel(JsonElement jsonElement, FormBuilder formBuilder)
+    public static Result<UIElement> CreateStackPanel(JsonElement config, FormBuilder formBuilder)
     {
-        var viewModel = ServiceLocator.AcquireService<StackPanelViewModel>();
-        return viewModel.CreateElement(jsonElement, formBuilder);
+        var formElement = ServiceLocator.AcquireService<StackPanelElement>();
+        return formElement.CreateElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
         var stackPanel = new StackPanel();
         stackPanel.DataContext = this;
 
-        var alignmentResult = ApplyAlignmentConfig(stackPanel, jsonElement);
+        var alignmentResult = ApplyAlignmentConfig(stackPanel, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to StackPanel")
@@ -28,7 +28,7 @@ public class StackPanelViewModel : ElementViewModel
         }
 
         // Set the spacing between elements
-        if (jsonElement.TryGetProperty("spacing", out var spacing))
+        if (config.TryGetProperty("spacing", out var spacing))
         {
             stackPanel.Spacing = spacing.GetInt32();
         }
@@ -38,7 +38,7 @@ public class StackPanelViewModel : ElementViewModel
         }
 
         // Set the orientation
-        if (jsonElement.TryGetProperty("orientation", out var orientation))
+        if (config.TryGetProperty("orientation", out var orientation))
         {
             var orientationString = orientation.GetString();
             if (orientationString == "Horizontal")
@@ -57,7 +57,7 @@ public class StackPanelViewModel : ElementViewModel
         }
 
         // Add child controls
-        if (jsonElement.TryGetProperty("children", out var children))
+        if (config.TryGetProperty("children", out var children))
         {
             foreach (var child in children.EnumerateArray())
             {

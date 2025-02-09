@@ -9,7 +9,7 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 /// <summary>
 /// Base class for element view models that bind to a form data provider.
 /// </summary>
-public abstract partial class ElementViewModel : ObservableObject
+public abstract partial class FormElement : ObservableObject
 {
     [ObservableProperty]
     private string _value = string.Empty;
@@ -20,7 +20,7 @@ public abstract partial class ElementViewModel : ObservableObject
 
     public string PropertyPath { get; set; } = string.Empty;
 
-    protected abstract Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder);
+    protected abstract Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder);
 
     public Result Finalize()
     {
@@ -109,9 +109,9 @@ public abstract partial class ElementViewModel : ObservableObject
         return Result.Ok();
     }
 
-    protected Result<(bool, string)> GetBindingPropertyPath(JsonElement jsonElement, string configPropertyName)
+    protected Result<(bool, string)> GetBindingPropertyPath(JsonElement config, string configPropertyName)
     {
-        if (!jsonElement.TryGetProperty(configPropertyName, out var bindingConfig))
+        if (!config.TryGetProperty(configPropertyName, out var bindingConfig))
         {
             // Call succeeds, but result bool is false to indicate property is not present
             return Result<(bool, string)>.Ok((false, string.Empty));
@@ -148,10 +148,10 @@ public abstract partial class ElementViewModel : ObservableObject
             // Tell the view model to stop listening for property changes when the view is unloaded
             frameworkElement.Unloaded += (s, e) =>
             {
-                var vm = frameworkElement.DataContext as ElementViewModel;
-                if (vm is not null)
+                var formElement = frameworkElement.DataContext as FormElement;
+                if (formElement is not null)
                 {
-                    vm.OnViewUnloaded();
+                    formElement.OnViewUnloaded();
                     frameworkElement.DataContext = null;
                 }
             };
@@ -172,13 +172,13 @@ public abstract partial class ElementViewModel : ObservableObject
         return Result.Ok();
     }
 
-    protected Result ValidateConfigKeys(JsonElement jsonElement, HashSet<string> validConfigKeys)
+    protected Result ValidateConfigKeys(JsonElement config, HashSet<string> validConfigKeys)
     {
         bool valid = true;
         var keys = new List<string>();
-        if (jsonElement.ValueKind == JsonValueKind.Object)
+        if (config.ValueKind == JsonValueKind.Object)
         {
-            foreach (var property in jsonElement.EnumerateObject())
+            foreach (var property in config.EnumerateObject())
             {
                 var configKey = property.Name;
                 if (configKey == "element" ||

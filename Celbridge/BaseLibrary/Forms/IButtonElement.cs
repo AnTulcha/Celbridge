@@ -1,9 +1,9 @@
 namespace Celbridge.Forms;
 
 /// <summary>
-/// A view model that binds a form button UI element to a form property via a form data provider.
+/// A form element that binds a form button UI element to a form property via a form data provider.
 /// </summary>
-public interface IButtonViewModel
+public interface IButtonElement
 {
     /// <summary>
     /// Called when the use clicks the button.

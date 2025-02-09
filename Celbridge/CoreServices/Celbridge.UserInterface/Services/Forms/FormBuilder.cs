@@ -32,14 +32,14 @@ public class FormBuilder
         {
             Orientation = Orientation.Vertical,
             DataContext = formDataProvider,
-            Spacing = StackPanelViewModel.DefaultStackPanelSpacing
+            Spacing = StackPanelElement.DefaultStackPanelSpacing
         };
 
         try
         {
-            foreach (var jsonElement in formConfig.EnumerateArray())
+            foreach (var config in formConfig.EnumerateArray())
             {
-                var uiElement = CreateFormElement(jsonElement);
+                var uiElement = CreateFormElement(config);
                 if (uiElement is null)
                 {
                     // The build has failed, but continue to report all the errors we can find
@@ -96,17 +96,17 @@ public class FormBuilder
         return Result<object>.Ok(formPanel);
     }
 
-    public UIElement? CreateFormElement(JsonElement jsonElement)
+    public UIElement? CreateFormElement(JsonElement config)
     {
         Guard.IsNotNull(_formDataProvider);
 
-        if (jsonElement.ValueKind != JsonValueKind.Object)
+        if (config.ValueKind != JsonValueKind.Object)
         {
             _buildErrors.Add("Form element config is not an object");
             return null;
         }
 
-        if (!jsonElement.TryGetProperty("element", out var element))
+        if (!config.TryGetProperty("element", out var element))
         {
             _buildErrors.Add("Form object does not contain an 'elementType' property");
             return null;
@@ -117,7 +117,7 @@ public class FormBuilder
         switch (elementName)
         {
             case "StackPanel":
-                var stackPanelResult = StackPanelViewModel.CreateStackPanel(jsonElement, this);
+                var stackPanelResult = StackPanelElement.CreateStackPanel(config, this);
                 if (stackPanelResult.IsFailure)
                 {
                     _buildErrors.Add(stackPanelResult.Error);
@@ -129,7 +129,7 @@ public class FormBuilder
                 break;
 
             case "TextBox":
-                var textBoxResult = TextBoxViewModel.CreateTextBox(jsonElement, this);
+                var textBoxResult = TextBoxElement.CreateTextBox(config, this);
                 if (textBoxResult.IsFailure)
                 {
                     _buildErrors.Add(textBoxResult.Error);
@@ -141,7 +141,7 @@ public class FormBuilder
                 break;
 
             case "TextBlock":
-                var textBlockResult = TextBlockViewModel.CreateTextBlock(jsonElement, this);
+                var textBlockResult = TextBlockElement.CreateTextBlock(config, this);
                 if (textBlockResult.IsFailure)
                 {
                     _buildErrors.Add(textBlockResult.Error);
@@ -153,7 +153,7 @@ public class FormBuilder
                 break;
 
             case "Button":
-                var buttonResult = ButtonViewModel.CreateButton(jsonElement, this);
+                var buttonResult = ButtonElement.CreateButton(config, this);
                 if (buttonResult.IsFailure)
                 {
                     _buildErrors.Add(buttonResult.Error);

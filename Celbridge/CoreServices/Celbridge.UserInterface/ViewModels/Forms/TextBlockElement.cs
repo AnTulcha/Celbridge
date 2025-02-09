@@ -5,16 +5,16 @@ using Windows.UI.Text;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
 
-public class TextBlockViewModel : ElementViewModel
+public class TextBlockElement : FormElement
 {
-    public static Result<UIElement> CreateTextBlock(JsonElement jsonElement, FormBuilder formBuilder)
+    public static Result<UIElement> CreateTextBlock(JsonElement config, FormBuilder formBuilder)
     {
         // Create the TextBlock view model
-        var viewModel = ServiceLocator.AcquireService<TextBlockViewModel>();
-        return viewModel.CreateElement(jsonElement, formBuilder);
+        var formElement = ServiceLocator.AcquireService<TextBlockElement>();
+        return formElement.CreateElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement jsonElement, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
@@ -22,7 +22,7 @@ public class TextBlockViewModel : ElementViewModel
         var textBlock = new TextBlock();
         textBlock.DataContext = this;
 
-        var alignmentResult = ApplyAlignmentConfig(textBlock, jsonElement);
+        var alignmentResult = ApplyAlignmentConfig(textBlock, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration")
@@ -39,7 +39,7 @@ public class TextBlockViewModel : ElementViewModel
             "bold"
         };
 
-        var validateResult = ValidateConfigKeys(jsonElement, validConfigKeys);
+        var validateResult = ValidateConfigKeys(config, validConfigKeys);
         if (validateResult.IsFailure)
         {
             return Result<UIElement>.Fail("Invalid TextBlock configuration")
@@ -48,13 +48,13 @@ public class TextBlockViewModel : ElementViewModel
 
         // Apply property bindings
 
-        if (jsonElement.TryGetProperty("text", out var text))
+        if (config.TryGetProperty("text", out var text))
         {
             // Todo: Support localization
             textBlock.Text = text.GetString();
         }
 
-        if (jsonElement.TryGetProperty("italic", out var italic))
+        if (config.TryGetProperty("italic", out var italic))
         {
             if (italic.GetBoolean())
             {
@@ -62,7 +62,7 @@ public class TextBlockViewModel : ElementViewModel
             }
         }
 
-        if (jsonElement.TryGetProperty("bold", out var bold))
+        if (config.TryGetProperty("bold", out var bold))
         {
             if (bold.GetBoolean())
             {
@@ -72,7 +72,7 @@ public class TextBlockViewModel : ElementViewModel
 
         // Apply bound properties
 
-        var pathResult = GetBindingPropertyPath(jsonElement, "textBinding");
+        var pathResult = GetBindingPropertyPath(config, "textBinding");
         if (pathResult.IsFailure)
         {
             return Result<UIElement>.Fail("Failed to get binding property path")
