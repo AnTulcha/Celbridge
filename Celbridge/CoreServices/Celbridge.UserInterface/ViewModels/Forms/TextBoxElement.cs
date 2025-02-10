@@ -65,7 +65,7 @@ public partial class TextBoxElement : FormElement
         }
 
         //
-        // Apply common config properties
+        // Apply common element config properties
         //
 
         var commonConfigResult = ApplyCommonConfig(textBox, config);
