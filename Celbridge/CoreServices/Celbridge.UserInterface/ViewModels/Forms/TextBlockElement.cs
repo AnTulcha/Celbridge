@@ -24,7 +24,7 @@ public partial class TextBlockElement : FormElement
         FormDataProvider = formBuilder.FormDataProvider;
 
         //
-        // Create the UI element and set the data context
+        // Create the UI element
         //
 
         var textBlock = new TextBlock();
@@ -86,15 +86,12 @@ public partial class TextBlockElement : FormElement
         hasBindings = hasBindings || textResult.Value;
 
         //
-        // Register listeners for bound properties
+        // Finalize bindings
         //
 
         if (hasBindings)
         {
-            // Listen for changes to update bound values
-            FormDataProvider.FormPropertyChanged += OnFormDataChanged;
-            PropertyChanged += OnMemberChanged;
-            textBlock.Unloaded += OnUIElementUnloaded;
+            Bind(textBlock);
         }
 
         return Result<UIElement>.Ok(textBlock);
@@ -216,7 +213,7 @@ public partial class TextBlockElement : FormElement
         return Result.Ok();
     }
 
-    private void OnFormDataChanged(string propertyPath)
+    protected override void OnFormDataChanged(string propertyPath)
     {
         if (propertyPath == _textPropertyPath)
         {
@@ -224,7 +221,7 @@ public partial class TextBlockElement : FormElement
         }
     }
 
-    private void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    protected override void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
     {
         Guard.IsNotNull(FormDataProvider);
 
@@ -239,20 +236,5 @@ public partial class TextBlockElement : FormElement
 
         // Resume listening for form data changes
         FormDataProvider.FormPropertyChanged += OnFormDataChanged;
-    }
-    private void OnUIElementUnloaded(object sender, RoutedEventArgs e)
-    {
-        // Unregister all listeners and clear references
-
-        Guard.IsNotNull(FormDataProvider);
-
-        FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
-        PropertyChanged -= OnMemberChanged;
-
-        var uiElement = sender as FrameworkElement;
-        Guard.IsNotNull(uiElement);
-        uiElement.Unloaded -= OnUIElementUnloaded;
-
-        FormDataProvider = null;
     }
 }

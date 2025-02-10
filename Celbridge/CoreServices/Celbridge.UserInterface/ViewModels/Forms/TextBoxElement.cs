@@ -1,7 +1,7 @@
-using System.ComponentModel;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using Celbridge.UserInterface.Services.Forms;
+using System.ComponentModel;
+using System.Text.Json.Nodes;
+using System.Text.Json;
 using Windows.System;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
@@ -23,7 +23,7 @@ public partial class TextBoxElement : FormElement
         FormDataProvider = formBuilder.FormDataProvider;
 
         //
-        // Create the UI element and set the data context
+        // Create the UI element
         //
 
         var textBox = new TextBox();
@@ -47,7 +47,7 @@ public partial class TextBoxElement : FormElement
         };
 
         //
-        // Check all config properties are supported
+        // Check all specified config properties are supported
         //
 
         var validateResult = ValidateConfigKeys(config, new HashSet<string>()
@@ -65,21 +65,21 @@ public partial class TextBoxElement : FormElement
         }
 
         //
-        // Apply common element config properties
+        // Apply common config properties
         //
 
-        var alignmentResult = ApplyCommonConfig(textBox, config);
-        if (alignmentResult.IsFailure)
+        var commonConfigResult = ApplyCommonConfig(textBox, config);
+        if (commonConfigResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply common config properties")
-                .WithErrors(alignmentResult);
+                .WithErrors(commonConfigResult);
         }
 
         //
         // Apply element-specific config properties
         //
 
-        // Todo: Set this from a property
+        // Todo: Set this via a config property
         textBox.TextWrapping = TextWrapping.Wrap;
 
         var headerResult = ApplyHeaderConfig(config, textBox);
@@ -112,15 +112,12 @@ public partial class TextBoxElement : FormElement
         hasBindings = hasBindings || textResult.Value;
 
         //
-        // Register listeners for bound properties
+        // Finalize bindings
         //
 
         if (hasBindings)
         {
-            // Listen for changes to update bound values
-            FormDataProvider.FormPropertyChanged += OnFormDataChanged;
-            PropertyChanged += OnMemberChanged;
-            textBox.Unloaded += OnUIElementUnloaded;
+            Bind(textBox);
         }
 
         return Result<UIElement>.Ok(textBox);
@@ -255,7 +252,7 @@ public partial class TextBoxElement : FormElement
         return Result.Ok();
     }
 
-    private void OnFormDataChanged(string propertyPath)
+    protected override void OnFormDataChanged(string propertyPath)
     {
         if (propertyPath == _textPropertyPath)
         {
@@ -263,7 +260,7 @@ public partial class TextBoxElement : FormElement
         }
     }
 
-    private void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    protected override void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
     {
         Guard.IsNotNull(FormDataProvider);
 
@@ -278,20 +275,5 @@ public partial class TextBoxElement : FormElement
 
         // Resume listening for form data changes
         FormDataProvider.FormPropertyChanged += OnFormDataChanged;
-    }
-    private void OnUIElementUnloaded(object sender, RoutedEventArgs e)
-    {
-        // Unregister all listeners and clear references
-
-        Guard.IsNotNull(FormDataProvider);
-
-        FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
-        PropertyChanged -= OnMemberChanged;
-
-        var uiElement = sender as FrameworkElement;
-        Guard.IsNotNull(uiElement);
-        uiElement.Unloaded -= OnUIElementUnloaded;
-
-        FormDataProvider = null;
     }
 }

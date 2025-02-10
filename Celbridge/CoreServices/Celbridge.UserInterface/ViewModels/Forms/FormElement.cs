@@ -280,4 +280,37 @@ public abstract partial class FormElement : ObservableObject
 
         return Result.Ok();
     }
+
+    // *** New base class methods ***
+
+    protected virtual void OnFormDataChanged(string propertyPath)
+    {}
+
+    protected virtual void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    {}
+
+    protected void Bind(FrameworkElement frameworkElement)
+    {
+        Guard.IsNotNull(FormDataProvider);
+
+        // Listen for changes to update bound values
+        FormDataProvider.FormPropertyChanged += OnFormDataChanged;
+        PropertyChanged += OnMemberChanged;
+        frameworkElement.Unloaded += (s, e) =>
+        {
+            Unbind(frameworkElement);
+        };
+    }
+
+    private void Unbind(FrameworkElement frameworkElement)
+    {
+        // Unregister listeners and clear references
+        Guard.IsNotNull(FormDataProvider);
+
+        FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
+        PropertyChanged -= OnMemberChanged;
+
+        FormDataProvider = null;
+    }
+
 }
