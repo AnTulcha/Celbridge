@@ -32,7 +32,7 @@ public partial class TextBlockElement : FormElement
         bool hasBindings = false;
 
         //
-        // Check config properties are supported
+        // Check all config properties are supported
         //
 
         var validateResult = ValidateConfigKeys(config, new HashSet<string>()
