@@ -20,7 +20,7 @@ public abstract partial class FormElement : ObservableObject
 
     public string PropertyPath { get; set; } = string.Empty;
 
-    protected abstract Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder);
+    protected abstract Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder);
 
     public Result Finalize()
     {
@@ -174,7 +174,6 @@ public abstract partial class FormElement : ObservableObject
 
     protected Result ValidateConfigKeys(JsonElement config, HashSet<string> validConfigKeys)
     {
-        bool valid = true;
         var keys = new List<string>();
         if (config.ValueKind == JsonValueKind.Object)
         {
@@ -184,8 +183,7 @@ public abstract partial class FormElement : ObservableObject
                 if (configKey == "element" ||
                     configKey == "horizontalAlignment" ||
                     configKey == "verticalAlignment" ||
-                    configKey == "tooltip" ||
-                    configKey == "alignment")
+                    configKey == "tooltip")
                 {
                     // Skip general config properties that apply to all elements
                     continue;
@@ -201,7 +199,26 @@ public abstract partial class FormElement : ObservableObject
         return Result.Ok();
     }
 
-    protected Result ApplyAlignmentConfig(FrameworkElement frameworkElement, JsonElement config)
+    protected Result ApplyCommonConfig(FrameworkElement frameworkElement, JsonElement config)
+    {
+        var alignmentResult = ApplyAlignmentConfig(frameworkElement, config);
+        if (alignmentResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply alignment config")
+                .WithErrors(alignmentResult);
+        }
+
+        var tooltipResult = ApplyTooltipConfig(frameworkElement, config);
+        if (alignmentResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply tooltip config")
+                .WithErrors(alignmentResult);
+        }
+
+        return Result.Ok();
+    }
+
+    private Result ApplyAlignmentConfig(FrameworkElement frameworkElement, JsonElement config)
     {
         if (config.TryGetProperty("horizontalAlignment", out var horizontalProperty))
         {
@@ -254,11 +271,13 @@ public abstract partial class FormElement : ObservableObject
         return Result.Ok();
     }
 
-    protected void ApplyTooltip(FrameworkElement frameworkElement, JsonElement config)
+    private Result ApplyTooltipConfig(FrameworkElement frameworkElement, JsonElement config)
     {
         if (config.TryGetProperty("tooltip", out var tooltipText))
         {
             ToolTipService.SetToolTip(frameworkElement, tooltipText);
         }
+
+        return Result.Ok();
     }
 }

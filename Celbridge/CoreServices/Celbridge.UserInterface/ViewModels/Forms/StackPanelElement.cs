@@ -10,21 +10,21 @@ public class StackPanelElement : FormElement
     public static Result<UIElement> CreateStackPanel(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<StackPanelElement>();
-        return formElement.CreateElement(config, formBuilder);
+        return formElement.CreateUIElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
         var stackPanel = new StackPanel();
         stackPanel.DataContext = this;
 
-        var alignmentResult = ApplyAlignmentConfig(stackPanel, config);
-        if (alignmentResult.IsFailure)
+        var commonResult = ApplyCommonConfig(stackPanel, config);
+        if (commonResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply alignment configuration to StackPanel")
-                .WithErrors(alignmentResult);
+            return Result<UIElement>.Fail($"Failed to apply common configuration properties to StackPanel")
+                .WithErrors(commonResult);
         }
 
         // Set the spacing between elements

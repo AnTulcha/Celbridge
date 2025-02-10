@@ -9,10 +9,10 @@ public class TextBoxElement : FormElement
     public static Result<UIElement> CreateTextBox(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<TextBoxElement>();
-        return formElement.CreateElement(config, formBuilder);
+        return formElement.CreateUIElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
@@ -23,7 +23,7 @@ public class TextBoxElement : FormElement
         // Todo: Set this from a property
         textBox.TextWrapping = TextWrapping.Wrap;
 
-        var alignmentResult = ApplyAlignmentConfig(textBox, config);
+        var alignmentResult = ApplyCommonConfig(textBox, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to TextBox");

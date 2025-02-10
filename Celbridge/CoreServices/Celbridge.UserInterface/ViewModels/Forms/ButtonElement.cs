@@ -16,24 +16,24 @@ public class ButtonElement : FormElement, IButtonElement
     public static Result<UIElement> CreateButton(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<ButtonElement>();
-        return formElement.CreateElement(config, formBuilder);
+        return formElement.CreateUIElement(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
         FormDataProvider = formBuilder.FormDataProvider;
 
         var button = new Button();
         button.DataContext = this;
 
-        var alignmentResult = ApplyAlignmentConfig(button, config);
+        var alignmentResult = ApplyCommonConfig(button, config);
         if (alignmentResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply alignment configuration to Button")
                 .WithErrors(alignmentResult);
         }
 
-        ApplyTooltip(button, config);
+        ApplyCommonConfig(button, config);
 
         // Check all specified properties are supported
 
