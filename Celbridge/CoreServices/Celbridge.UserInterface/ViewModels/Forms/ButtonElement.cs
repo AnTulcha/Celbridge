@@ -5,16 +5,14 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 
 public partial class ButtonElement : FormElement
 {
-    public static Result<UIElement> CreateButton(JsonElement config, FormBuilder formBuilder)
+    public static Result<FrameworkElement> CreateButton(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<ButtonElement>();
-        return formElement.CreateUIElement(config, formBuilder);
+        return formElement.Create(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
-        FormDataProvider = formBuilder.FormDataProvider;
-
         //
         // Create the UI element
         //
@@ -40,7 +38,7 @@ public partial class ButtonElement : FormElement
 
         if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid Button configuration")
+            return Result<FrameworkElement>.Fail("Invalid Button configuration")
                 .WithErrors(validateResult);
         }
 
@@ -51,7 +49,7 @@ public partial class ButtonElement : FormElement
         var commonConfigResult = ApplyCommonConfig(button, config);
         if (commonConfigResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply common config properties")
+            return Result<FrameworkElement>.Fail($"Failed to apply common config properties")
                 .WithErrors(commonConfigResult);
         }
 
@@ -62,25 +60,25 @@ public partial class ButtonElement : FormElement
         var iconResult = ApplyIconConfig(config, buttonPanel);
         if (iconResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'icon' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'icon' config property")
                 .WithErrors(iconResult);
         }
 
         var textResult = ApplyTextConfig(config, buttonPanel);
         if (textResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'text' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'text' config property")
                 .WithErrors(textResult);
         }
 
         var buttonIdResult = ApplyButtonIdConfig(config, button);
         if (buttonIdResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'buttonId' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'buttonId' config property")
                 .WithErrors(buttonIdResult);
         }
 
-        return Result<UIElement>.Ok(button);
+        return Result<FrameworkElement>.Ok(button);
     }
 
     private Result ApplyIconConfig(JsonElement config, StackPanel buttonPanel)

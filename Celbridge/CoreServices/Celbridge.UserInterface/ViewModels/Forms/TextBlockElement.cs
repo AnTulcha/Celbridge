@@ -8,27 +8,24 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 
 public partial class TextBlockElement : FormElement
 {
-    public static Result<UIElement> CreateTextBlock(JsonElement config, FormBuilder formBuilder)
+    public static Result<FrameworkElement> CreateTextBlock(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<TextBlockElement>();
-        return formElement.CreateUIElement(config, formBuilder);
+        return formElement.Create(config, formBuilder);
     }
 
     [ObservableProperty]
     private string _text = string.Empty;
     private string _textPropertyPath = string.Empty;
 
-    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
-        FormDataProvider = formBuilder.FormDataProvider;
-
         //
         // Create the UI element
         //
 
         var textBlock = new TextBlock();
         textBlock.DataContext = this;
-        bool hasBindings = false;
 
         //
         // Check all specified config properties are supported
@@ -43,7 +40,7 @@ public partial class TextBlockElement : FormElement
 
         if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid form element configuration")
+            return Result<FrameworkElement>.Fail("Invalid form element configuration")
                 .WithErrors(validateResult);
         }
 
@@ -54,7 +51,7 @@ public partial class TextBlockElement : FormElement
         var commonConfigResult = ApplyCommonConfig(textBlock, config);
         if (commonConfigResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply common config properties")
+            return Result<FrameworkElement>.Fail($"Failed to apply common config properties")
                 .WithErrors(commonConfigResult);
         }
 
@@ -65,35 +62,25 @@ public partial class TextBlockElement : FormElement
         var italicResult = ApplyItalicConfig(config, textBlock);
         if (italicResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'italic' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'italic' config property")
                 .WithErrors(italicResult);
         }
 
         var boldResult = ApplyBoldConfig(config, textBlock);
         if (boldResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'bold' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'bold' config property")
                 .WithErrors(boldResult);
         }
 
         var textResult = ApplyTextConfig(config, textBlock);
         if (textResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'text' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'text' config property")
                 .WithErrors(textResult);
         }
-        hasBindings = hasBindings || textResult.Value;
 
-        //
-        // Finalize bindings
-        //
-
-        if (hasBindings)
-        {
-            Bind(textBlock);
-        }
-
-        return Result<UIElement>.Ok(textBlock);
+        return Result<FrameworkElement>.Ok(textBlock);
     }
 
     private Result ApplyItalicConfig(JsonElement config, TextBlock textBlock)
@@ -140,14 +127,14 @@ public partial class TextBlockElement : FormElement
         return Result.Ok();
     }
 
-    private Result<bool> ApplyTextConfig(JsonElement config, TextBlock textBlock)
+    private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
         if (config.TryGetProperty("text", out var textProperty))
         {
             // Check the type
             if (textProperty.ValueKind != JsonValueKind.String)
             {
-                return Result<bool>.Fail("'text' property must be a string");
+                return Result.Fail("'text' property must be a string");
             }
 
             // Apply the property
@@ -168,11 +155,13 @@ public partial class TextBlockElement : FormElement
                 var updateResult = UpdateText();
                 if (updateResult.IsFailure)
                 {
-                    return Result<bool>.Fail($"Failed to update value of 'text' property")
+                    return Result.Fail($"Failed to update value of 'text' property")
                         .WithErrors(updateResult);
                 }
 
-                return Result<bool>.Ok(true);
+                HasBindings = true;
+
+                return Result.Ok();
             }
             else
             {
@@ -182,7 +171,7 @@ public partial class TextBlockElement : FormElement
             }
         }
 
-        return Result<bool>.Ok(false);
+        return Result.Ok();
     }
 
     private Result UpdateText()

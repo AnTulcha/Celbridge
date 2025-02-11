@@ -7,27 +7,24 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 
 public partial class TextBoxElement : FormElement
 {
-    public static Result<UIElement> CreateTextBox(JsonElement config, FormBuilder formBuilder)
+    public static Result<FrameworkElement> CreateTextBox(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<TextBoxElement>();
-        return formElement.CreateUIElement(config, formBuilder);
+        return formElement.Create(config, formBuilder);
     }
 
     [ObservableProperty]
     private string _text = string.Empty;
     private string _textPropertyPath = string.Empty;
 
-    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
-        FormDataProvider = formBuilder.FormDataProvider;
-
         //
         // Create the UI element
         //
 
         var textBox = new TextBox();
         textBox.DataContext = this;
-        bool hasBindings = false;
 
         textBox.KeyDown += (sender, e) =>
         {
@@ -59,7 +56,7 @@ public partial class TextBoxElement : FormElement
 
         if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid form element configuration")
+            return Result<FrameworkElement>.Fail("Invalid form element configuration")
                 .WithErrors(validateResult);
         }
 
@@ -70,7 +67,7 @@ public partial class TextBoxElement : FormElement
         var commonConfigResult = ApplyCommonConfig(textBox, config);
         if (commonConfigResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply common config properties")
+            return Result<FrameworkElement>.Fail($"Failed to apply common config properties")
                 .WithErrors(commonConfigResult);
         }
 
@@ -84,42 +81,32 @@ public partial class TextBoxElement : FormElement
         var headerResult = ApplyHeaderConfig(config, textBox);
         if (headerResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'header' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'header' config property")
                 .WithErrors(headerResult);        
         }
 
         var placeholderResult = ApplyPlaceholderConfig(config, textBox);
         if (placeholderResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'placeholder' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'placeholder' config property")
                 .WithErrors(placeholderResult);
         }
 
         var checkSpellingResult = ApplyCheckSpellingConfig(config, textBox);
         if (checkSpellingResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'checkSpelling' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'checkSpelling' config property")
                 .WithErrors(checkSpellingResult);
         }
 
         var textResult = ApplyTextConfig(config, textBox);
         if (textResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'text' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'text' config property")
                 .WithErrors(textResult);
         }
-        hasBindings = hasBindings || textResult.Value;
 
-        //
-        // Finalize bindings
-        //
-
-        if (hasBindings)
-        {
-            Bind(textBox);
-        }
-
-        return Result<UIElement>.Ok(textBox);
+        return Result<FrameworkElement>.Ok(textBox);
     }
 
     private Result ApplyHeaderConfig(JsonElement config, TextBox textBox)
@@ -212,6 +199,8 @@ public partial class TextBoxElement : FormElement
                     return Result<bool>.Fail($"Failed to update value of 'text' property")
                         .WithErrors(updateResult);
                 }
+
+                HasBindings = true;
 
                 return Result<bool>.Ok(true);
             }

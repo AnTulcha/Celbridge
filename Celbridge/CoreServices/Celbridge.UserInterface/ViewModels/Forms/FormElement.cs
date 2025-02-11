@@ -11,13 +11,32 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 public abstract partial class FormElement : ObservableObject
 {
     private IFormDataProvider? _formDataProvider;
-    public IFormDataProvider FormDataProvider 
+    public IFormDataProvider FormDataProvider => _formDataProvider!;
+
+    protected bool HasBindings { get; set; }
+
+    public Result<FrameworkElement> Create(JsonElement config, FormBuilder formBuilder)
     {
-        get => _formDataProvider!;
-        set => _formDataProvider = value;
+        Guard.IsNull(_formDataProvider);
+        _formDataProvider = formBuilder.FormDataProvider;
+
+        var createUIResult = CreateUIElement(config, formBuilder);
+        if (createUIResult.IsFailure)
+        {
+            return Result<FrameworkElement>.Fail("Failed to create UI element")
+                .WithErrors(createUIResult);
+        }
+        var uiElement = createUIResult.Value;
+
+        if (HasBindings)
+        {
+            RegisterEvents(uiElement);
+        }
+
+        return Result<FrameworkElement>.Ok(uiElement);
     }
 
-    protected abstract Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder);
+    protected abstract Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder);
 
     protected Result ValidateConfigKeys(JsonElement config, HashSet<string> validConfigKeys)
     {
@@ -128,22 +147,27 @@ public abstract partial class FormElement : ObservableObject
         return Result.Ok();
     }
 
-    protected void Bind(FrameworkElement frameworkElement)
+    protected void RegisterEvents(FrameworkElement frameworkElement)
     {
-        // Listen for changes to update bound values
+        // Listen for changes to form data and member data
         FormDataProvider.FormPropertyChanged += OnFormPropertyChanged;
         PropertyChanged += OnPropertyChanged;
-        frameworkElement.Unloaded += (s, e) =>
-        {
-            Unbind(frameworkElement);
-        };
+        frameworkElement.Unloaded += FrameworkElement_Unloaded;        
     }
 
-    private void Unbind(FrameworkElement frameworkElement)
+    private void FrameworkElement_Unloaded(object sender, RoutedEventArgs e)
     {
-        // Unregister listeners and clear references
+        var frameworkElement = sender as FrameworkElement;
+        Guard.IsNotNull(frameworkElement);
+        UnregisterEvents(frameworkElement);
+    }
+
+    private void UnregisterEvents(FrameworkElement frameworkElement)
+    {
+        // Unregister event listeners
         FormDataProvider.FormPropertyChanged -= OnFormPropertyChanged;
         PropertyChanged -= OnPropertyChanged;
+        frameworkElement.Unloaded -= FrameworkElement_Unloaded;
 
         _formDataProvider = null;
     }
@@ -152,6 +176,7 @@ public abstract partial class FormElement : ObservableObject
     {
         Guard.IsNotNullOrEmpty(propertyPath);
 
+        // Forward the event to the derived class
         OnFormDataChanged(propertyPath);
     }
 
@@ -162,6 +187,7 @@ public abstract partial class FormElement : ObservableObject
         // Stop listening for form data changes while we update the form data
         FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
 
+        // Forward the event to the derived class
         var propertyName = e.PropertyName;
         OnMemberDataChanged(propertyName);
 

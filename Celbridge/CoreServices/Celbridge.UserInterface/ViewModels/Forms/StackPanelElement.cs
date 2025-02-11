@@ -8,23 +8,20 @@ public class StackPanelElement : FormElement
     public const int DefaultStackPanelSpacing = 8;
     private const Orientation DefaultOrientation = Orientation.Vertical;
 
-    public static Result<UIElement> CreateStackPanel(JsonElement config, FormBuilder formBuilder)
+    public static Result<FrameworkElement> CreateStackPanel(JsonElement config, FormBuilder formBuilder)
     {
         var formElement = ServiceLocator.AcquireService<StackPanelElement>();
-        return formElement.CreateUIElement(config, formBuilder);
+        return formElement.Create(config, formBuilder);
     }
 
-    protected override Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
+    protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
-        FormDataProvider = formBuilder.FormDataProvider;
-
         //
         // Create the UI element
         //
 
         var stackPanel = new StackPanel();
         stackPanel.DataContext = this;
-        bool hasBindings = false;
 
         //
         // Check all specified config properties are supported
@@ -39,14 +36,14 @@ public class StackPanelElement : FormElement
 
         if (validateResult.IsFailure)
         {
-            return Result<UIElement>.Fail("Invalid form element configuration")
+            return Result<FrameworkElement>.Fail("Invalid form element configuration")
                 .WithErrors(validateResult);
         }
 
         var commonConfigResult = ApplyCommonConfig(stackPanel, config);
         if (commonConfigResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply common configuration properties to StackPanel")
+            return Result<FrameworkElement>.Fail($"Failed to apply common configuration properties to StackPanel")
                 .WithErrors(commonConfigResult);
         }
 
@@ -57,34 +54,25 @@ public class StackPanelElement : FormElement
         var spacingResult = ApplySpacingConfig(config, stackPanel);
         if (spacingResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'spacing' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'spacing' config property")
                 .WithErrors(spacingResult);
         }
 
         var orientationResult = ApplyOrientationConfig(config, stackPanel);
         if (orientationResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'orientation' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'orientation' config property")
                 .WithErrors(orientationResult);
         }
 
         var childrenResult = ApplyChildrenConfig(config, stackPanel, formBuilder);
         if (childrenResult.IsFailure)
         {
-            return Result<UIElement>.Fail($"Failed to apply 'children' config property")
+            return Result<FrameworkElement>.Fail($"Failed to apply 'children' config property")
                 .WithErrors(childrenResult);
         }
 
-        //
-        // Finalize bindings
-        //
-
-        if (hasBindings)
-        {
-            Bind(stackPanel);
-        }
-
-        return Result<UIElement>.Ok(stackPanel);
+        return Result<FrameworkElement>.Ok(stackPanel);
     }
 
     private Result ApplySpacingConfig(JsonElement config, StackPanel stackPanel)
