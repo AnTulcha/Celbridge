@@ -15,7 +15,6 @@ public partial class TextBlockElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-
     private StringPropertyBinder _textBinder = new();
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
