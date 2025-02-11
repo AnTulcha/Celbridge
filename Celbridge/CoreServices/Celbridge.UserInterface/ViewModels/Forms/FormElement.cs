@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Celbridge.Forms;
 using Celbridge.UserInterface.Services.Forms;
 
@@ -11,166 +10,9 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 /// </summary>
 public abstract partial class FormElement : ObservableObject
 {
-    [ObservableProperty]
-    private string _value = string.Empty;
-
-    public string BoundPropertyName => nameof(Value);
-
     public IFormDataProvider? FormDataProvider { get; set; }
 
-    public string PropertyPath { get; set; } = string.Empty;
-
     protected abstract Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder);
-
-    public Result Finalize()
-    {
-        if (FormDataProvider is null)
-        {
-            return Result.Fail("Form data provider is null");
-        }
-
-        if (!string.IsNullOrEmpty(PropertyPath))
-        {
-            // Read the current property value from the component
-            var updateResult = UpdateValue();
-            if (updateResult.IsFailure)
-            {
-                return Result.Fail($"Failed to update value for element view model")
-                    .WithErrors(updateResult);
-            }
-        }
-
-        // Listen for property changes on the component (via the form data provider)
-        FormDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
-
-        // Listen for property changes on this view model (via ObservableObject)
-        PropertyChanged += OnMemberPropertyChanged;
-
-        return Result.Ok();
-    }
-
-    public void OnViewUnloaded()
-    {
-        if (FormDataProvider != null)
-        {
-            // Unregister listeners
-            FormDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
-            PropertyChanged -= OnMemberPropertyChanged;
-        }
-    }
-
-    private void OnFormDataPropertyChanged(string propertyPath)
-    {
-        if (propertyPath == PropertyPath)
-        {
-            UpdateValue();
-        }
-    }
-
-    private void OnMemberPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        Guard.IsNotNull(FormDataProvider);
-
-        if (e.PropertyName == nameof(Value))
-        {
-            // Stop listening for component property changes while we update the component
-            FormDataProvider.FormPropertyChanged -= OnFormDataPropertyChanged;
-
-            var jsonValue = JsonSerializer.Serialize(Value);
-
-            FormDataProvider.SetProperty(PropertyPath, jsonValue, false);
-
-            // Start listening for component property changes again
-            FormDataProvider.FormPropertyChanged += OnFormDataPropertyChanged;
-        }
-    }
-
-    protected Result UpdateValue()
-    {
-        Guard.IsNotNull(FormDataProvider);
-
-        // Sync the value member variable with the property
-        var getResult = FormDataProvider.GetProperty(PropertyPath);
-        if (getResult.IsFailure)
-        {
-            return Result.Fail($"Failed to get property: '{PropertyPath}'")
-                .WithErrors(getResult);
-        }
-        var jsonValue = getResult.Value;
-
-        var jsonNode = JsonNode.Parse(jsonValue);
-        if (jsonNode is null)
-        {
-            return Result.Fail($"Failed to parse JSON property: '{PropertyPath}'");
-        }
-
-        Value = jsonNode.ToString();
-
-        return Result.Ok();
-    }
-
-    protected Result<(bool, string)> GetBindingPropertyPath(JsonElement config, string configPropertyName)
-    {
-        if (!config.TryGetProperty(configPropertyName, out var bindingConfig))
-        {
-            // Call succeeds, but result bool is false to indicate property is not present
-            return Result<(bool, string)>.Ok((false, string.Empty));
-        }
-
-        var bindingPropertyPath = bindingConfig.GetString();
-        if (string.IsNullOrEmpty(bindingPropertyPath))
-        {
-            return Result<(bool, string)>.Fail($"Binding property '{configPropertyName}' is empty");
-        }
-
-        // Parsed the binding info successfully
-        return Result<(bool, string)>.Ok((true, bindingPropertyPath));
-    }
-
-    protected Result ApplyBinding(
-        FrameworkElement frameworkElement,
-        DependencyProperty dependencyProperty,
-        BindingMode bindingMode,
-        string propertyPath)
-    {
-        if (FormDataProvider is null)
-        {
-            return Result.Fail($"Form data provider is null");
-        }
-
-        try
-        {
-            PropertyPath = propertyPath;
-
-            // The DataContext will be used automatically as the binding source
-            Guard.IsTrue(frameworkElement.DataContext == this);
-
-            // Tell the view model to stop listening for property changes when the view is unloaded
-            frameworkElement.Unloaded += (s, e) =>
-            {
-                var formElement = frameworkElement.DataContext as FormElement;
-                if (formElement is not null)
-                {
-                    formElement.OnViewUnloaded();
-                    frameworkElement.DataContext = null;
-                }
-            };
-
-            // Bind the dependency property to the property view model
-            var binding = new Binding()
-            {
-                Path = new PropertyPath(BoundPropertyName),
-                Mode = bindingMode
-            };
-            frameworkElement.SetBinding(dependencyProperty, binding);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"An exception occurred when applying property binding: '{propertyPath}'. {ex}");
-        }
-
-        return Result.Ok();
-    }
 
     protected Result ValidateConfigKeys(JsonElement config, HashSet<string> validConfigKeys)
     {
@@ -281,14 +123,6 @@ public abstract partial class FormElement : ObservableObject
         return Result.Ok();
     }
 
-    // *** New base class methods ***
-
-    protected virtual void OnFormDataChanged(string propertyPath)
-    {}
-
-    protected virtual void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
-    {}
-
     protected void Bind(FrameworkElement frameworkElement)
     {
         Guard.IsNotNull(FormDataProvider);
@@ -313,4 +147,9 @@ public abstract partial class FormElement : ObservableObject
         FormDataProvider = null;
     }
 
+    protected virtual void OnFormDataChanged(string propertyPath)
+    {}
+
+    protected virtual void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    {}
 }
