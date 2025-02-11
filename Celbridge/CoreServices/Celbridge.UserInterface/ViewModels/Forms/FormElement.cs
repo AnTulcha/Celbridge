@@ -10,7 +10,12 @@ namespace Celbridge.UserInterface.ViewModels.Forms;
 /// </summary>
 public abstract partial class FormElement : ObservableObject
 {
-    public IFormDataProvider? FormDataProvider { get; set; }
+    private IFormDataProvider? _formDataProvider;
+    public IFormDataProvider FormDataProvider 
+    {
+        get => _formDataProvider!;
+        set => _formDataProvider = value;
+    }
 
     protected abstract Result<UIElement> CreateUIElement(JsonElement config, FormBuilder formBuilder);
 
@@ -125,11 +130,9 @@ public abstract partial class FormElement : ObservableObject
 
     protected void Bind(FrameworkElement frameworkElement)
     {
-        Guard.IsNotNull(FormDataProvider);
-
         // Listen for changes to update bound values
-        FormDataProvider.FormPropertyChanged += OnFormDataChanged;
-        PropertyChanged += OnMemberChanged;
+        FormDataProvider.FormPropertyChanged += OnFormPropertyChanged;
+        PropertyChanged += OnPropertyChanged;
         frameworkElement.Unloaded += (s, e) =>
         {
             Unbind(frameworkElement);
@@ -139,17 +142,36 @@ public abstract partial class FormElement : ObservableObject
     private void Unbind(FrameworkElement frameworkElement)
     {
         // Unregister listeners and clear references
-        Guard.IsNotNull(FormDataProvider);
+        FormDataProvider.FormPropertyChanged -= OnFormPropertyChanged;
+        PropertyChanged -= OnPropertyChanged;
 
+        _formDataProvider = null;
+    }
+
+    private void OnFormPropertyChanged(string propertyPath)
+    {
+        Guard.IsNotNullOrEmpty(propertyPath);
+
+        OnFormDataChanged(propertyPath);
+    }
+
+    private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        Guard.IsNotNullOrEmpty(e.PropertyName);
+
+        // Stop listening for form data changes while we update the form data
         FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
-        PropertyChanged -= OnMemberChanged;
 
-        FormDataProvider = null;
+        var propertyName = e.PropertyName;
+        OnMemberDataChanged(propertyName);
+
+        // Resume listening for form data changes
+        FormDataProvider.FormPropertyChanged += OnFormDataChanged;
     }
 
     protected virtual void OnFormDataChanged(string propertyPath)
     {}
 
-    protected virtual void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    protected virtual void OnMemberDataChanged(string propertyName)
     {}
 }

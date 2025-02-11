@@ -1,5 +1,4 @@
 using Celbridge.UserInterface.Services.Forms;
-using System.ComponentModel;
 using System.Text.Json.Nodes;
 using System.Text.Json;
 using Windows.System;
@@ -227,8 +226,6 @@ public partial class TextBoxElement : FormElement
 
     private Result UpdateText()
     {
-        Guard.IsNotNull(FormDataProvider);
-
         // Get the property JSON value from the FormDataProvider
         var getResult = FormDataProvider.GetProperty(_textPropertyPath);
         if (getResult.IsFailure)
@@ -260,20 +257,12 @@ public partial class TextBoxElement : FormElement
         }
     }
 
-    protected override void OnMemberChanged(object? sender, PropertyChangedEventArgs e)
+    protected override void OnMemberDataChanged(string propertyName)
     {
-        Guard.IsNotNull(FormDataProvider);
-
-        // Stop listening for form data changes while we update the form data
-        FormDataProvider.FormPropertyChanged -= OnFormDataChanged;
-
-        if (e.PropertyName == nameof(Text))
+        if (propertyName == nameof(Text))
         {
             var jsonValue = JsonSerializer.Serialize(Text);
             FormDataProvider.SetProperty(_textPropertyPath, jsonValue, false);
         }
-
-        // Resume listening for form data changes
-        FormDataProvider.FormPropertyChanged += OnFormDataChanged;
     }
 }
