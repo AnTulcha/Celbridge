@@ -108,7 +108,7 @@ public class FormBuilder
 
         if (!config.TryGetProperty("element", out var element))
         {
-            _buildErrors.Add("Form object does not contain an 'elementType' property");
+            _buildErrors.Add("Form object does not contain an 'element' property");
             return null;
         }
         var elementName = element.GetString();
