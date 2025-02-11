@@ -52,11 +52,11 @@ public partial class TextBlockElement : FormElement
         // Apply common element config properties
         //
 
-        var alignmentResult = ApplyCommonConfig(textBlock, config);
-        if (alignmentResult.IsFailure)
+        var commonConfigResult = ApplyCommonConfig(textBlock, config);
+        if (commonConfigResult.IsFailure)
         {
             return Result<UIElement>.Fail($"Failed to apply common config properties")
-                .WithErrors(alignmentResult);
+                .WithErrors(commonConfigResult);
         }
 
         //
