@@ -1,7 +1,6 @@
 using Celbridge.UserInterface.Services.Forms;
 using Microsoft.UI.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Windows.UI.Text;
 
 namespace Celbridge.UserInterface.ViewModels.Forms;
@@ -16,7 +15,8 @@ public partial class TextBlockElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-    private string _textPropertyPath = string.Empty;
+
+    private StringPropertyBinder _textBinder = new();
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -129,81 +129,22 @@ public partial class TextBlockElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
-        if (config.TryGetProperty("text", out var textProperty))
-        {
-            // Check the type
-            if (textProperty.ValueKind != JsonValueKind.String)
-            {
-                return Result.Fail("'text' property must be a string");
-            }
-
-            // Apply the property
-            var text = textProperty.GetString()!;
-            if (text.StartsWith('/'))
-            {
-                // Store the property path for future updates
-                _textPropertyPath = text;
-
-                // Bind dependency property to a member variable on this class
-                textBlock.SetBinding(TextBlock.TextProperty, new Binding()
-                {
-                    Path = new PropertyPath(nameof(Text)),
-                    Mode = BindingMode.OneWay
-                });
-
-                // Get the current property value via the FormDataProvider
-                var updateResult = UpdateText();
-                if (updateResult.IsFailure)
-                {
-                    return Result.Fail($"Failed to update value of 'text' property")
-                        .WithErrors(updateResult);
-                }
-
-                HasBindings = true;
-
-                return Result.Ok();
-            }
-            else
-            {
-                // Set property value directly
-                // Todo: Support localization
-                textBlock.Text = text;
-            }
-        }
-
-        return Result.Ok();
-    }
-
-    private Result UpdateText()
-    {
-        // Get the property JSON value from the FormDataProvider
-        var getResult = FormDataProvider.GetProperty(_textPropertyPath);
-        if (getResult.IsFailure)
-        {
-            return Result.Fail($"Failed to get property: '{_textPropertyPath}'")
-                .WithErrors(getResult);
-        }
-        var jsonValue = getResult.Value;
-
-        // Parse the JSON value
-        var jsonNode = JsonNode.Parse(jsonValue);
-        if (jsonNode is null)
-        {
-            return Result.Fail($"Failed to parse JSON value for property: '{_textPropertyPath}'");
-        }
-        var value = jsonNode.ToString();
-
-        // Update the member variable
-        Text = value;
-
-        return Result.Ok();
+        return _textBinder.Initialize(
+            this, 
+            textBlock, 
+            config, 
+            "text", 
+            TextBlock.TextProperty, 
+            BindingMode.OneWay, 
+            nameof(Text), 
+            (string stringValue) => Text = stringValue);
     }
 
     protected override void OnFormDataChanged(string propertyPath)
     {
-        if (propertyPath == _textPropertyPath)
+        if (propertyPath == _textBinder.PropertyPath)
         {
-            UpdateText();
+            _textBinder.UpdatePropertyValue();
         }
     }
 
@@ -212,7 +153,7 @@ public partial class TextBlockElement : FormElement
         if (propertyName == nameof(Text))
         {
             var jsonValue = JsonSerializer.Serialize(Text);
-            FormDataProvider.SetProperty(_textPropertyPath, jsonValue, false);
+            FormDataProvider.SetProperty(_textBinder.PropertyPath, jsonValue, false);
         }
     }
 }

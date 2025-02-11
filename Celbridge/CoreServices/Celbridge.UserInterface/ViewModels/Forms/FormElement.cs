@@ -13,7 +13,7 @@ public abstract partial class FormElement : ObservableObject
     private IFormDataProvider? _formDataProvider;
     public IFormDataProvider FormDataProvider => _formDataProvider!;
 
-    protected bool HasBindings { get; set; }
+    public bool HasBindings { get; set; }
 
     public Result<FrameworkElement> Create(JsonElement config, FormBuilder formBuilder)
     {
