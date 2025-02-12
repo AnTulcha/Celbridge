@@ -32,10 +32,20 @@ public class FormBuilder
 
         try
         {
+            // Create the root panel for the form
             var uiElement = CreateFormElement(formConfig);
             if (uiElement is not null)
             {
                 formPanel = uiElement as Panel;
+                if (formPanel is null)
+                {
+                    _buildErrors.Add("Failed to create form panel");
+                }
+                else
+                {
+                    // Set the root panel's data context to the form data provider
+                    formPanel.DataContext = formDataProvider;
+                }
             }
             else
             {
@@ -71,7 +81,10 @@ public class FormBuilder
 
         formPanel.Loaded += (s, e) =>
         {
-            var formDataProvider = formPanel.DataContext as IFormDataProvider;
+            var panel = s as Panel; // Avoid capturing references outside the lambda
+            Guard.IsNotNull(panel);
+
+            var formDataProvider = panel.DataContext as IFormDataProvider;
             if (formDataProvider is not null)
             {
                 formDataProvider.OnFormLoaded();
@@ -80,7 +93,10 @@ public class FormBuilder
 
         formPanel.Unloaded += (s, e) =>
         {
-            var formDataProvider = formPanel.DataContext as IFormDataProvider;
+            var panel = s as Panel; // Avoid capturing references outside the lambda
+            Guard.IsNotNull(panel);
+
+            var formDataProvider = panel.DataContext as IFormDataProvider;
             if (formDataProvider is not null)
             {
                 formDataProvider.OnFormUnloaded();
