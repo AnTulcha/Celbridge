@@ -33,9 +33,11 @@ public class FormBuilder
         try
         {
             var uiElement = CreateFormElement(formConfig);
-            if (uiElement is not null)
+            if (uiElement is Panel panel &&
+                panel is not null)
             {
-                formPanel = uiElement as Panel;
+                formPanel = panel;
+                formPanel.DataContext = formDataProvider;
             }
             else
             {
