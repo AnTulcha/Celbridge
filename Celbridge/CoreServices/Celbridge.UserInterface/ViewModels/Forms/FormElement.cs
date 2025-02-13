@@ -145,19 +145,19 @@ public abstract partial class FormElement : ObservableObject
 
     private Result ApplyTooltipConfig(FrameworkElement frameworkElement, JsonElement config)
     {
-        if (!config.TryGetProperty("tooltip", out var _))
+        if (config.TryGetProperty("tooltip", out var configValue))
         {
-            return Result.Ok();
+            _tooltipBinder = PropertyBinder.Create(frameworkElement, this)
+                .Setter((jsonValue) =>
+                {
+                    var tooltipValue = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
+                    ToolTipService.SetToolTip(frameworkElement, tooltipValue);
+                });
+
+            return _tooltipBinder.Initialize(configValue);
         }
 
-        _tooltipBinder = PropertyBinder.Create(frameworkElement, this)
-            .Setter((jsonValue) =>
-            {
-                var tooltipValue = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
-                ToolTipService.SetToolTip(frameworkElement, tooltipValue);
-            });
-
-        return _tooltipBinder.Initialize(config, "tooltip");
+        return Result.Ok();
     }
 
     protected void RegisterEvents(FrameworkElement frameworkElement)

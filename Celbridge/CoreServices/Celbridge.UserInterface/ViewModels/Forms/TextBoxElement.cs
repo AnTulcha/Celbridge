@@ -169,7 +169,9 @@ public partial class TextBoxElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBox textBox)
     {
-        _textBinder = PropertyBinder.Create(textBox, this)
+        if (config.TryGetProperty("text", out var configValue))
+        {
+            _textBinder = PropertyBinder.Create(textBox, this)
             .Binding(TextBox.TextProperty, BindingMode.TwoWay, nameof(Text))
             .Setter((jsonValue) =>
             {
@@ -180,7 +182,10 @@ public partial class TextBoxElement : FormElement
                 return JsonSerializer.Serialize(Text);
             });
 
-        return _textBinder.Initialize(config, "text");
+            return _textBinder.Initialize(configValue);
+        }
+
+        return Result.Ok();
     }
 
     protected override void OnFormDataChanged(string propertyPath)

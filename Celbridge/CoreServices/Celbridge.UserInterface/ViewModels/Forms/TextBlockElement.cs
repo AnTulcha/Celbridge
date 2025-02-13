@@ -128,14 +128,19 @@ public partial class TextBlockElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
-        _textBinder = PropertyBinder.Create(textBlock, this)
-            .Binding(TextBlock.TextProperty, BindingMode.OneWay, nameof(Text))
-            .Setter((jsonValue) =>
-             {
-                 Text = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
-             });
+        if (config.TryGetProperty("text", out var configValue))
+        {
+            _textBinder = PropertyBinder.Create(textBlock, this)
+                .Binding(TextBlock.TextProperty, BindingMode.OneWay, nameof(Text))
+                .Setter((jsonValue) =>
+                 {
+                     Text = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
+                 });
 
-        return _textBinder.Initialize(config, "text");
+            return _textBinder.Initialize(configValue);
+        }
+
+        return Result.Ok();
     }
 
     protected override void OnFormDataChanged(string propertyPath)

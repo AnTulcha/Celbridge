@@ -54,60 +54,57 @@ public class PropertyBinder
         return this;
     }
 
-    public Result Initialize(JsonElement config, string configKey)
+    public Result Initialize(JsonElement configValue)
     {
         if (_setterAction is null)
         {
             return Result.Fail($"No setter action specified");
         }
 
-        if (config.TryGetProperty(configKey, out var stringValue))
+        // Check the type
+        if (configValue.ValueKind != JsonValueKind.String)
         {
-            // Check the type
-            if (stringValue.ValueKind != JsonValueKind.String)
+            return Result.Fail($"Config value must be a string");
+        }
+
+        // Apply the property
+        var configText = configValue.GetString()!;
+        if (configText.StartsWith('/'))
+        {
+            // Store the property path for future updates
+            _formPropertyPath = configText;
+
+            // Sync the member variable with the form data provider
+            SynchonizeProperties();
+
+            if (HasBinding)
             {
-                return Result.Fail($"'{configKey}' property must be a string");
+                // Bind dependency property to a member variable on the form element class
+                _frameworkElement.SetBinding(_dependencyProperty, new Binding()
+                {
+                    Path = new PropertyPath(_memberName),
+                    Mode = _bindingMode
+                });
             }
 
-            // Apply the property
-            var stringText = stringValue.GetString()!;
-            if (stringText.StartsWith('/'))
+            // Set a flag to indicate that the form element needs to register for
+            // property update notifications.
+            _formElement.RequiresChangeNotifications = true;
+        }
+        else
+        {
+            // Todo: Support localization
+            var jsonValue = configValue.GetRawText();
+            _setterAction?.Invoke(jsonValue);
+
+            if (HasBinding)
             {
-                // Store the property path for future updates
-                _formPropertyPath = stringText;
-
-                // Sync the member variable with the form data provider
-                SynchonizeProperties();
-
-                if (HasBinding)
+                // Bind dependency property to a member variable on the form element class
+                _frameworkElement.SetBinding(_dependencyProperty, new Binding()
                 {
-                    // Bind dependency property to a member variable on the form element class
-                    _frameworkElement.SetBinding(_dependencyProperty, new Binding()
-                    {
-                        Path = new PropertyPath(_memberName),
-                        Mode = _bindingMode
-                    });
-                }
-
-                // Set a flag to indicate that the form element needs to register for
-                // property update notifications.
-                _formElement.RequiresChangeNotifications = true;
-            }
-            else
-            {
-                // Todo: Support localization
-                var jsonValue = stringValue.GetRawText();
-                _setterAction?.Invoke(jsonValue);
-
-                if (HasBinding)
-                {
-                    // Bind dependency property to a member variable on the form element class
-                    _frameworkElement.SetBinding(_dependencyProperty, new Binding()
-                    {
-                        Path = new PropertyPath(_memberName),
-                        Mode = BindingMode.OneTime, // Setting member to a fixed value that will never update
-                    });
-                }
+                    Path = new PropertyPath(_memberName),
+                    Mode = BindingMode.OneTime, // Setting member to a fixed value that will never update
+                });
             }
         }
 
