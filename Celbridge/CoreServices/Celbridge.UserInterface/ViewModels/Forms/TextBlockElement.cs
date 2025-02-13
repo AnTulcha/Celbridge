@@ -15,7 +15,7 @@ public partial class TextBlockElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-    private StringPropertyBinder _textBinder = new();
+    private StringPropertyBinder? _textBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -128,31 +128,24 @@ public partial class TextBlockElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
-        return _textBinder.Initialize(
-            this, 
-            textBlock, 
-            config, 
-            "text", 
-            TextBlock.TextProperty, 
-            BindingMode.OneWay, 
-            nameof(Text), 
-            (string stringValue) => Text = stringValue);
+        _textBinder = StringPropertyBinder.Create(textBlock, this)
+            .Binding(TextBlock.TextProperty, BindingMode.OneWay, nameof(Text))
+            .Setter((string stringValue) => Text = stringValue);
+
+        return _textBinder.Initialize(config, "text");
     }
 
     protected override void OnFormDataChanged(string propertyPath)
     {
-        if (propertyPath == _textBinder.PropertyPath)
-        {
-            _textBinder.UpdatePropertyValue();
-        }
+        Guard.IsNotNull(_textBinder);
+
+        _textBinder.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
     {
-        if (propertyName == nameof(Text))
-        {
-            var jsonValue = JsonSerializer.Serialize(Text);
-            FormDataProvider.SetProperty(_textBinder.PropertyPath, jsonValue, false);
-        }
+        Guard.IsNotNull(_textBinder);
+
+        _textBinder.OnMemberDataChanged(propertyName);
     }
 }

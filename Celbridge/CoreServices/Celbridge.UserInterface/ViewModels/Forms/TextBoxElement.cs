@@ -14,7 +14,7 @@ public partial class TextBoxElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-    private StringPropertyBinder _textBinder = new();
+    private StringPropertyBinder? _textBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -169,31 +169,25 @@ public partial class TextBoxElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBox textBox)
     {
-        return _textBinder.Initialize(
-            this,
-            textBox,
-            config,
-            "text",
-            TextBox.TextProperty,
-            BindingMode.TwoWay,
-            nameof(Text),
-            (string stringValue) => Text = stringValue);
+        _textBinder = StringPropertyBinder.Create(textBox, this)
+            .Binding(TextBox.TextProperty, BindingMode.TwoWay, nameof(Text))
+            .Setter((string stringValue) => Text = stringValue)
+            .Getter(() => Text);
+
+        return _textBinder.Initialize(config, "text");
     }
 
     protected override void OnFormDataChanged(string propertyPath)
     {
-        if (propertyPath == _textBinder.PropertyPath)
-        {
-            _textBinder.UpdatePropertyValue();
-        }
+        Guard.IsNotNull(_textBinder);
+
+        _textBinder.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
     {
-        if (propertyName == nameof(Text))
-        {
-            var jsonValue = JsonSerializer.Serialize(Text);
-            FormDataProvider.SetProperty(_textBinder.PropertyPath, jsonValue, false);
-        }
+        Guard.IsNotNull(_textBinder);
+
+        _textBinder.OnMemberDataChanged(propertyName);
     }
 }
