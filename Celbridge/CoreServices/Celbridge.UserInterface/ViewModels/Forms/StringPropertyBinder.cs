@@ -58,7 +58,7 @@ public class StringPropertyBinder
             }
             else
             {
-                // Set member property directly (i.eno binding)
+                // Set member property directly (i.e no binding)
                 // Todo: Support localization
                 setMemberProperty.Invoke(stringText);
             }
