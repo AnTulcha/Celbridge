@@ -10,6 +10,7 @@ public class PropertyBinder
     private DependencyProperty? _dependencyProperty;
     private BindingMode _bindingMode = BindingMode.OneTime;
     private string _memberName = string.Empty;
+    private bool HasBinding => _dependencyProperty is not null && !string.IsNullOrEmpty(_memberName);
 
     private Action<string>? _setterAction;
     private Func<string>? _getterAction;
@@ -55,12 +56,6 @@ public class PropertyBinder
 
     public Result Initialize(JsonElement config, string configKey)
     {
-        if (_dependencyProperty is null ||
-            string.IsNullOrEmpty(_memberName))
-        {
-            return Result.Fail($"Binding information was not set");
-        }
-
         if (_setterAction is null)
         {
             return Result.Fail($"No setter action specified");
@@ -84,12 +79,15 @@ public class PropertyBinder
                 // Sync the member variable with the form data provider
                 SynchonizeProperties();
 
-                // Bind dependency property to a member variable on the form element class
-                _frameworkElement.SetBinding(_dependencyProperty, new Binding()
+                if (HasBinding)
                 {
-                    Path = new PropertyPath(_memberName),
-                    Mode = _bindingMode
-                });
+                    // Bind dependency property to a member variable on the form element class
+                    _frameworkElement.SetBinding(_dependencyProperty, new Binding()
+                    {
+                        Path = new PropertyPath(_memberName),
+                        Mode = _bindingMode
+                    });
+                }
 
                 // Set a flag to indicate that the form element needs to register for
                 // property update notifications.
@@ -101,12 +99,15 @@ public class PropertyBinder
                 var jsonValue = stringValue.GetRawText();
                 _setterAction?.Invoke(jsonValue);
 
-                // Bind dependency property to a member variable on the form element class
-                _frameworkElement.SetBinding(_dependencyProperty, new Binding()
+                if (HasBinding)
                 {
-                    Path = new PropertyPath(_memberName),
-                    Mode = BindingMode.OneTime, // Setting member to a fixed value that will never update
-                });
+                    // Bind dependency property to a member variable on the form element class
+                    _frameworkElement.SetBinding(_dependencyProperty, new Binding()
+                    {
+                        Path = new PropertyPath(_memberName),
+                        Mode = BindingMode.OneTime, // Setting member to a fixed value that will never update
+                    });
+                }
             }
         }
 

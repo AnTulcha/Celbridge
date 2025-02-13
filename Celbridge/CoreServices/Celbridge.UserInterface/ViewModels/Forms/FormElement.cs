@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Celbridge.Forms;
 using Celbridge.UserInterface.Services.Forms;
 
@@ -18,7 +17,7 @@ public abstract partial class FormElement : ObservableObject
 
     private FrameworkElement? _frameworkElement;
 
-    private string _tooltipPath = string.Empty;
+    private PropertyBinder? _tooltipBinder;
 
     public Result<FrameworkElement> Create(JsonElement config, FormBuilder formBuilder)
     {
@@ -146,61 +145,19 @@ public abstract partial class FormElement : ObservableObject
 
     private Result ApplyTooltipConfig(FrameworkElement frameworkElement, JsonElement config)
     {
-        if (config.TryGetProperty("tooltip", out var jsonValue))
+        if (!config.TryGetProperty("tooltip", out var _))
         {
-            // Check the type
-            if (jsonValue.ValueKind != JsonValueKind.String)
-            {
-                return Result.Fail("'tooltip' property must be a string");
-            }
+            return Result.Ok();
+        }
 
-            // Apply the property
-            var tooltipValue = jsonValue.GetString();
-            if (string.IsNullOrEmpty(tooltipValue))
+        _tooltipBinder = PropertyBinder.Create(frameworkElement, this)
+            .Setter((jsonValue) =>
             {
-                // This is a noop
-                return Result.Ok();
-            }
-
-            if (tooltipValue.StartsWith('/'))
-            {
-                _tooltipPath = tooltipValue;
-                UpdateStringProperty(_tooltipPath, (v) => ToolTipService.SetToolTip(frameworkElement, v));
-
-                RequiresChangeNotifications = true;
-            }
-            else 
-            { 
+                var tooltipValue = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
                 ToolTipService.SetToolTip(frameworkElement, tooltipValue);
-            }
-        }
+            });
 
-        return Result.Ok();
-    }
-
-    private Result UpdateStringProperty(string propertyPath, Action<string> setProperty)
-    {
-        // Read the current property JSON value via the FormDataProvider
-        var getResult = FormDataProvider.GetProperty(_tooltipPath);
-        if (getResult.IsFailure)
-        {
-            return Result.Fail($"Failed to get property: '{_tooltipPath}'")
-                .WithErrors(getResult);
-        }
-        var jsonValue = getResult.Value;
-
-        // Parse the JSON value as a string
-        var jsonNode = JsonNode.Parse(jsonValue);
-        if (jsonNode is null)
-        {
-            return Result.Fail($"Failed to parse JSON value for property: '{_tooltipPath}'");
-        }
-        var value = jsonNode.ToString();
-
-        // Update the member variable
-        setProperty?.Invoke(value);
-
-        return Result.Ok();
+        return _tooltipBinder.Initialize(config, "tooltip");
     }
 
     protected void RegisterEvents(FrameworkElement frameworkElement)
@@ -232,10 +189,8 @@ public abstract partial class FormElement : ObservableObject
     {
         Guard.IsNotNullOrEmpty(propertyPath);
 
-        if (propertyPath == _tooltipPath)
-        {
-            UpdateStringProperty(_tooltipPath, (v) => ToolTipService.SetToolTip(_frameworkElement, v));
-        }
+        // Tooltip binder only needs to respond to form property changes
+        _tooltipBinder?.OnFormDataChanged(propertyPath);
 
         // Forward the event to the derived class
         OnFormDataChanged(propertyPath);
@@ -250,6 +205,7 @@ public abstract partial class FormElement : ObservableObject
 
         // Forward the event to the derived class
         var propertyName = e.PropertyName;
+
         OnMemberDataChanged(propertyName);
 
         // Resume listening for form data changes
