@@ -15,7 +15,7 @@ public partial class TextBlockElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-    private StringPropertyBinder? _textBinder;
+    private PropertyBinder? _textBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -128,9 +128,12 @@ public partial class TextBlockElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
-        _textBinder = StringPropertyBinder.Create(textBlock, this)
+        _textBinder = PropertyBinder.Create(textBlock, this)
             .Binding(TextBlock.TextProperty, BindingMode.OneWay, nameof(Text))
-            .Setter((string stringValue) => Text = stringValue);
+            .Setter((jsonValue) =>
+             {
+                 Text = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
+             });
 
         return _textBinder.Initialize(config, "text");
     }

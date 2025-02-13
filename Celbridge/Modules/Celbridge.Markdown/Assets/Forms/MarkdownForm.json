@@ -9,6 +9,10 @@
     "text": "/editorMode"
   },
   {
+    "element": "TextBlock",
+    "text": "Some text"
+  },
+  {
     "element": "StackPanel",
     "orientation": "Horizontal",
     "horizontalAlignment": "Center",

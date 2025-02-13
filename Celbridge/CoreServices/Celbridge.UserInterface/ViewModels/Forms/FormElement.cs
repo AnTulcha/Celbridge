@@ -14,7 +14,7 @@ public abstract partial class FormElement : ObservableObject
     private IFormDataProvider? _formDataProvider;
     public IFormDataProvider FormDataProvider => _formDataProvider!;
 
-    public bool HasBindings { get; set; }
+    public bool RequiresChangeNotifications { get; set; }
 
     private FrameworkElement? _frameworkElement;
 
@@ -35,7 +35,7 @@ public abstract partial class FormElement : ObservableObject
 
         _frameworkElement = uiElement;
 
-        if (HasBindings)
+        if (RequiresChangeNotifications)
         {
             RegisterEvents(uiElement);
         }
@@ -167,7 +167,7 @@ public abstract partial class FormElement : ObservableObject
                 _tooltipPath = tooltipValue;
                 UpdateStringProperty(_tooltipPath, (v) => ToolTipService.SetToolTip(frameworkElement, v));
 
-                HasBindings = true;
+                RequiresChangeNotifications = true;
             }
             else 
             { 

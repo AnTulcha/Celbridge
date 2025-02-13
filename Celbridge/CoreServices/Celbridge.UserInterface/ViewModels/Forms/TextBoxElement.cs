@@ -14,7 +14,7 @@ public partial class TextBoxElement : FormElement
 
     [ObservableProperty]
     private string _text = string.Empty;
-    private StringPropertyBinder? _textBinder;
+    private PropertyBinder? _textBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -169,10 +169,16 @@ public partial class TextBoxElement : FormElement
 
     private Result ApplyTextConfig(JsonElement config, TextBox textBox)
     {
-        _textBinder = StringPropertyBinder.Create(textBox, this)
+        _textBinder = PropertyBinder.Create(textBox, this)
             .Binding(TextBox.TextProperty, BindingMode.TwoWay, nameof(Text))
-            .Setter((string stringValue) => Text = stringValue)
-            .Getter(() => Text);
+            .Setter((jsonValue) =>
+            {
+                Text = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
+            })
+            .Getter(() =>
+            {
+                return JsonSerializer.Serialize(Text);
+            });
 
         return _textBinder.Initialize(config, "text");
     }
