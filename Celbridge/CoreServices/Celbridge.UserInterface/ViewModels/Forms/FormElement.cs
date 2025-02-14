@@ -46,25 +46,27 @@ public abstract partial class FormElement : ObservableObject
 
     protected Result ValidateConfigKeys(JsonElement config, HashSet<string> validConfigKeys)
     {
-        var keys = new List<string>();
-        if (config.ValueKind == JsonValueKind.Object)
+        if (config.ValueKind != JsonValueKind.Object)
         {
-            foreach (var property in config.EnumerateObject())
+            return Result.Fail("Form element config must be an object");
+        }
+
+        foreach (var property in config.EnumerateObject())
+        {
+            var configKey = property.Name;
+            switch (configKey)
             {
-                var configKey = property.Name;
-                if (configKey == "element" ||
-                    configKey == "horizontalAlignment" ||
-                    configKey == "verticalAlignment" ||
-                    configKey == "tooltip")
-                {
+                case "element":
+                case "horizontalAlignment":
+                case "verticalAlignment":
+                case "tooltip":
                     // Skip general config properties that apply to all elements
                     continue;
-                }
+            }
 
-                if (!validConfigKeys.Contains(configKey))
-                {
-                    return Result.Fail($"Invalid form element property: '{configKey}'");
-                }
+            if (!validConfigKeys.Contains(configKey))
+            {
+                return Result.Fail($"Invalid form element property: '{configKey}'");
             }
         }
 
