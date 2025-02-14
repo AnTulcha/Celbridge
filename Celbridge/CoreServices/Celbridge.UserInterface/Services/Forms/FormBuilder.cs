@@ -32,20 +32,14 @@ public class FormBuilder
 
         try
         {
-            // Create the root panel for the form
+			// Create the root panel for the form
             var uiElement = CreateFormElement(formConfig);
-            if (uiElement is not null)
+            if (uiElement is Panel panel &&
+                panel is not null)
             {
-                formPanel = uiElement as Panel;
-                if (formPanel is null)
-                {
-                    _buildErrors.Add("Failed to create form panel");
-                }
-                else
-                {
-                    // Set the root panel's data context to the form data provider
-                    formPanel.DataContext = formDataProvider;
-                }
+				// Set the root panel's data context to the form data provider
+                formPanel = panel;
+                formPanel.DataContext = formDataProvider;
             }
             else
             {
