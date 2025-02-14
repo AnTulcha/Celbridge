@@ -227,15 +227,12 @@ public partial class TextBoxElement : FormElement
 
     protected override void OnFormDataChanged(string propertyPath)
     {
-        Guard.IsNotNull(_textBinder);
-
-        _textBinder.OnFormDataChanged(propertyPath);
+        _isEnabledBinder?.OnFormDataChanged(propertyPath);
+        _textBinder?.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
     {
-        Guard.IsNotNull(_textBinder);
-
-        _textBinder.OnMemberDataChanged(propertyName);
+        _textBinder?.OnMemberDataChanged(propertyName);
     }
 }
