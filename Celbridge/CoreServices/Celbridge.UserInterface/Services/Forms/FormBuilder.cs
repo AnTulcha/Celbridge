@@ -32,12 +32,12 @@ public class FormBuilder
 
         try
         {
-			// Create the root panel for the form
+            // Create the root panel for the form
             var uiElement = CreateFormElement(formConfig);
             if (uiElement is Panel panel &&
                 panel is not null)
             {
-				// Set the root panel's data context to the form data provider
+                // Set the root panel's data context to the form data provider
                 formPanel = panel;
                 formPanel.DataContext = formDataProvider;
             }
