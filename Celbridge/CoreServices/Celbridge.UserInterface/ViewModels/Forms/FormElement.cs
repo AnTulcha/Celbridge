@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Celbridge.Forms;
 using Celbridge.UserInterface.Services.Forms;
 
@@ -17,6 +18,7 @@ public abstract partial class FormElement : ObservableObject
 
     private FrameworkElement? _frameworkElement;
 
+    private PropertyBinder? _visibilityBinder;
     private PropertyBinder? _tooltipBinder;
 
     public Result<FrameworkElement> Create(JsonElement config, FormBuilder formBuilder)
@@ -57,6 +59,7 @@ public abstract partial class FormElement : ObservableObject
             switch (configKey)
             {
                 case "element":
+                case "visibility":
                 case "horizontalAlignment":
                 case "verticalAlignment":
                 case "tooltip":
@@ -75,18 +78,47 @@ public abstract partial class FormElement : ObservableObject
 
     protected Result ApplyCommonConfig(FrameworkElement frameworkElement, JsonElement config)
     {
+        var visibilityResult = ApplyVisibilityConfig(frameworkElement, config);
+        if (visibilityResult.IsFailure)
+        {
+            return Result.Fail($"Failed to apply 'visibility' config")
+                .WithErrors(visibilityResult);
+        }
+
         var alignmentResult = ApplyAlignmentConfig(frameworkElement, config);
         if (alignmentResult.IsFailure)
         {
-            return Result.Fail($"Failed to apply alignment config")
+            return Result.Fail($"Failed to apply 'alignment' config")
                 .WithErrors(alignmentResult);
         }
 
         var tooltipResult = ApplyTooltipConfig(frameworkElement, config);
         if (alignmentResult.IsFailure)
         {
-            return Result.Fail($"Failed to apply tooltip config")
+            return Result.Fail($"Failed to apply 'tooltip' config")
                 .WithErrors(alignmentResult);
+        }
+
+        return Result.Ok();
+    }
+
+    private Result ApplyVisibilityConfig(FrameworkElement frameworkElement, JsonElement config)
+    {
+        if (config.TryGetProperty("visibility", out var configValue))
+        {
+            _visibilityBinder = PropertyBinder.Create(frameworkElement, this)
+                .Setter((jsonValue) =>
+                {
+                    var options = new JsonSerializerOptions
+                    {
+                        Converters = { new JsonStringEnumConverter() }
+                    };
+
+                    var visibility = JsonSerializer.Deserialize<Visibility>(jsonValue.ToString(), options);
+                    frameworkElement.Visibility = visibility;
+                });
+
+            return _visibilityBinder.Initialize(configValue);
         }
 
         return Result.Ok();
@@ -152,8 +184,15 @@ public abstract partial class FormElement : ObservableObject
             _tooltipBinder = PropertyBinder.Create(frameworkElement, this)
                 .Setter((jsonValue) =>
                 {
-                    var tooltipValue = JsonSerializer.Deserialize<string>(jsonValue.ToString())!;
-                    ToolTipService.SetToolTip(frameworkElement, tooltipValue);
+                    var tooltipValue = JsonSerializer.Deserialize<string>(jsonValue.ToString()) ?? string.Empty;
+                    if (string.IsNullOrEmpty(tooltipValue))
+                    {
+                        ToolTipService.SetToolTip(frameworkElement, null);
+                    }
+                    else
+                    {
+                        ToolTipService.SetToolTip(frameworkElement, tooltipValue);
+                    }
                 });
 
             return _tooltipBinder.Initialize(configValue);
