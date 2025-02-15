@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Celbridge.Commands;
 using Celbridge.Documents;
 using Celbridge.Entities;
@@ -43,6 +44,15 @@ public class MarkdownEditor : ComponentEditorBase
         return new ComponentSummary(string.Empty, string.Empty);
     }
 
+    protected override void OnFormPropertyChanged(string propertyPath)
+    {
+        if (propertyPath == "/editorMode")
+        {
+            // Notify updates to "virtual" form properties
+            NotifyFormPropertyChanged("/openButtonEnabled");
+        }
+    }
+
     public override void OnButtonClicked(string buttonId)
     {
         switch (buttonId)
@@ -66,6 +76,28 @@ public class MarkdownEditor : ComponentEditorBase
                 OpenDocument();
                 break;
         }
+    }
+
+    protected override Result<string> TryGetProperty(string propertyPath)
+    {
+        if (propertyPath == "/openButtonEnabled")
+        {
+            var editorMode = Component.GetString(MarkdownComponentConstants.EditorMode);
+
+            string jsonValue;
+            if (editorMode == "Preview")
+            {
+                jsonValue = "\"true\"";
+            }
+            else
+            {
+                jsonValue = "\"false\"";
+            }
+
+            return Result<String>.Ok(jsonValue);
+        }
+
+        return Result<string>.Fail();
     }
 
     private void OpenDocument()

@@ -99,6 +99,8 @@ public partial class ButtonElement : FormElement
             _isEnabledBinder = PropertyBinder.Create(button, this)
                 .Setter((jsonValue) =>
                 {
+                    // Todo: Deserialize will cause an exception here if jsonValue is invalid
+
                     var isEnabled = false;
                     if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
                     {

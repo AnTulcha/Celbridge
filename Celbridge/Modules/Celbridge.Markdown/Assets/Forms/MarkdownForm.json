@@ -20,6 +20,7 @@
       {
         "element": "Button",
         "tooltip": "/editorMode",
+        "isEnabled": "/openButtonEnabled",
         "icon": "OpenFile",
         "buttonId": "OpenDocument"
       },
