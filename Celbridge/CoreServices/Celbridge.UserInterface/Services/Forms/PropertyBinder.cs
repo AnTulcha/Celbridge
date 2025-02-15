@@ -24,6 +24,22 @@ public class PropertyBinder
         _formElement = formElement;
     }
 
+    public static bool IsBindingConfig(JsonElement config)
+    {
+        if (config.ValueKind == JsonValueKind.String)
+        {
+            var value = config.GetString();
+            if (!string.IsNullOrEmpty(value) &&
+                value.StartsWith('/') && 
+                value.Length > 1)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static PropertyBinder Create(
         FrameworkElement frameworkElement,
         FormElement formElement)

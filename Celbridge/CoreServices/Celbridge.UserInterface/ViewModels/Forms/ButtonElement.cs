@@ -96,20 +96,35 @@ public partial class ButtonElement : FormElement
     {
         if (config.TryGetProperty("isEnabled", out var configValue))
         {
-            _isEnabledBinder = PropertyBinder.Create(button, this)
-                .Setter((jsonValue) =>
-                {
-                    // Todo: Deserialize will cause an exception here if jsonValue is invalid
-
-                    var isEnabled = false;
-                    if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
+            if (PropertyBinder.IsBindingConfig(configValue))
+            {
+                _isEnabledBinder = PropertyBinder.Create(button, this)
+                    .Setter((jsonValue) =>
                     {
-                        isEnabled = result;
-                    }
-                    button.IsEnabled = isEnabled;
-                });
+                        // Todo: Deserialize will cause an exception here if jsonValue is invalid
 
-            return _isEnabledBinder.Initialize(configValue);
+                        var isEnabled = false;
+                        if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
+                        {
+                            isEnabled = result;
+                        }
+                        button.IsEnabled = isEnabled;
+                    });
+
+                return _isEnabledBinder.Initialize(configValue);
+            }
+            else if (configValue.ValueKind == JsonValueKind.True)
+            {
+                button.IsEnabled = true;
+            }
+            else if (configValue.ValueKind == JsonValueKind.False)
+            {
+                button.IsEnabled = false;
+            }
+            else
+            {
+                return Result<bool>.Fail("'isEnabled' config is not valid");
+            }
         }
 
         return Result.Ok();

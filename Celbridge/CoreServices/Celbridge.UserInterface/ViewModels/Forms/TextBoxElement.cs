@@ -122,18 +122,35 @@ public partial class TextBoxElement : FormElement
     {
         if (config.TryGetProperty("isEnabled", out var configValue))
         {
-            _isEnabledBinder = PropertyBinder.Create(textBox, this)
-                .Setter((jsonValue) =>
-                {
-                    var isEnabled = false;
-                    if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
+            if (PropertyBinder.IsBindingConfig(configValue))
+            {
+                _isEnabledBinder = PropertyBinder.Create(textBox, this)
+                    .Setter((jsonValue) =>
                     {
-                        isEnabled = result;
-                    }
-                    textBox.IsEnabled = isEnabled;
-                });
+                        // Todo: Deserialize will cause an exception here if jsonValue is invalid
 
-            return _isEnabledBinder.Initialize(configValue);
+                        var isEnabled = false;
+                        if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
+                        {
+                            isEnabled = result;
+                        }
+                        textBox.IsEnabled = isEnabled;
+                    });
+
+                return _isEnabledBinder.Initialize(configValue);
+            }
+            else if (configValue.ValueKind == JsonValueKind.True)
+            {
+                textBox.IsEnabled = false;
+            }
+            else if (configValue.ValueKind == JsonValueKind.False)
+            {
+                textBox.IsEnabled = false;
+            }
+            else
+            {
+                return Result<bool>.Fail("'isEnabled' config is not valid");
+            }
         }
 
         return Result.Ok();
