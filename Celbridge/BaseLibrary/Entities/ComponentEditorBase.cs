@@ -72,6 +72,7 @@ public abstract class ComponentEditorBase : IComponentEditor
             return Result.Ok();
         }
 
+        // Set the property on the component
         return Component.SetProperty(propertyPath, jsonValue, insert);
     }
 
