@@ -111,7 +111,9 @@ public class PropertyBinder<T> where T : notnull
 
     public void OnMemberDataChanged(string propertyName)
     {
-        if (_getterAction is null || string.IsNullOrEmpty(_memberName) || propertyName != _memberName)
+        if (_getterAction is null || 
+            string.IsNullOrEmpty(_memberName) || 
+            propertyName != _memberName)
         {
             return;
         }
