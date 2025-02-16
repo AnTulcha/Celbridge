@@ -84,15 +84,8 @@ public class MarkdownEditor : ComponentEditorBase
         {
             var editorMode = Component.GetString(MarkdownComponentConstants.EditorMode);
 
-            string jsonValue;
-            if (editorMode == "Preview")
-            {
-                jsonValue = "\"true\"";
-            }
-            else
-            {
-                jsonValue = "\"false\"";
-            }
+            bool isEnabled = editorMode == "Preview";
+            var jsonValue = JsonSerializer.Serialize(isEnabled);
 
             return Result<String>.Ok(jsonValue);
         }

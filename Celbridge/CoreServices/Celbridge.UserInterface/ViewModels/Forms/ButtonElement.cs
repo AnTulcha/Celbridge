@@ -12,7 +12,7 @@ public partial class ButtonElement : FormElement
         return formElement.Create(config, formBuilder);
     }
 
-    private PropertyBinder? _isEnabledBinder;
+    private PropertyBinder<bool>? _isEnabledBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -96,19 +96,12 @@ public partial class ButtonElement : FormElement
     {
         if (config.TryGetProperty("isEnabled", out var configValue))
         {
-            if (PropertyBinder.IsBindingConfig(configValue))
+            if (PropertyBinder<bool>.IsBindingConfig(configValue))
             {
-                _isEnabledBinder = PropertyBinder.Create(button, this)
-                    .Setter((jsonValue) =>
+                _isEnabledBinder = PropertyBinder<bool>.Create(button, this)
+                    .Setter((value) =>
                     {
-                        // Todo: Deserialize will cause an exception here if jsonValue is invalid
-
-                        var isEnabled = false;
-                        if (bool.TryParse(JsonSerializer.Deserialize<string>(jsonValue), out bool result))
-                        {
-                            isEnabled = result;
-                        }
-                        button.IsEnabled = isEnabled;
+                        button.IsEnabled = value;
                     });
 
                 return _isEnabledBinder.Initialize(configValue);
