@@ -49,7 +49,9 @@ public class MarkdownEditor : ComponentEditorBase
         if (propertyPath == "/editorMode")
         {
             // Notify updates to "virtual" form properties
-            NotifyFormPropertyChanged("/openButtonEnabled");
+            NotifyFormPropertyChanged("/editorEnabled");
+            NotifyFormPropertyChanged("/editorAndPreviewEnabled");
+            NotifyFormPropertyChanged("/previewEnabled");
         }
     }
 
@@ -80,11 +82,29 @@ public class MarkdownEditor : ComponentEditorBase
 
     protected override Result<string> TryGetProperty(string propertyPath)
     {
-        if (propertyPath == "/openButtonEnabled")
+        if (propertyPath == "/editorEnabled")
         {
             var editorMode = Component.GetString(MarkdownComponentConstants.EditorMode);
 
-            bool isEnabled = editorMode == "Preview";
+            bool isEnabled = editorMode == "EditorAndPreview" || editorMode == "Preview";
+            var jsonValue = JsonSerializer.Serialize(isEnabled);
+
+            return Result<String>.Ok(jsonValue);
+        }
+        else if (propertyPath == "/editorAndPreviewEnabled")
+        {
+            var editorMode = Component.GetString(MarkdownComponentConstants.EditorMode);
+
+            bool isEnabled = editorMode == "Editor" || editorMode == "Preview";
+            var jsonValue = JsonSerializer.Serialize(isEnabled);
+
+            return Result<String>.Ok(jsonValue);
+        }
+        else if (propertyPath == "/previewEnabled")
+        {
+            var editorMode = Component.GetString(MarkdownComponentConstants.EditorMode);
+
+            bool isEnabled = editorMode == "Editor" || editorMode == "EditorAndPreview";
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
             return Result<String>.Ok(jsonValue);
@@ -92,6 +112,7 @@ public class MarkdownEditor : ComponentEditorBase
 
         return Result<string>.Fail();
     }
+
 
     private void OpenDocument()
     {
