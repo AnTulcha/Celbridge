@@ -5,9 +5,14 @@
     "text": "/dialogueKey"
   },
   {
-    "element": "TextBox",
+    "element": "ComboBox",
     "header": "Character",
-    "text": "/character"
+    "selectedItem": "/character",
+    "items": {
+      "Player1": "A",
+      "Player2": "B",
+      "Player3": "C"
+    }
   },
   {
     "element": "TextBox",

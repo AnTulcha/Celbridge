@@ -162,7 +162,7 @@ public partial class TextBoxElement : FormElement
             // Todo: Support binding
 
             // Apply the property
-            var header = jsonValue.GetString();
+            var header = jsonValue.GetString() ?? string.Empty;
             textBox.Header = header;
         }
 
