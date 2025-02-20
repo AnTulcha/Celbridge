@@ -7,12 +7,8 @@
   {
     "element": "ComboBox",
     "header": "Character",
-    "selectedItem": "/character",
-    "items": {
-      "Player1": "A",
-      "Player2": "B",
-      "Player3": "C"
-    }
+    "item": "/character",
+    "values":  ["Person 1", "Person 2", "Person 3"]
   },
   {
     "element": "TextBox",

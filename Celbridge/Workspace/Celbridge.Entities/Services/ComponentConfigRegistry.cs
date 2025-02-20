@@ -256,6 +256,12 @@ public class ComponentConfigRegistry
                         }
                     }
 
+                    // If an enum list is specified then store it as a Json string attribute
+                    if (propertyElement.Value.TryGetProperty(ComponentConfig.EnumKey, out var enumValue))
+                    {
+                        propertyAttributes[ComponentConfig.EnumKey] = enumValue.ToJsonString();
+                    }
+
                     var propertyInfo = new ComponentPropertyInfo(propertyName, propertyType, propertyAttributes);
                     componentProperties.Add(propertyInfo);
                 }

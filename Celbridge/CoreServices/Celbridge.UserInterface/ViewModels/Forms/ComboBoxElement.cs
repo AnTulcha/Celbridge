@@ -1,3 +1,4 @@
+using Celbridge.Entities;
 using Celbridge.UserInterface.Services.Forms;
 using System.Text.Json;
 
@@ -12,6 +13,14 @@ public partial class ComboBoxElement : FormElement
     }
 
     private PropertyBinder<bool>? _isEnabledBinder;
+
+    [ObservableProperty]
+    private string _selectedKey = string.Empty;
+    private PropertyBinder<string>? _selectedKeyBinder;
+
+    // Used as a temporary storage for the values specified in the "values" property until
+    // they can be applied to the ItemSource.
+    private List<string> _values = new();
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -30,8 +39,8 @@ public partial class ComboBoxElement : FormElement
         {
             "isEnabled",
             "header",
-            "selectedItem",
-            "items"
+            "item",
+            "values"
         });
 
         if (validateResult.IsFailure)
@@ -67,6 +76,20 @@ public partial class ComboBoxElement : FormElement
         {
             return Result<FrameworkElement>.Fail($"Failed to apply 'header' config property")
                 .WithErrors(headerResult);
+        }
+
+        var valuesResult = ApplyValuesConfig(config, comboBox);
+        if (valuesResult.IsFailure)
+        {
+            return Result<FrameworkElement>.Fail($"Failed to apply 'values' config property")
+                .WithErrors(valuesResult);
+        }
+
+        var itemResult = ApplyItemConfig(config, comboBox, formBuilder);
+        if (itemResult.IsFailure)
+        {
+            return Result<FrameworkElement>.Fail($"Failed to apply 'item' config property")
+                .WithErrors(itemResult);
         }
 
         return Result<FrameworkElement>.Ok(comboBox);
@@ -123,17 +146,129 @@ public partial class ComboBoxElement : FormElement
         return Result.Ok();
     }
 
+    private Result ApplyValuesConfig(JsonElement config, ComboBox comboBox)
+    {
+        if (config.TryGetProperty("values", out var configValue))
+        {
+            // Check the type
+            if (configValue.ValueKind != JsonValueKind.Array)
+            {
+                return Result.Fail("'values' property must be an array");
+            }
+
+            // Apply the property
+            var enumValues = JsonSerializer.Deserialize<List<string>>(configValue.GetRawText());
+            if (enumValues is null)
+            {
+                return Result.Fail($"Failed to deserialize 'values' property");
+            }
+
+            if (enumValues.Count != enumValues.Distinct().Count())
+            {
+                return Result.Fail($"'values' property contains duplicate items");
+            }
+
+            _values.ReplaceWith(enumValues);
+        }
+
+        return Result.Ok();
+    }
+
+    private Result ApplyItemConfig(JsonElement config, ComboBox comboBox, FormBuilder formBuilder)
+    {
+        if (config.TryGetProperty("item", out var configValue))
+        {
+            // Check the type
+            if (configValue.ValueKind != JsonValueKind.String)
+            {
+                return Result.Fail("'item' property must be a string");
+            }
+
+            // The ItemSource must be populated before we apply the binding so that the item can be
+            // selected during initialization.
+
+            // Acquire the component that we are binding to.
+            var componentEditor = formBuilder.FormDataProvider as IComponentEditor;
+            if (componentEditor is null)
+            {
+                // ComboBox may only be bound to a component property, so the IFormDataProvider
+                // must also be an IComponentEditor.
+                return Result.Fail("Failed to acquire component for binding 'item' property");
+            }
+            var component = componentEditor.Component;
+
+            // Acquire the property and check if it specifies enum values.
+            var propertyPath = configValue.ToString();
+            var property = component.Schema.Properties.First((p) => propertyPath == $"/{p.PropertyName}");
+            if (property is null)
+            {
+                return Result.Fail($"Failed to acquire component property '{property}'");
+            }
+
+            if (property.Attributes.TryGetValue("enum", out var enumJson))
+            {
+                // The property specifies an enum attribute, so use the enum values as the ItemSource.
+                var enumValues = JsonSerializer.Deserialize<List<string>>(enumJson);
+                if (enumValues is null)
+                {
+                    return Result.Fail($"Failed to deserialize enum json");
+                }
+
+                if (enumValues.Count != enumValues.Distinct().Count())
+                {
+                    return Result.Fail($"'values' property contains duplicate items");
+                }
+
+                comboBox.ItemsSource = enumValues;
+            }
+            else
+            {
+                // Apply the values read from the 'values' config we read earlier.
+                // If no values were specified then _values will be empty.
+                comboBox.ItemsSource = _values;
+            }
+
+            if (PropertyBinder<bool>.IsBindingConfig(configValue))
+            {
+                _selectedKeyBinder = PropertyBinder<string>.Create(comboBox, this)
+                    .Binding(ComboBox.SelectedValueProperty,
+                        BindingMode.TwoWay,
+                        nameof(SelectedKey))
+                    .Setter((value) =>
+                    {
+                        SelectedKey = value;
+                    })
+                    .Getter(() =>
+                    {
+                        return SelectedKey;
+                    });
+
+                return _selectedKeyBinder.Initialize(configValue);
+            }
+            else
+            {
+                return Result<bool>.Fail("'selectedItem' config is not valid");
+            }
+        }
+
+        return Result.Ok();
+    }
+
     protected override void OnFormDataChanged(string propertyPath)
     {
         _isEnabledBinder?.OnFormDataChanged(propertyPath);
+        _selectedKeyBinder?.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
-    {}
+    {
+        _selectedKeyBinder?.OnMemberDataChanged(propertyName);
+    }
 
     protected override void OnElementUnloaded()
     {
         _isEnabledBinder?.OnElementUnloaded();
+        _selectedKeyBinder?.OnElementUnloaded();
     }
 
     private void OnButtonClicked(string buttonId)
