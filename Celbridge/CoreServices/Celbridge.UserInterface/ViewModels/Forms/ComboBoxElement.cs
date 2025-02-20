@@ -18,9 +18,9 @@ public partial class ComboBoxElement : FormElement
     private string _selectedKey = string.Empty;
     private PropertyBinder<string>? _selectedKeyBinder;
 
-    // Used as a temporary storage for the values specified in the "values" property until
-    // they can be applied to the ItemSource.
+    [ObservableProperty]
     private List<string> _values = new();
+    private PropertyBinder<List<string>>? _valuesBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -150,25 +150,42 @@ public partial class ComboBoxElement : FormElement
     {
         if (config.TryGetProperty("values", out var configValue))
         {
-            // Check the type
-            if (configValue.ValueKind != JsonValueKind.Array)
+            if (configValue.ValueKind == JsonValueKind.Array)
             {
-                return Result.Fail("'values' property must be an array");
+                var enumValues = JsonSerializer.Deserialize<List<string>>(configValue.GetRawText());
+                if (enumValues is null)
+                {
+                    return Result.Fail($"Failed to deserialize 'values' property");
+                }
+
+                if (enumValues.Count != enumValues.Distinct().Count())
+                {
+                    return Result.Fail($"'values' property contains duplicate items");
+                }
+
+                Values.ReplaceWith(enumValues);
+
+                return Result.Ok();
+            }
+            else if (configValue.ValueKind == JsonValueKind.String)
+            {
+                // If the 'values' property specifies a binding then apply the binding.
+                if (PropertyBinder<List<string>>.IsBindingConfig(configValue))
+                {
+                    _valuesBinder = PropertyBinder<List<string>>.Create(comboBox, this)
+                        .Binding(ComboBox.ItemsSourceProperty,
+                            BindingMode.OneWay,
+                            nameof(Values))
+                        .Setter((value) =>
+                        {
+                            Values = value;
+                        });
+
+                    return _valuesBinder.Initialize(configValue);
+                }
             }
 
-            // Apply the property
-            var enumValues = JsonSerializer.Deserialize<List<string>>(configValue.GetRawText());
-            if (enumValues is null)
-            {
-                return Result.Fail($"Failed to deserialize 'values' property");
-            }
-
-            if (enumValues.Count != enumValues.Distinct().Count())
-            {
-                return Result.Fail($"'values' property contains duplicate items");
-            }
-
-            _values.ReplaceWith(enumValues);
+            return Result.Fail($"Failed to apply binding for 'values' property");
         }
 
         return Result.Ok();
@@ -225,7 +242,7 @@ public partial class ComboBoxElement : FormElement
             {
                 // Apply the values read from the 'values' config we read earlier.
                 // If no values were specified then _values will be empty.
-                comboBox.ItemsSource = _values;
+                comboBox.ItemsSource = Values;
             }
 
             if (PropertyBinder<bool>.IsBindingConfig(configValue))
