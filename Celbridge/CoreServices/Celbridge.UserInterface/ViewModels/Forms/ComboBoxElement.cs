@@ -99,7 +99,7 @@ public partial class ComboBoxElement : FormElement
     {
         if (config.TryGetProperty("isEnabled", out var configValue))
         {
-            if (PropertyBinder<bool>.IsBindingConfig(configValue))
+            if (configValue.IsBindingConfig())
             {
                 _isEnabledBinder = PropertyBinder<bool>.Create(button, this)
                     .Setter((value) =>
@@ -170,7 +170,7 @@ public partial class ComboBoxElement : FormElement
             else if (configValue.ValueKind == JsonValueKind.String)
             {
                 // If the 'values' property specifies a binding then apply the binding.
-                if (PropertyBinder<List<string>>.IsBindingConfig(configValue))
+                if (configValue.IsBindingConfig())
                 {
                     _valuesBinder = PropertyBinder<List<string>>.Create(comboBox, this)
                         .Binding(ComboBox.ItemsSourceProperty,
@@ -247,7 +247,7 @@ public partial class ComboBoxElement : FormElement
 
             // The ItemsSource has been populated, now setup the property binding.
 
-            if (PropertyBinder<bool>.IsBindingConfig(configValue))
+            if (configValue.IsBindingConfig())
             {
                 _selectedValueBinder = PropertyBinder<string>.Create(comboBox, this)
                     .Binding(ComboBox.SelectedValueProperty,
