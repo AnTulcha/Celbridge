@@ -15,8 +15,8 @@ public partial class ComboBoxElement : FormElement
     private PropertyBinder<bool>? _isEnabledBinder;
 
     [ObservableProperty]
-    private string _selectedKey = string.Empty;
-    private PropertyBinder<string>? _selectedKeyBinder;
+    private string _selectedValue = string.Empty;
+    private PropertyBinder<string>? _selectedValueBinder;
 
     [ObservableProperty]
     private List<string> _values = new();
@@ -39,8 +39,8 @@ public partial class ComboBoxElement : FormElement
         {
             "isEnabled",
             "header",
-            "item",
-            "values"
+            "values",
+            "selectedValue"
         });
 
         if (validateResult.IsFailure)
@@ -85,11 +85,11 @@ public partial class ComboBoxElement : FormElement
                 .WithErrors(valuesResult);
         }
 
-        var itemResult = ApplyItemConfig(config, comboBox, formBuilder);
-        if (itemResult.IsFailure)
+        var selectedValueResult = ApplySelectedValueConfig(config, comboBox, formBuilder);
+        if (selectedValueResult.IsFailure)
         {
-            return Result<FrameworkElement>.Fail($"Failed to apply 'item' config property")
-                .WithErrors(itemResult);
+            return Result<FrameworkElement>.Fail($"Failed to apply 'selectedValue' config property")
+                .WithErrors(selectedValueResult);
         }
 
         return Result<FrameworkElement>.Ok(comboBox);
@@ -160,7 +160,7 @@ public partial class ComboBoxElement : FormElement
 
                 if (enumValues.Count != enumValues.Distinct().Count())
                 {
-                    return Result.Fail($"'values' property contains duplicate items");
+                    return Result.Fail($"'values' property contains duplicate values");
                 }
 
                 Values.ReplaceWith(enumValues);
@@ -191,18 +191,18 @@ public partial class ComboBoxElement : FormElement
         return Result.Ok();
     }
 
-    private Result ApplyItemConfig(JsonElement config, ComboBox comboBox, FormBuilder formBuilder)
+    private Result ApplySelectedValueConfig(JsonElement config, ComboBox comboBox, FormBuilder formBuilder)
     {
-        if (config.TryGetProperty("item", out var configValue))
+        if (config.TryGetProperty("selectedValue", out var configValue))
         {
             // Check the type
             if (configValue.ValueKind != JsonValueKind.String)
             {
-                return Result.Fail("'item' property must be a string");
+                return Result.Fail("'selectedValue' property must be a string");
             }
 
-            // The ItemSource must be populated before we apply the binding so that the item can be
-            // selected during initialization.
+            // The ItemSource must be populated before we apply the binding so that the current value
+            // can be selected during initialization.
 
             // Acquire the component that we are binding to.
             var componentEditor = formBuilder.FormDataProvider as IComponentEditor;
@@ -210,7 +210,7 @@ public partial class ComboBoxElement : FormElement
             {
                 // ComboBox may only be bound to a component property, so the IFormDataProvider
                 // must also be an IComponentEditor.
-                return Result.Fail("Failed to acquire component for binding 'item' property");
+                return Result.Fail("Failed to acquire component for binding 'selectedValue' property");
             }
             var component = componentEditor.Component;
 
@@ -233,7 +233,7 @@ public partial class ComboBoxElement : FormElement
 
                 if (enumValues.Count != enumValues.Distinct().Count())
                 {
-                    return Result.Fail($"'values' property contains duplicate items");
+                    return Result.Fail($"'selectedValues' property contains duplicate values");
                 }
 
                 comboBox.ItemsSource = enumValues;
@@ -245,26 +245,28 @@ public partial class ComboBoxElement : FormElement
                 comboBox.ItemsSource = Values;
             }
 
+            // The ItemsSource has been populated, now setup the property binding.
+
             if (PropertyBinder<bool>.IsBindingConfig(configValue))
             {
-                _selectedKeyBinder = PropertyBinder<string>.Create(comboBox, this)
+                _selectedValueBinder = PropertyBinder<string>.Create(comboBox, this)
                     .Binding(ComboBox.SelectedValueProperty,
                         BindingMode.TwoWay,
-                        nameof(SelectedKey))
+                        nameof(SelectedValue))
                     .Setter((value) =>
                     {
-                        SelectedKey = value;
+                        SelectedValue = value;
                     })
                     .Getter(() =>
                     {
-                        return SelectedKey;
+                        return SelectedValue;
                     });
 
-                return _selectedKeyBinder.Initialize(configValue);
+                return _selectedValueBinder.Initialize(configValue);
             }
             else
             {
-                return Result<bool>.Fail("'selectedItem' config is not valid");
+                return Result<bool>.Fail("'selectedValue' config does not specify a property binding");
             }
         }
 
@@ -274,18 +276,18 @@ public partial class ComboBoxElement : FormElement
     protected override void OnFormDataChanged(string propertyPath)
     {
         _isEnabledBinder?.OnFormDataChanged(propertyPath);
-        _selectedKeyBinder?.OnFormDataChanged(propertyPath);
+        _selectedValueBinder?.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
     {
-        _selectedKeyBinder?.OnMemberDataChanged(propertyName);
+        _selectedValueBinder?.OnMemberDataChanged(propertyName);
     }
 
     protected override void OnElementUnloaded()
     {
         _isEnabledBinder?.OnElementUnloaded();
-        _selectedKeyBinder?.OnElementUnloaded();
+        _selectedValueBinder?.OnElementUnloaded();
     }
 
     private void OnButtonClicked(string buttonId)
