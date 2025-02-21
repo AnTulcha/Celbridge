@@ -256,7 +256,7 @@ public class ComponentConfigRegistry
                         }
                     }
 
-                    // If an enum list is specified then store it as a Json string attribute
+                    // If the schema defines an enum list then store it as a Json string attribute.
                     if (propertyElement.Value.TryGetProperty(ComponentConfig.EnumKey, out var enumValue))
                     {
                         propertyAttributes[ComponentConfig.EnumKey] = enumValue.ToJsonString();

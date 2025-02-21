@@ -34,6 +34,7 @@ public class LineEditor : ComponentEditorBase
     {
         if (propertyPath == "/characterIds")
         {
+            // Todo: Return the list of character Ids for the current screenplay
             var characterIds = "[\"Character 1\", \"Character 2\", \"Character 3\", \"Character 4\"]";
             return Result<string>.Ok(characterIds);
         }
