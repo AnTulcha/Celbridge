@@ -163,7 +163,7 @@ public partial class ComboBoxElement : FormElement
                     return Result.Fail($"'values' property contains duplicate values");
                 }
 
-                Values.ReplaceWith(enumValues);
+                Values = enumValues;
 
                 return Result.Ok();
             }
@@ -288,10 +288,5 @@ public partial class ComboBoxElement : FormElement
     {
         _isEnabledBinder?.OnElementUnloaded();
         _selectedValueBinder?.OnElementUnloaded();
-    }
-
-    private void OnButtonClicked(string buttonId)
-    {
-        FormDataProvider?.OnButtonClicked(buttonId);
     }
 }
