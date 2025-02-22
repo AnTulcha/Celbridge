@@ -180,14 +180,14 @@ public class ScreenplayActivity : IActivity
         }
         var sceneComponent = getComponentResult.Value;
 
-        var sceneTitle = sceneComponent.GetString(SceneEditor.SceneTitle);
-        var sceneDescription = sceneComponent.GetString(SceneEditor.SceneDescription);
+        var categoryText = sceneComponent.GetString(SceneEditor.Category);
+        var namespaceText = sceneComponent.GetString(SceneEditor.Namespace);
 
         var sb = new StringBuilder();
 
-        sb.AppendLine($"# {sceneTitle}");
+        sb.AppendLine($"# {categoryText}");
         sb.AppendLine();
-        sb.AppendLine($"{sceneDescription}");
+        sb.AppendLine($"{namespaceText}");
         sb.AppendLine();
 
         var getLinesResult = _entityService.GetComponentsOfType(resource, LineEditor.ComponentType);

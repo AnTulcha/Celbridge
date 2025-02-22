@@ -11,22 +11,23 @@
       "type": "string",
       "const": "Screenplay.Scene#1"
     },
-    "sceneTitle": {
-      "type": "string"
+    "category": {
+      "type": "string",
+      "enum" :  ["None", "Cinematic", "Conversation", "Barks"]
     },
-    "sceneDescription": {
+    "namespace": {
       "type": "string"
     }
   },
 
   "required": [
     "_type",
-    "sceneTitle",
-    "sceneDescription"
+    "category",
+    "namespace"
   ],
 
   "prototype": {
-    "sceneTitle": "",
-    "sceneDescription": ""
+    "category": "None",
+    "namespace":  ""
   }
 }    

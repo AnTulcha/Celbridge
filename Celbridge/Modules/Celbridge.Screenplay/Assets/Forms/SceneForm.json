@@ -1,12 +1,13 @@
 [
   {
-    "element": "TextBox",
-    "header": "Scene Title",
-    "text": "/sceneTitle"
+    "element": "ComboBox",
+    "header": "Category",
+    "selectedValue": "/category"
   },
   {
-    "element": "TextBox",
-    "header": "Scene Description",
-    "text": "/sceneDescription"
+    "element": "ComboBox",
+    "header": "Namespace",
+    "selectedValue": "/namespace",
+    "values":  ["A", "B", "C"]
   }
 ]
