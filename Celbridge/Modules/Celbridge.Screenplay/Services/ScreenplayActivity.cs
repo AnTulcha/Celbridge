@@ -168,6 +168,20 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
+    public async Task<Result> LoadScreenplay(ResourceKey screenplayResource)
+    {
+        var loader = _serviceProvider.AcquireService<ScreenplayDataLoader>();
+
+        var importResult = await loader.ImportData(screenplayResource);
+        if (importResult.IsFailure)
+        {
+            return Result.Fail($"Failed to import screenplay data")
+                .WithErrors(importResult);
+        }
+
+        return Result.Ok();
+    }
+
     private Result<string> GenerateScreenplayMarkdown(ResourceKey resource)
     {
         var getComponentResult = _entityService.GetComponentOfType(resource, SceneEditor.ComponentType);
