@@ -1,6 +1,8 @@
 [
   {
-    "element": "TextBlock",
-    "text": "Screenplay data"
+    "element": "Button",
+    "text": "Load data",
+    "icon": "Refresh",
+    "buttonId": "loadData"
   }
 ]

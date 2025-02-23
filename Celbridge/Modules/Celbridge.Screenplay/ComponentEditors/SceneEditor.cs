@@ -29,9 +29,4 @@ public class SceneEditor : ComponentEditorBase
         var summaryText = $"{categoryText}: {namespaceText}";
         return new ComponentSummary(summaryText, summaryText);
     }
-
-    public override void OnButtonClicked(string buttonId)
-    {
-        // Todo: Call a method on the activity to load and parse the Excel file
-    }
 }

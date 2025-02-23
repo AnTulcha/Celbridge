@@ -6,12 +6,6 @@
     "text": "/dialogueFile"
   },
   {
-    "element": "Button",
-    "text": "Load dialogue",
-    "icon":  "Refresh",
-    "buttonId": "loadDialogue"
-  },
-  {
     "element": "ComboBox",
     "header": "Category",
     "selectedValue": "/category"
