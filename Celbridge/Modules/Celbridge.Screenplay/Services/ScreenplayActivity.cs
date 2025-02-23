@@ -19,8 +19,6 @@ public class ScreenplayActivity : IActivity
     private readonly IEntityService _entityService;
     private readonly IDocumentsService _documentService;
 
-    private HashSet<ResourceKey> _pendingEntityUpdates = new();
-
     public ScreenplayActivity(
         IServiceProvider serviceProvider,
         ILogger<ScreenplayActivity> logger,        
