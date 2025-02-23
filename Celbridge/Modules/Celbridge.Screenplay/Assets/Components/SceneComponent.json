@@ -11,9 +11,12 @@
       "type": "string",
       "const": "Screenplay.Scene#1"
     },
+    "dialogueFile": {
+      "type": "string"
+    },
     "category": {
       "type": "string",
-      "enum" :  ["None", "Cinematic", "Conversation", "Barks"]
+      "enum": [ "None", "Cinematic", "Conversation", "Barks" ]
     },
     "namespace": {
       "type": "string"
@@ -22,12 +25,14 @@
 
   "required": [
     "_type",
+    "dialogueFile",
     "category",
     "namespace"
   ],
 
   "prototype": {
+    "dialogueFile": "",
     "category": "None",
-    "namespace":  ""
+    "namespace": ""
   }
 }    

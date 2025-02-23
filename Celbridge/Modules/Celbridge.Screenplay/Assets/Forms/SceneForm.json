@@ -1,5 +1,17 @@
 [
   {
+    "element": "TextBox",
+    "header": "Dialogue file",
+    "checkSpelling": false,
+    "text": "/dialogueFile"
+  },
+  {
+    "element": "Button",
+    "text": "Load dialogue",
+    "icon":  "Refresh",
+    "buttonId": "loadDialogue"
+  },
+  {
     "element": "ComboBox",
     "header": "Category",
     "selectedValue": "/category"
@@ -8,6 +20,6 @@
     "element": "ComboBox",
     "header": "Namespace",
     "selectedValue": "/namespace",
-    "values":  ["A", "B", "C"]
+    "values": [ "A", "B", "C" ]
   }
 ]
