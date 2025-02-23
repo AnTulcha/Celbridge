@@ -107,15 +107,42 @@ public class SpreadsheetActivity : IActivity
         {
             var error = new ComponentError(
                 ComponentErrorSeverity.Critical,
-                "Invalid component position",
-                "This component must be the first component.");
+                "Invalid root component",
+                $"The root component must be a '{SpreadsheetEditor.ComponentType}'.");
 
             entityAnnotation.AddError(0, error);
         }
 
         //
-        // Todo: Remaining components must have tag "SpreadsheetComponent"
+        // Remaining components must have attribute "isSpreadsheetComponent"
         //
+
+        for (int i = 1; i < components.Count; i++)
+        {
+            var component = components[i];
+
+            if (component.Schema.ComponentType == EntityConstants.EmptyComponentType)
+            {
+                // Skip empty components
+                continue;
+            }
+
+            var isSpreadsheetComponent = component.Schema.GetBooleanAttribute("isSpreadsheetComponent");
+
+            if (isSpreadsheetComponent)
+            {
+                entityAnnotation.SetIsRecognized(i);
+            }
+            else
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid component type",
+                    "This component is not compatible with the 'Data.Spreadsheet' component");
+
+                entityAnnotation.AddError(i, error);
+            }
+        }
 
         return Result.Ok();
     }

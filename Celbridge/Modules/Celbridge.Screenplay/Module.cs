@@ -26,6 +26,7 @@ public class Module : IModule
 
         services.AddTransient<LineEditor>();
         services.AddTransient<SceneEditor>();
+        services.AddTransient<ScreenplayDataEditor>();
         services.AddTransient<ScreenplayActivityEditor>();
     }
 
