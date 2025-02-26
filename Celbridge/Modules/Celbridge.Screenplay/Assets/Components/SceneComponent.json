@@ -13,26 +13,15 @@
     },
     "dialogueFile": {
       "type": "string"
-    },
-    "category": {
-      "type": "string",
-      "enum": [ "None", "Cinematic", "Conversation", "Barks" ]
-    },
-    "namespace": {
-      "type": "string"
     }
   },
 
   "required": [
     "_type",
-    "dialogueFile",
-    "category",
-    "namespace"
+    "dialogueFile"
   ],
 
   "prototype": {
-    "dialogueFile": "",
-    "category": "None",
-    "namespace": ""
+    "dialogueFile": ""
   }
 }    

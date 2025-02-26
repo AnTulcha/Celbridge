@@ -1,19 +1,16 @@
 [
   {
-    "element": "TextBox",
-    "header": "Dialogue file",
-    "checkSpelling": false,
-    "text": "/dialogueFile"
-  },
-  {
-    "element": "ComboBox",
-    "header": "Category",
-    "selectedValue": "/category"
-  },
-  {
-    "element": "ComboBox",
-    "header": "Namespace",
-    "selectedValue": "/namespace",
-    "values": [ "A", "B", "C" ]
+    "element": "StackPanel",
+    "orientation": "Horizontal",
+    "children": [
+      {
+        "element": "TextBlock",
+        "text": "Excel file:"
+      },
+      {
+        "element": "TextBlock",
+        "text": "/dialogueFile"
+      }
+    ]
   }
 ]

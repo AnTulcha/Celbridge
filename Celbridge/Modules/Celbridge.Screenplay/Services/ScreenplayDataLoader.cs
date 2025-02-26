@@ -1,6 +1,7 @@
 using Celbridge.Explorer;
 using Celbridge.Logging;
 using Celbridge.Screenplay.Models;
+using Celbridge.Workspace;
 using ClosedXML.Excel;
 
 namespace Celbridge.Screenplay.Services;
@@ -9,13 +10,16 @@ public class ScreenplayDataLoader
 {
     private ILogger<ScreenplayDataLoader> _logger;
     private IExplorerService _explorerService;
+    private IWorkspaceWrapper _workspaceWrapper;
 
     public ScreenplayDataLoader(
         ILogger<ScreenplayDataLoader> logger,
-        IExplorerService explorerService)
+        IExplorerService explorerService,
+        IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
         _explorerService = explorerService;
+        _workspaceWrapper = workspaceWrapper;
     }
 
     public async Task<Result> ImportData(ResourceKey excelResource)
@@ -39,8 +43,8 @@ public class ScreenplayDataLoader
         // Create a new screenplay folder for the screenplay
         Directory.CreateDirectory(screenplayFolderPath);
 
-        // Update the resource registry to delete any associated entity data files before
-        // we start adding .scene files.
+        // Update the resource registry to delete any existing entity data files before
+        // we start adding new .scene files.
         var updateResult = resourceRegistry.UpdateResourceRegistry();
         if (updateResult.IsFailure)
         {
@@ -48,19 +52,6 @@ public class ScreenplayDataLoader
                 .WithErrors(updateResult);
         }
 
-        // Load the Excel file and generate .scene files
-        var loadResult = await LoadScreenplayDataAsync(excelFilePath, screenplayFolderPath);
-        if (loadResult.IsFailure)
-        {
-            return Result.Fail($"Failed to load screenplay data")
-                .WithErrors(loadResult);
-        }
-
-        return Result.Ok();
-    }
-
-    private async Task<Result> LoadScreenplayDataAsync(string excelFilePath, string screenplayFolderPath)
-    {
         // Load the dialogue lines from the Excel file
         var loadResult = LoadDialogueLines(excelFilePath, "Lines");
         if (loadResult.IsFailure)
@@ -77,28 +68,15 @@ public class ScreenplayDataLoader
             return Result.Fail($"Failed create namespace lines dictionary")
                 .WithErrors(createResult);
         }
-        var namespace_lines = createResult.Value;
+        var namespaceLines = createResult.Value;
 
-        // Create a .scene file for each namespace
-        foreach (var kv in namespace_lines)
+        // Save a .scene file for each namespace
+        var saveResult = await SaveSceneFilesAsync(namespaceLines, excelResource);
+        if (saveResult.IsFailure)
         {
-            var namespace_key = kv.Key;
-            var line_list = kv.Value;
-
-            foreach (var line in line_list)
-            {
-                var category = line.Category;
-                var dialogue_key = line.DialogueKey;
-    
-                // Todo: Create an entity file for each namespace, save it in the entities folder
-                // Either serialize DialogueLine to JSON, or add a method that formats the DialogueLine as JSON text.
-                _logger.LogInformation($"{category}, {namespace_key}, {dialogue_key}");
-                break;
-            }
+            return Result.Fail($"Failed to save .scene files")
+                .WithErrors(loadResult);
         }
-
-
-        await Task.CompletedTask;
 
         return Result.Ok();
     }
@@ -226,5 +204,79 @@ public class ScreenplayDataLoader
         }
 
         return Result<Dictionary<string, List<DialogueLine>>>.Ok(namespace_lines);
+    }
+
+    private async Task<Result> SaveSceneFilesAsync(Dictionary<string, List<DialogueLine>> namespaceLines, ResourceKey excelResource)
+    {
+        var screenplayFolderResource = Path.GetFileNameWithoutExtension(excelResource);
+
+        var resourceRegistry = _explorerService.ResourceRegistry;
+        var sceneFolderPath = resourceRegistry.GetResourcePath(screenplayFolderResource);
+
+        var entityService = _workspaceWrapper.WorkspaceService.EntityService;
+        var entityFolderPath = entityService.GetEntityDataPath(screenplayFolderResource);
+
+        // Remove the .json extension
+        entityFolderPath = entityFolderPath.Substring(0, entityFolderPath.LastIndexOf('.'));
+
+        // Create a .scene file for each namespace
+        foreach (var kv in namespaceLines)
+        {
+            var namespace_key = kv.Key;
+            var line_list = kv.Value;
+
+            if (line_list.Count == 0)
+            {
+                continue;
+            }
+
+            // Get the category from the first line in the list
+            var category = line_list[0].Category;
+
+            // Create a .scene file
+            var sceneFilePath = Path.Combine(sceneFolderPath, category, $"{namespace_key}.scene");
+
+            var sceneFolder = Path.GetDirectoryName(sceneFilePath);
+            if (!string.IsNullOrEmpty(sceneFolder) &&
+                !Directory.Exists(sceneFolder))
+            {
+                Directory.CreateDirectory(sceneFolder);
+            }
+
+            await File.WriteAllTextAsync(sceneFilePath, string.Empty);
+
+            // Create an entity data .json file
+
+            var entityFilePath = Path.Combine(entityFolderPath, category, $"{namespace_key}.scene.json");
+
+            var entityFolder = Path.GetDirectoryName(entityFilePath);
+            if (!string.IsNullOrEmpty(entityFolder) &&
+                !Directory.Exists(entityFolder))
+            {
+                Directory.CreateDirectory(entityFolder);
+            }
+
+            // Generate component data for each line
+            foreach (var line in line_list)
+            {
+                var dialogue_key = line.DialogueKey;
+            }
+
+            var entityData = $$"""
+            {
+                "_entityVersion": 1,
+                "_components": [
+                {
+                    "_type": "Screenplay.Scene#1",
+                    "dialogueFile": "{{excelResource}}"
+                }
+                ]
+            }
+            """;
+
+            await File.WriteAllTextAsync(entityFilePath, entityData);
+        }
+
+        return Result.Ok();
     }
 }
