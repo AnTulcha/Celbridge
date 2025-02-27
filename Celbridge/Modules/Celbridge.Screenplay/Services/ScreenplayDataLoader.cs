@@ -3,6 +3,8 @@ using Celbridge.Logging;
 using Celbridge.Screenplay.Models;
 using Celbridge.Workspace;
 using ClosedXML.Excel;
+using System.Text.Json.Nodes;
+using System.Text.Json;
 
 namespace Celbridge.Screenplay.Services;
 
@@ -71,7 +73,7 @@ public class ScreenplayDataLoader
         var namespaceLines = createResult.Value;
 
         // Save a .scene file for each namespace
-        var saveResult = await SaveSceneFilesAsync(namespaceLines, excelResource);
+        var saveResult = await CreateSceneFilesAsync(namespaceLines, excelResource);
         if (saveResult.IsFailure)
         {
             return Result.Fail($"Failed to save .scene files")
@@ -134,10 +136,21 @@ public class ScreenplayDataLoader
 
                 var line = new DialogueLine
                 (
+                    DialogueKey: TryGetValue<string>(row, columnMap, nameof(DialogueLine.DialogueKey)),
                     Category: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Category)),
                     Namespace: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Namespace)),
-                    DialogueKey: TryGetValue<string>(row, columnMap, nameof(DialogueLine.DialogueKey)),
-                    SourceText: TryGetValue<string>(row, columnMap, nameof(DialogueLine.SourceText))
+                    CharacterId: TryGetValue<string>(row, columnMap, nameof(DialogueLine.CharacterId)),
+                    SpeakingTo: TryGetValue<string>(row, columnMap, nameof(DialogueLine.SpeakingTo)),
+                    SourceText: TryGetValue<string>(row, columnMap, nameof(DialogueLine.SourceText)),
+                    ContextNotes: TryGetValue<string>(row, columnMap, nameof(DialogueLine.ContextNotes)),
+                    Direction: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Direction)),
+                    GameArea: TryGetValue<string>(row, columnMap, nameof(DialogueLine.GameArea)),
+                    TimeConstraint: TryGetValue<string>(row, columnMap, nameof(DialogueLine.TimeConstraint)),
+                    SoundProcessing: TryGetValue<string>(row, columnMap, nameof(DialogueLine.SoundProcessing)),
+                    Platform: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Platform)),
+                    LinePriority: TryGetValue<string>(row, columnMap, nameof(DialogueLine.LinePriority)),
+                    ProductionStatus: TryGetValue<string>(row, columnMap, nameof(DialogueLine.ProductionStatus)),
+                    DialogueAsset: TryGetValue<string>(row, columnMap, nameof(DialogueLine.DialogueAsset))
                 );
 
                 lines.Add(line);
@@ -179,11 +192,11 @@ public class ScreenplayDataLoader
             var namespace_key = line.Namespace;
 
             // Acquire a list of lines for the namespace
-            List<DialogueLine> filtered_lines;
-            if (!namespace_lines.TryGetValue(namespace_key, out filtered_lines!))
+            List<DialogueLine> filteredLines;
+            if (!namespace_lines.TryGetValue(namespace_key, out filteredLines!))
             {
-                filtered_lines = new List<DialogueLine>();
-                namespace_lines[namespace_key] = filtered_lines;
+                filteredLines = new List<DialogueLine>();
+                namespace_lines[namespace_key] = filteredLines;
             }
             else
             {
@@ -197,7 +210,7 @@ public class ScreenplayDataLoader
             }
 
             // Add the line to the list of lines for the namespace
-            filtered_lines.Add(line);
+            filteredLines.Add(line);
 
             previous_namespace = namespace_key;
             row_index++;
@@ -206,7 +219,7 @@ public class ScreenplayDataLoader
         return Result<Dictionary<string, List<DialogueLine>>>.Ok(namespace_lines);
     }
 
-    private async Task<Result> SaveSceneFilesAsync(Dictionary<string, List<DialogueLine>> namespaceLines, ResourceKey excelResource)
+    private async Task<Result> CreateSceneFilesAsync(Dictionary<string, List<DialogueLine>> namespaceLines, ResourceKey excelResource)
     {
         var screenplayFolderResource = Path.GetFileNameWithoutExtension(excelResource);
 
@@ -222,61 +235,94 @@ public class ScreenplayDataLoader
         // Create a .scene file for each namespace
         foreach (var kv in namespaceLines)
         {
-            var namespace_key = kv.Key;
-            var line_list = kv.Value;
+            var namespaceKey = kv.Key;
+            var lineList = kv.Value;
 
-            if (line_list.Count == 0)
+            if (lineList.Count == 0)
             {
                 continue;
             }
 
             // Get the category from the first line in the list
-            var category = line_list[0].Category;
+            var category = lineList[0].Category;
 
-            // Create a .scene file
-            var sceneFilePath = Path.Combine(sceneFolderPath, category, $"{namespace_key}.scene");
+            // Create the .scene resource
 
-            var sceneFolder = Path.GetDirectoryName(sceneFilePath);
-            if (!string.IsNullOrEmpty(sceneFolder) &&
-                !Directory.Exists(sceneFolder))
-            {
-                Directory.CreateDirectory(sceneFolder);
-            }
-
-            await File.WriteAllTextAsync(sceneFilePath, string.Empty);
-
-            // Create an entity data .json file
-
-            var entityFilePath = Path.Combine(entityFolderPath, category, $"{namespace_key}.scene.json");
-
-            var entityFolder = Path.GetDirectoryName(entityFilePath);
-            if (!string.IsNullOrEmpty(entityFolder) &&
-                !Directory.Exists(entityFolder))
-            {
-                Directory.CreateDirectory(entityFolder);
-            }
-
-            // Generate component data for each line
-            foreach (var line in line_list)
-            {
-                var dialogue_key = line.DialogueKey;
-            }
-
-            var entityData = $$"""
-            {
-                "_entityVersion": 1,
-                "_components": [
-                {
-                    "_type": "Screenplay.Scene#1",
-                    "dialogueFile": "{{excelResource}}"
-                }
-                ]
-            }
-            """;
-
-            await File.WriteAllTextAsync(entityFilePath, entityData);
+            await CreateSceneFile(sceneFolderPath, namespaceKey, category);
+            await CreateEntityDataFile(excelResource, entityFolderPath, namespaceKey, category, lineList);
         }
 
         return Result.Ok();
+    }
+
+    private static async Task CreateEntityDataFile(ResourceKey excelResource, string entityFolderPath, string namespace_key, string category, List<DialogueLine> line_list)
+    {
+        var entityFilePath = Path.Combine(entityFolderPath, category, $"{namespace_key}.scene.json");
+
+        var entityFolder = Path.GetDirectoryName(entityFilePath);
+        if (!string.IsNullOrEmpty(entityFolder) &&
+            !Directory.Exists(entityFolder))
+        {
+            Directory.CreateDirectory(entityFolder);
+        }
+
+        // Generate component data for each line
+
+        var components = new JsonArray();
+
+        // Add scene component
+        var sceneComponent = new JsonObject();
+        sceneComponent["_type"] = "Screenplay.Scene#1";
+        sceneComponent["dialogueFile"] = excelResource.ToString();
+        components.Add(sceneComponent);
+
+        // Add line components
+        foreach (var line in line_list)
+        {
+            var lineComponent = new JsonObject();
+            lineComponent["_type"] = "Screenplay.Line#1";
+            lineComponent["dialogueKey"] = line.DialogueKey;
+            lineComponent["characterId"] = line.CharacterId;
+            lineComponent["speakingTo"] = line.SpeakingTo;
+            lineComponent["sourceText"] = line.SourceText;
+            lineComponent["contextNotes"] = line.ContextNotes;
+            lineComponent["direction"] = line.Direction;
+            lineComponent["gameArea"] = line.GameArea;
+            lineComponent["timeConstraint"] = line.TimeConstraint;
+            lineComponent["soundProcessing"] = line.SoundProcessing;
+            lineComponent["platform"] = line.Platform;
+            lineComponent["linePriority"] = line.LinePriority;
+            lineComponent["productionStatus"] = line.ProductionStatus;
+
+            components.Add(lineComponent);
+        }
+
+        var entity = new JsonObject();
+        entity["_entityVersion"] = 1;
+        entity["_components"] = components;
+
+        var options = new JsonSerializerOptions()
+        {
+            WriteIndented = true,
+            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+        };
+        var entityData = entity.ToJsonString(options);
+
+        await File.WriteAllTextAsync(entityFilePath, entityData);
+    }
+
+    private static async Task CreateSceneFile(string sceneFolderPath, string namespace_key, string category)
+    {
+        // Create a .scene file
+        var sceneFilePath = Path.Combine(sceneFolderPath, category, $"{namespace_key}.scene");
+
+        var sceneFolder = Path.GetDirectoryName(sceneFilePath);
+        if (!string.IsNullOrEmpty(sceneFolder) &&
+            !Directory.Exists(sceneFolder))
+        {
+            Directory.CreateDirectory(sceneFolder);
+        }
+
+        await File.WriteAllTextAsync(sceneFilePath, string.Empty);
     }
 }
