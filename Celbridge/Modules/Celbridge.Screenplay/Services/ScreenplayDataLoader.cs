@@ -246,6 +246,12 @@ public class ScreenplayDataLoader
             // Get the category from the first line in the list
             var category = lineList[0].Category;
 
+            if (category == "Bark")
+            {
+                // Editing barks is not supported yet
+                continue;
+            }
+
             // Create the .scene resource
 
             await CreateSceneFile(sceneFolderPath, namespaceKey, category);
