@@ -20,7 +20,7 @@ public class Module : IModule
         //
 
         services.AddTransient<ScreenplayActivity>();
-        services.AddTransient<ScreenplayDataLoader>();
+        services.AddTransient<ScreenplayImporter>();
 
         //
         // Register components

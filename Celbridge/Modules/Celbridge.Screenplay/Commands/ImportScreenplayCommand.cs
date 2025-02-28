@@ -36,7 +36,7 @@ public class ImportScreenplayCommand : CommandBase
                 .WithErrors(getActivityResult);
         }
 
-        var loadResult = await screenplayActivity.LoadScreenplay(ExcelFile);
+        var loadResult = await screenplayActivity.ImportScreenplay(ExcelFile);
         if (loadResult.IsFailure)
         {
             return Result.Fail($"Failed to load screenplay from Excel file")
