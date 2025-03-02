@@ -5,6 +5,8 @@ using Celbridge.Workspace;
 using ClosedXML.Excel;
 using System.Text.Json.Nodes;
 using System.Text.Json;
+using Celbridge.Screenplay.Components;
+using Celbridge.Entities;
 
 namespace Celbridge.Screenplay.Services;
 
@@ -34,30 +36,39 @@ public class ScreenplayImporter
                 return Result.Fail($"Unsupported file type: {extension}");
             }
 
+            var entityService = _workspaceWrapper.WorkspaceService.EntityService;
             var resourceRegistry = _explorerService.ResourceRegistry;
             var excelFilePath = resourceRegistry.GetResourcePath(excelFile);
             var screenplayFolderPath = Path.GetFileNameWithoutExtension(excelFilePath);
 
-            // Delete the screenplay folder if it already exists
+            // Acquire the ScreenplayData component from the Excel file resource
+            var getComponentResult = entityService.GetComponentOfType(excelFile, ScreenplayDataEditor.ComponentType);
+            if (getComponentResult.IsFailure)
+            {
+                return Result.Fail($"Failed to get ScreenplayData component from Excel file resource '{excelFile}'")
+                    .WithErrors(getComponentResult);
+            }
+            var screenplayData = getComponentResult.Value;
+
+            // Open the Excel file.
+            // It's best to do this before we make any other changes, e.g. in case the file is locked.
+            using var workbook = new XLWorkbook(excelFilePath);
+
+            // Create a new screenplay folder for the screenplay
             if (Directory.Exists(screenplayFolderPath))
             {
                 Directory.Delete(screenplayFolderPath, true);
             }
-
-            // Create a new screenplay folder for the screenplay
             Directory.CreateDirectory(screenplayFolderPath);
 
             // Update the resource registry to delete any existing entity data files before
-            // we start adding new .scene files.
+            // we add the .scene files.
             var updateResult = resourceRegistry.UpdateResourceRegistry();
             if (updateResult.IsFailure)
             {
                 return Result.Fail($"Failed to update resource registry")
                     .WithErrors(updateResult);
             }
-
-            // Open the Excel file
-            using var workbook = new XLWorkbook(excelFilePath);
 
             // Load the characters from the "Characters" worksheet
             var charactersWorksheet = workbook.Worksheet("Characters");
@@ -101,6 +112,13 @@ public class ScreenplayImporter
             if (saveResult.IsFailure)
             {
                 return Result.Fail($"Failed to save .scene files")
+                    .WithErrors(loadLinesResult);
+            }
+
+            var populateResult = PopulateCharacters(screenplayData, characters);
+            if (populateResult.IsFailure)
+            {
+                return Result.Fail($"Failed to populate characters property")
                     .WithErrors(loadLinesResult);
             }
 
@@ -444,6 +462,37 @@ public class ScreenplayImporter
         var entityData = entity.ToJsonString(options);
 
         await File.WriteAllTextAsync(entityFilePath, entityData);
+    }
+
+    private Result PopulateCharacters(IComponentProxy screenplayData, List<Character> characters)
+    {
+        // Populate the "characters" property of the ScreenplayData component with a JSON object
+        // mapping character IDs to character names and tags.
+
+        var charactersObject = new JsonObject();
+        foreach (var character in characters)
+        {
+            charactersObject[character.CharacterId] = new JsonObject
+            {
+                ["name"] = character.Name,
+                ["tag"] = character.Tag
+            };
+        }
+
+        var options = new JsonSerializerOptions()
+        {
+            WriteIndented = true
+        };
+        var charactersJson = charactersObject.ToJsonString(options);
+
+        var setResult = screenplayData.SetProperty("characters", charactersJson);
+        if (setResult.IsFailure)
+        {
+            return Result.Fail($"Failed to populate characters property on ScreenplayData component")
+                .WithErrors(setResult);
+        }
+
+        return Result.Ok();
     }
 
     private T TryGetValue<T>(IXLRangeRow row, Dictionary<string, int> columnMap, string columnName)

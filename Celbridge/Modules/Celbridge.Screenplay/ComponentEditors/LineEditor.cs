@@ -1,4 +1,7 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Celbridge.Entities;
+using Celbridge.Workspace;
 
 namespace Celbridge.Screenplay.Components;
 
@@ -10,6 +13,13 @@ public class LineEditor : ComponentEditorBase
     public const string ComponentType = "Screenplay.Line";
     public const string Character = "/character";
     public const string SourceText = "/sourceText";
+
+    private readonly IEntityService _entityService;
+
+    public LineEditor(IWorkspaceWrapper workspaceWrapper)
+    {
+        _entityService = workspaceWrapper.WorkspaceService.EntityService;
+    }
 
     public override string GetComponentConfig()
     {
@@ -34,13 +44,74 @@ public class LineEditor : ComponentEditorBase
     {
         if (propertyPath == "/characterIds")
         {
-            // Todo: Return the list of character Ids for the current screenplay
-            var characterIds = "[\"Character 1\", \"Character 2\", \"Character 3\", \"Character 4\"]";
-            return Result<string>.Ok(characterIds);
+            var getCharactersResult = GetCharacterIds();
+            if (getCharactersResult.IsFailure)
+            {
+                return Result<string>.Fail($"Failed to get character ids")
+                    .WithErrors(getCharactersResult);
+            }
+            var characterIdJson = getCharactersResult.Value;
+
+            return Result<string>.Ok(characterIdJson);
         }
 
         return Result<string>.Fail();
     }
 
+    private Result<string> GetCharacterIds()
+    {
+        // Get the scene component on this entity
+        var sceneComponentKey = new ComponentKey(Component.Key.Resource, 0);
+        var getComponentResult = _entityService.GetComponent(sceneComponentKey);
+        if (getComponentResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get scene component: '{sceneComponentKey}'")
+                .WithErrors(getComponentResult);
+        }
+        var sceneComponent = getComponentResult.Value;
+
+        // Get the dialogue file resource from the scene component
+        var excelFileResource = sceneComponent.GetString("/dialogueFile");
+        if (string.IsNullOrEmpty(excelFileResource))
+        {
+            return Result<string>.Fail($"Failed to get dialogue file property");
+        }
+        
+        // Get the ScreenplayData component on the Excel resource
+        var getScreenplayDataResult = _entityService.GetComponentOfType(excelFileResource, ScreenplayDataEditor.ComponentType);
+        if (getScreenplayDataResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get the ScreenplayData component from the Excel file resource");
+        }
+        var screenplayDataComponent = getScreenplayDataResult.Value;
+
+        // Get the 'characters' property from the ScreenplayData component
+        var getCharactersResult = screenplayDataComponent.GetProperty("/characters");
+        if (getCharactersResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get characters property");
+        }
+        var charactersJson = getCharactersResult.Value;
+
+        // Parse the characters JSON and build a list of character ids
+        var charactersObject = JsonNode.Parse(charactersJson) as JsonObject;
+        if (charactersObject is null)
+        {
+            return Result<string>.Fail("Failed to parse characters JSON");
+        }
+
+        var characterIds = new List<string>();
+        foreach (var kv in charactersObject)
+        {
+            var characterId = kv.Key;
+            characterIds.Add(characterId);
+        }
+
+        // Conver the character list to JSON so we can return it as a component property
+
+        var characterIdsJson = JsonSerializer.Serialize(characterIds);
+
+        return Result<String>.Ok(characterIdsJson);
+    }
 }
 
