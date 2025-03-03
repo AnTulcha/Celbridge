@@ -108,7 +108,7 @@ public class ScreenplayImporter
             var namespaceLines = createResult.Value;
 
             // Save a .scene file for each namespace
-            var saveResult = await CreateSceneFilesAsync(namespaceLines, excelFile);
+            var saveResult = await SaveSceneFilesAsync(namespaceLines, excelFile);
             if (saveResult.IsFailure)
             {
                 return Result.Fail($"Failed to save .scene files")
@@ -351,7 +351,7 @@ public class ScreenplayImporter
         return Result<Dictionary<string, List<DialogueLine>>>.Ok(namespace_lines);
     }
 
-    private async Task<Result> CreateSceneFilesAsync(Dictionary<string, List<DialogueLine>> namespaceLines, ResourceKey excelResource)
+    private async Task<Result> SaveSceneFilesAsync(Dictionary<string, List<DialogueLine>> namespaceLines, ResourceKey excelResource)
     {
         var screenplayFolderResource = Path.GetFileNameWithoutExtension(excelResource);
 
@@ -364,7 +364,7 @@ public class ScreenplayImporter
         // Remove the .json extension
         entityFolderPath = entityFolderPath.Substring(0, entityFolderPath.LastIndexOf('.'));
 
-        // Create a .scene file for each namespace
+        // Save a .scene file for each namespace
         foreach (var kv in namespaceLines)
         {
             var namespaceKey = kv.Key;
@@ -384,16 +384,16 @@ public class ScreenplayImporter
                 continue;
             }
 
-            // Create the .scene resource
+            // Create the .scene resource and entity data
 
-            await CreateSceneFile(sceneFolderPath, namespaceKey, category);
-            await CreateEntityDataFile(excelResource, entityFolderPath, namespaceKey, category, lineList);
+            await SaveSceneFileAsync(sceneFolderPath, category, namespaceKey);
+            await SaveEntityFileAsync(excelResource, entityFolderPath, category, namespaceKey, lineList);
         }
 
         return Result.Ok();
     }
 
-    private static async Task CreateSceneFile(string sceneFolderPath, string namespace_key, string category)
+    private static async Task SaveSceneFileAsync(string sceneFolderPath, string category, string namespace_key)
     {
         // Create a .scene file
         var sceneFilePath = Path.Combine(sceneFolderPath, category, $"{namespace_key}.scene");
@@ -408,7 +408,7 @@ public class ScreenplayImporter
         await File.WriteAllTextAsync(sceneFilePath, string.Empty);
     }
 
-    private static async Task CreateEntityDataFile(ResourceKey excelResource, string entityFolderPath, string namespace_key, string category, List<DialogueLine> line_list)
+    private static async Task SaveEntityFileAsync(ResourceKey excelResource, string entityFolderPath, string category, string namespace_key, List<DialogueLine> line_list)
     {
         var entityFilePath = Path.Combine(entityFolderPath, category, $"{namespace_key}.scene.json");
 
@@ -427,6 +427,8 @@ public class ScreenplayImporter
         var sceneComponent = new JsonObject();
         sceneComponent["_type"] = "Screenplay.Scene#1";
         sceneComponent["dialogueFile"] = excelResource.ToString();
+        sceneComponent["category"] = category;
+        sceneComponent["namespace"] = namespace_key;
         components.Add(sceneComponent);
 
         // Add line components

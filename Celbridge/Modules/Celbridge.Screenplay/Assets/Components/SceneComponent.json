@@ -11,6 +11,12 @@
       "type": "string",
       "const": "Screenplay.Scene#1"
     },
+    "category": {
+      "type": "string"
+    },
+    "namespace": {
+      "type": "string"
+    },
     "dialogueFile": {
       "type": "string"
     }
@@ -18,10 +24,14 @@
 
   "required": [
     "_type",
+    "category",
+    "namespace",
     "dialogueFile"
   ],
 
   "prototype": {
+    "category": "",
+    "namespace": "",
     "dialogueFile": ""
   }
 }    

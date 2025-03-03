@@ -156,7 +156,7 @@ public class ScreenplayActivity : IActivity
         var markdown = generateResult.Value;
 
         // Set the contents of the document to the generated markdown
-        var setContentResult = _documentService.SetTextDocumentContent(resource, markdown);
+        var setContentResult = await _documentService.SetTextDocumentContentAsync(resource, markdown);
         if (setContentResult.IsFailure)
         {
             return Result.Fail($"Failed to set document content")
@@ -212,7 +212,7 @@ public class ScreenplayActivity : IActivity
 
         foreach (var lineComponent in lineComponents)
         {
-            var character = lineComponent.GetString(LineEditor.Character);
+            var character = lineComponent.GetString(LineEditor.CharacterId);
             var sourceText = lineComponent.GetString(LineEditor.SourceText);
 
             if (string.IsNullOrWhiteSpace(character) || string.IsNullOrWhiteSpace(sourceText))

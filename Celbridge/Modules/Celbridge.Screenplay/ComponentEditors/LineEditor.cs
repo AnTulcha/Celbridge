@@ -11,7 +11,7 @@ public class LineEditor : ComponentEditorBase
     private const string _formPath = "Celbridge.Screenplay.Assets.Forms.LineForm.json";
 
     public const string ComponentType = "Screenplay.Line";
-    public const string Character = "/character";
+    public const string CharacterId = "/characterId";
     public const string SourceText = "/sourceText";
 
     private readonly IEntityService _entityService;
@@ -33,15 +33,16 @@ public class LineEditor : ComponentEditorBase
 
     public override ComponentSummary GetComponentSummary()
     {
-        var character = Component.GetString(Character);
+        var characterId = Component.GetString(CharacterId);
         var sourceText = Component.GetString(SourceText);
 
-        var summaryText = $"{character}: {sourceText}";
+        var summaryText = $"{characterId}: {sourceText}";
         return new ComponentSummary(summaryText, summaryText);
     }
 
     protected override Result<string> TryGetProperty(string propertyPath)
     {
+        // Get list of available characters to populate the Character combo box
         if (propertyPath == "/characterIds")
         {
             var getCharactersResult = GetCharacterIds();

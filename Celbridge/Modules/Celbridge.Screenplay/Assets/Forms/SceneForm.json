@@ -12,5 +12,33 @@
         "text": "/dialogueFile"
       }
     ]
+  },
+  {
+    "element": "StackPanel",
+    "orientation": "Horizontal",
+    "children": [
+      {
+        "element": "TextBlock",
+        "text": "Category:"
+      },
+      {
+        "element": "TextBlock",
+        "text": "/category"
+      }
+    ]
+  },
+  {
+    "element": "StackPanel",
+    "orientation": "Horizontal",
+    "children": [
+      {
+        "element": "TextBlock",
+        "text": "Namespace:"
+      },
+      {
+        "element": "TextBlock",
+        "text": "/namespace"
+      }
+    ]
   }
 ]
