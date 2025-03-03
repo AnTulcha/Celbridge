@@ -36,11 +36,11 @@ public class ImportScreenplayCommand : CommandBase
                 .WithErrors(getActivityResult);
         }
 
-        var loadResult = await screenplayActivity.ImportScreenplay(ExcelFile);
-        if (loadResult.IsFailure)
+        var importResult = await screenplayActivity.ImportScreenplayAsync(ExcelFile);
+        if (importResult.IsFailure)
         {
-            return Result.Fail($"Failed to load screenplay from Excel file")
-                .WithErrors(loadResult);
+            return Result.Fail($"Failed to import screenplay from Excel file")
+                .WithErrors(importResult);
         }
 
         return Result.Ok();

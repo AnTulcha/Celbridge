@@ -26,7 +26,7 @@ public class ScreenplayImporter
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public async Task<Result> ImportScreenplay(ResourceKey excelFile)
+    public async Task<Result> ImportScreenplayAsync(ResourceKey excelFile)
     {
         try
         {

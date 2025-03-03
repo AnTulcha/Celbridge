@@ -168,11 +168,11 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    public async Task<Result> ImportScreenplay(ResourceKey screenplayResource)
+    public async Task<Result> ImportScreenplayAsync(ResourceKey screenplayResource)
     {
         var importer = _serviceProvider.AcquireService<ScreenplayImporter>();
 
-        var importResult = await importer.ImportScreenplay(screenplayResource);
+        var importResult = await importer.ImportScreenplayAsync(screenplayResource);
         if (importResult.IsFailure)
         {
             return Result.Fail($"Failed to import screenplay data from Excel")
