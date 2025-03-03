@@ -71,6 +71,12 @@ public class LineEditor : ComponentEditorBase
         }
         var sceneComponent = getComponentResult.Value;
 
+        // Check the component is a scene component
+        if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
+        {
+            return Result<string>.Fail($"Primary component is not a Scene component");
+        }
+
         // Get the dialogue file resource from the scene component
         var excelFileResource = sceneComponent.GetString("/dialogueFile");
         if (string.IsNullOrEmpty(excelFileResource))
@@ -108,7 +114,7 @@ public class LineEditor : ComponentEditorBase
             characterIds.Add(characterId);
         }
 
-        // Conver the character list to JSON so we can return it as a component property
+        // Convert the character list to JSON so we can return it as a component property
 
         var characterIdsJson = JsonSerializer.Serialize(characterIds);
 
