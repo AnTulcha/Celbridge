@@ -1,7 +1,8 @@
 [
   {
     "element": "Button",
-    "text": "Load data",
+    "horizontalAlignment": "Center",
+    "text": "Import dialogue",
     "icon": "Refresh",
     "buttonId": "loadData"
   }
