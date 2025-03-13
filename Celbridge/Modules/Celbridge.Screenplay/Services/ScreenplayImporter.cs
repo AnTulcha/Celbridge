@@ -80,15 +80,15 @@ public class ScreenplayImporter
             }
             var characters = loadCharactersResult.Value;
 
-            // Load the dialogue lines from the "Lines" worksheet
-            var linesWorksheet = workbook.Worksheet("Lines");
-            var loadLinesResult = ReadLines(linesWorksheet);
-            if (loadLinesResult.IsFailure)
+            // Load the dialogue lines from the "Dialogue" worksheet
+            var dialogueWorksheet = workbook.Worksheet("Dialogue");
+            var dialogueResult = ReadLines(dialogueWorksheet);
+            if (dialogueResult.IsFailure)
             {
-                return Result.Fail($"Failed to load dialogue lines from Excel")
-                    .WithErrors(loadLinesResult);
+                return Result.Fail($"Failed to load dialogue lines from 'Dialogue' worksheet")
+                    .WithErrors(dialogueResult);
             }
-            var lines = loadLinesResult.Value;
+            var lines = dialogueResult.Value;
 
             // Validate imported data
             var validateResult = ValidateLines(characters, lines);
@@ -112,14 +112,14 @@ public class ScreenplayImporter
             if (saveResult.IsFailure)
             {
                 return Result.Fail($"Failed to save .scene files")
-                    .WithErrors(loadLinesResult);
+                    .WithErrors(dialogueResult);
             }
 
             var populateResult = PopulateCharacters(screenplayData, characters);
             if (populateResult.IsFailure)
             {
                 return Result.Fail($"Failed to populate characters property")
-                    .WithErrors(loadLinesResult);
+                    .WithErrors(dialogueResult);
             }
 
             return Result.Ok();
@@ -303,10 +303,13 @@ public class ScreenplayImporter
 
             // Check that the referenced character exists
             var characterId = line.CharacterId;
-            if (string.IsNullOrEmpty(characterId) ||
-                !characters.Any(c => c.CharacterId == characterId))
+            if (characterId != "Player" && characterId != "SceneNote")
             {
-                return Result.Fail($"Character '{characterId}' not found in characters list at row {row_index}");
+                if (string.IsNullOrEmpty(characterId) ||
+                    !characters.Any(c => c.CharacterId == characterId))
+                {
+                    return Result.Fail($"Character '{characterId}' not found in characters list at row {row_index}");
+                }
             }
         }
 
@@ -472,6 +475,15 @@ public class ScreenplayImporter
         // mapping character IDs to character names and tags.
 
         var charactersObject = new JsonObject();
+
+        // Add the 'Player' character
+        charactersObject["Player"] = new JsonObject
+        {
+            ["name"] = "Player",
+            ["tag"] = ""
+        };
+
+        // Add the characters from the 'Characters' sheet
         foreach (var character in characters)
         {
             charactersObject[character.CharacterId] = new JsonObject
