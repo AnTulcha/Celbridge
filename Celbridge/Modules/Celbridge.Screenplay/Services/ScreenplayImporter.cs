@@ -493,18 +493,21 @@ public class ScreenplayImporter
             // Create the .scene resource and entity data
 
             await SaveSceneFileAsync(sceneFolderPath, category, scene.AssetPath);
-            await SaveEntityFileAsync(excelResource, entityFolderPath, category, scene.AssetPath, scene.Lines);
+            await SaveEntityFileAsync(excelResource, entityFolderPath, category, scene.Namespace, scene.AssetPath, scene.Lines);
         }
 
         return Result.Ok();
     }
 
-    private static async Task SaveSceneFileAsync(string sceneFolderPath, string category, string asset_path)
+    private static async Task SaveSceneFileAsync(string sceneFolderPath, string category, string assetPath)
     {
         // Create a .scene file
-        var sceneFilePath = Path.Combine(sceneFolderPath, category, $"{asset_path}.scene");
 
+        var subFolder = Path.GetDirectoryName(assetPath) ?? string.Empty;
+        var assetName = Path.GetFileNameWithoutExtension(assetPath);
+        var sceneFilePath = Path.Combine(sceneFolderPath, category, subFolder, $"{assetName}.scene");
         var sceneFolder = Path.GetDirectoryName(sceneFilePath);
+
         if (!string.IsNullOrEmpty(sceneFolder) &&
             !Directory.Exists(sceneFolder))
         {
@@ -514,11 +517,13 @@ public class ScreenplayImporter
         await File.WriteAllTextAsync(sceneFilePath, string.Empty);
     }
 
-    private static async Task SaveEntityFileAsync(ResourceKey excelResource, string entityFolderPath, string category, string namespace_key, List<DialogueLine> line_list)
+    private static async Task SaveEntityFileAsync(ResourceKey excelResource, string entityFolderPath, string category, string @namespace, string assetPath, List<DialogueLine> lineList)
     {
-        var entityFilePath = Path.Combine(entityFolderPath, category, $"{namespace_key}.scene.json");
-
+        var subFolder = Path.GetDirectoryName(assetPath) ?? string.Empty;
+        var assetName = Path.GetFileNameWithoutExtension(assetPath);
+        var entityFilePath = Path.Combine(entityFolderPath, category, subFolder, $"{assetName}.scene.json");
         var entityFolder = Path.GetDirectoryName(entityFilePath);
+
         if (!string.IsNullOrEmpty(entityFolder) &&
             !Directory.Exists(entityFolder))
         {
@@ -534,11 +539,11 @@ public class ScreenplayImporter
         sceneComponent["_type"] = "Screenplay.Scene#1";
         sceneComponent["dialogueFile"] = excelResource.ToString();
         sceneComponent["category"] = category;
-        sceneComponent["namespace"] = namespace_key;
+        sceneComponent["namespace"] = @namespace;
         components.Add(sceneComponent);
 
         // Add line components
-        foreach (var line in line_list)
+        foreach (var line in lineList)
         {
             var lineComponent = new JsonObject();
             lineComponent["_type"] = "Screenplay.Line#1";
