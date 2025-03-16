@@ -109,6 +109,8 @@ public class ScreenplayActivity : IActivity
         // Remaining components must be "Line"
         //
 
+        string lineId = string.Empty;
+
         for (int i = 1; i < components.Count; i++)
         {
             var component = components[i];
@@ -119,11 +121,7 @@ public class ScreenplayActivity : IActivity
                 continue;
             }
 
-            if (component.Schema.ComponentType == LineEditor.ComponentType)
-            {
-                entityAnnotation.SetIsRecognized(i);
-            }
-            else
+            if (component.Schema.ComponentType != LineEditor.ComponentType)
             {
                 var error = new ComponentError(
                     ComponentErrorSeverity.Critical,
@@ -131,6 +129,50 @@ public class ScreenplayActivity : IActivity
                     "This component must be a 'Line' component");
 
                 entityAnnotation.AddError(i, error);
+
+                continue;
+            }
+
+            entityAnnotation.SetIsRecognized(i);
+
+            // Indent player variant lines
+            var dialogueKey = component.GetString("/dialogueKey");
+            var segments = dialogueKey.Split('-');
+
+            if (segments.Length != 3)
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid dialogue key",
+                    "The dialogue key must consist of 3 hyphen separated segments");
+                continue;
+            }
+
+            var currentLineId = segments[2];
+            if (string.IsNullOrEmpty(currentLineId))
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid line id",
+                    "The line id segment of the dialogue key must not be empty");
+                continue;
+            }
+
+            // Player variant lines
+            // 1. Character is a player character
+            // 2. The preceding lines are player characters or the Player character
+            // In this case, ensure the line id matches the main character line
+            // A player character line on its on displays an error message
+
+            // An identical namespace and line id indicates a player variant line
+            if (lineId == currentLineId)
+            {
+                // Indent the line
+                entityAnnotation.SetIndent(i, 1);
+            }
+            else
+            {
+                lineId = currentLineId;
             }
         }
 
