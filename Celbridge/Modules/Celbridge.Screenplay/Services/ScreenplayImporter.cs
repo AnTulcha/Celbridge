@@ -588,12 +588,30 @@ public class ScreenplayImporter
         charactersObject["Player"] = new JsonObject
         {
             ["name"] = "Player",
-            ["tag"] = ""
+            ["tag"] = "Character.Player"
         };
 
         // Add the characters from the 'Characters' sheet
+        var names = new HashSet<string>();
+        var tags = new HashSet<string>();
+
         foreach (var character in characters)
         {
+            // Check for duplicate names
+            if (names.Contains(character.Name))
+            {
+                return Result.Fail($"Duplicate character name '{character.Name}'");
+            }
+            names.Add(character.Name);
+
+            // Check for duplicate tags
+            if (tags.Contains(character.Tag))
+            {
+                return Result.Fail($"Duplicate character tag '{character.Tag}'");
+            }
+            tags.Add(character.Tag);
+
+            // Add character
             charactersObject[character.CharacterId] = new JsonObject
             {
                 ["name"] = character.Name,

@@ -118,7 +118,7 @@ public class LineEditor : ComponentEditorBase
 
         var characterIdsJson = JsonSerializer.Serialize(characterIds);
 
-        return Result<String>.Ok(characterIdsJson);
+        return Result<string>.Ok(characterIdsJson);
     }
 }
 

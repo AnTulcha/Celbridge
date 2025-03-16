@@ -4,8 +4,10 @@ using Celbridge.Documents;
 using Celbridge.Entities;
 using Celbridge.Logging;
 using Celbridge.Screenplay.Components;
+using Celbridge.Screenplay.Models;
 using Celbridge.Workspace;
 using System.Text;
+using System.Text.Json.Nodes;
 
 using Path = System.IO.Path;
 
@@ -90,8 +92,8 @@ public class ScreenplayActivity : IActivity
         // Root component must be "Scene"
         //
 
-        var rootComponent = components[0];
-        if (rootComponent.Schema.ComponentType == SceneEditor.ComponentType)
+        var sceneComponent = components[0];
+        if (sceneComponent.Schema.ComponentType == SceneEditor.ComponentType)
         {
             entityAnnotation.SetIsRecognized(0);
         }
@@ -105,11 +107,31 @@ public class ScreenplayActivity : IActivity
             entityAnnotation.AddError(0, error);
         }
 
+        // Todo: Check that the namespace matches one defined in the Screenplay component
+        var @namespace = sceneComponent.GetString(SceneEditor.Namespace);
+        if (string.IsNullOrEmpty(@namespace))
+        {
+            var error = new ComponentError(
+                ComponentErrorSeverity.Critical,
+                "Invalid namespace",
+                "The namespace must not be empty");
+            entityAnnotation.AddError(0, error);
+        }
+
+        // Lookup character list from the screenplay component
+        var getCharactersResult = GetCharacters(entity);
+        if (getCharactersResult.IsFailure)
+        {
+            return Result.Fail(entity, $"Failed to get characters from screenplay component")
+                .WithErrors(getCharactersResult);
+        }
+        var characters = getCharactersResult.Value;
+
         //
-        // Remaining components must be "Line"
+        // Remaining components must all be "Line"
         //
 
-        string lineId = string.Empty;
+        string playerLineId = string.Empty;
 
         for (int i = 1; i < components.Count; i++)
         {
@@ -127,52 +149,123 @@ public class ScreenplayActivity : IActivity
                     ComponentErrorSeverity.Critical,
                     "Invalid component type",
                     "This component must be a 'Line' component");
-
                 entityAnnotation.AddError(i, error);
 
                 continue;
             }
 
+            // Line component is recognized
             entityAnnotation.SetIsRecognized(i);
 
-            // Indent player variant lines
+            //
+            // Get the character id
+            //
+
+            var characterId = component.GetString(LineEditor.CharacterId);
+            if (string.IsNullOrEmpty(characterId))
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid character id",
+                    "The character id must not be empty");
+                entityAnnotation.AddError(i, error);
+
+                continue;
+            }
+
+            Character? character = null;
+            foreach (var c in characters)
+            {
+                if (characterId == c.CharacterId)
+                {
+                    character = c;
+                    break;
+                }
+            }
+            if (character is null)
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid character id",
+                    "A valid character must be selected");
+                entityAnnotation.AddError(i, error);
+
+                // There's not much more we can do until the user selects a character id
+                continue;
+            }
+
+            //
+            // Get the existing dialogue key and line id
+            //
+
             var dialogueKey = component.GetString("/dialogueKey");
             var segments = dialogueKey.Split('-');
-
-            if (segments.Length != 3)
+            var lineId = string.Empty;
+            if (segments.Length == 3)
             {
-                var error = new ComponentError(
-                    ComponentErrorSeverity.Critical,
-                    "Invalid dialogue key",
-                    "The dialogue key must consist of 3 hyphen separated segments");
-                continue;
+                lineId = segments[2];
             }
 
-            var currentLineId = segments[2];
-            if (string.IsNullOrEmpty(currentLineId))
+            bool isPlayerVariantLine = false;
+            var correctLineId = lineId;
+
+            if (character.Tag == "Character.Player")
             {
-                var error = new ComponentError(
-                    ComponentErrorSeverity.Critical,
-                    "Invalid line id",
-                    "The line id segment of the dialogue key must not be empty");
-                continue;
+                // Start of a new player line group
+                playerLineId = lineId;
             }
-
-            // Player variant lines
-            // 1. Character is a player character
-            // 2. The preceding lines are player characters or the Player character
-            // In this case, ensure the line id matches the main character line
-            // A player character line on its on displays an error message
-
-            // An identical namespace and line id indicates a player variant line
-            if (lineId == currentLineId)
+            else if (character.Tag.StartsWith("Character.Player."))
             {
-                // Indent the line
-                entityAnnotation.SetIndent(i, 1);
+                // Player variants lines must be part of a player line group
+                if (string.IsNullOrEmpty(playerLineId))
+                {
+                    var error = new ComponentError(
+                        ComponentErrorSeverity.Critical,
+                        "Invalid player variant line",
+                        "Player variant lines must be part of a player line group");
+                    entityAnnotation.AddError(i, error);
+                }
+                else
+                {
+                    // Indent player variant lines
+                    isPlayerVariantLine = true;
+
+                    // Ensure that the line id matches the player line id of the group
+                    if (lineId != playerLineId)
+                    {
+                        correctLineId = playerLineId;
+                    }
+                }
             }
             else
             {
-                lineId = currentLineId;
+                // This is an NPC line, so stop tracking any player line group
+                playerLineId = string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(correctLineId))
+            {
+                // No line id has been assigned yet, assign a new random one
+                // Todo: Ensure this new id does not match any existing id in the namespace
+                var random = new Random();
+                int number = random.Next(0x1000, 0x10000); // Generates a number between 0x1000 (4096) and 0xFFFF (65535)
+                correctLineId = number.ToString("X4");
+            }
+             
+            // Ensure a that a valid dialogue key is assigned.
+            var correctDialogueKey = $"{characterId}-{@namespace}-{correctLineId}";
+            if (dialogueKey != correctDialogueKey)
+            {
+                // Set the property directly rather than using a command because we
+                // don't want to register an undo operation in this case.
+                component.SetString("/dialogueKey", correctDialogueKey);
+            }
+
+            // Indent player variant lines
+            if (isPlayerVariantLine)
+            {
+                // Indent the line
+                entityAnnotation.SetIndent(i, 1);
             }
         }
 
@@ -269,5 +362,101 @@ public class ScreenplayActivity : IActivity
         var markdown = sb.ToString();
 
         return Result<string>.Ok(markdown);
+    }
+
+    // Todo: Make this into a utility or static method
+    private Result<List<Character>> GetCharacters(ResourceKey SceneResource)
+    {
+        // Get the scene component on this entity
+        var sceneComponentKey = new ComponentKey(SceneResource, 0);
+        var getComponentResult = _entityService.GetComponent(sceneComponentKey);
+        if (getComponentResult.IsFailure)
+        {
+            return Result<List<Character>>.Fail($"Failed to get scene component: '{sceneComponentKey}'")
+                .WithErrors(getComponentResult);
+        }
+        var sceneComponent = getComponentResult.Value;
+
+        // Check the component is a scene component
+        if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
+        {
+            return Result<List<Character>>.Fail($"Primary component of resource '{SceneResource}' is not a scene component");
+        }
+
+        // Get the dialogue file resource from the scene component
+        var dialogueFileResource = sceneComponent.GetString("/dialogueFile");
+        if (string.IsNullOrEmpty(dialogueFileResource))
+        {
+            return Result<List<Character>>.Fail($"Failed to get dialogue file property");
+        }
+
+        // Get the ScreenplayData component on the Excel resource
+        var getScreenplayDataResult = _entityService.GetComponentOfType(dialogueFileResource, ScreenplayDataEditor.ComponentType);
+        if (getScreenplayDataResult.IsFailure)
+        {
+            return Result<List<Character>>.Fail($"Failed to get the ScreenplayData component from the Excel file resource");
+        }
+        var screenplayDataComponent = getScreenplayDataResult.Value;
+
+        // Get the 'characters' property from the ScreenplayData component
+        var getCharactersResult = screenplayDataComponent.GetProperty("/characters");
+        if (getCharactersResult.IsFailure)
+        {
+            return Result<List<Character>>.Fail($"Failed to get characters property");
+        }
+        var charactersJson = getCharactersResult.Value;
+
+        // Parse the characters JSON and build a list of characters
+        var charactersObject = JsonNode.Parse(charactersJson) as JsonObject;
+        if (charactersObject is null)
+        {
+            return Result<List<Character>>.Fail("Failed to parse characters JSON");
+        }
+
+        var characters = new List<Character>();
+        foreach (var kv in charactersObject)
+        {
+            var characterId = kv.Key;
+            var characterProperties = kv.Value as JsonObject;
+
+            if (characterProperties is null)
+            {
+                return Result<List<Character>>.Fail("Failed to parse character properties");
+            }
+
+            var characterName = string.Empty;
+            if (characterProperties.TryGetPropertyValue("name", out JsonNode? nameValue) &&
+                nameValue is not null)
+            {
+                characterName = nameValue.ToString() ?? string.Empty;
+            }
+            if (string.IsNullOrEmpty(characterName))
+            {
+                return Result<List<Character>>.Fail("Character name is empty");
+            }
+
+            var characterTag = string.Empty;
+            if (characterName == "Player")
+            {
+                characterTag = "Character.Player";
+            }
+            else
+            {
+                if (characterProperties.TryGetPropertyValue("tag", out JsonNode? tagValue) &&
+                    tagValue is not null)
+                {
+                    characterTag = tagValue.ToString() ?? string.Empty;
+                }
+                if (string.IsNullOrEmpty(characterTag))
+                {
+                    return Result<List<Character>>.Fail("Character tag is empty");
+                }
+            }
+
+            var character = new Character(characterId, characterName, characterTag);
+            characters.Add(character);
+        }
+
+        return Result<List<Character>>.Ok(characters);
     }
 }
