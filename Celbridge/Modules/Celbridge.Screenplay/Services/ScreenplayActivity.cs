@@ -128,10 +128,17 @@ public class ScreenplayActivity : IActivity
         var characters = getCharactersResult.Value;
 
         //
-        // Remaining components must all be "Line"
+        // Remaining components must all be Line or Empty
         //
 
-        string playerLineId = string.Empty;
+        var lineComponents = new Dictionary<int, IComponentProxy>();
+        var activeLineIds = new HashSet<string>();
+        var activeDialogueKeys = new HashSet<string>();
+
+        //
+        // First pass checks component types are valid and records all
+        // line ids that are used in this namespace.
+        //
 
         for (int i = 1; i < components.Count; i++)
         {
@@ -154,8 +161,34 @@ public class ScreenplayActivity : IActivity
                 continue;
             }
 
-            // Line component is recognized
+            // Mark Line component as recognized
             entityAnnotation.SetIsRecognized(i);
+
+            //Build a list of existing line ids so we can safely allocate a random one later if needed 
+            var dialogueKey = component.GetString("/dialogueKey");
+            var segments = dialogueKey.Split('-');
+            if (segments.Length == 3)
+            {
+                var lineId = segments[2];
+                activeLineIds.Add(lineId);
+            }
+
+            lineComponents[i] = component;
+        }
+
+        //
+        // Second pass checks all line components are valid, and check that
+        // each line has a valid character id, line id and dialogue key.
+        // If the current line id is invalid then a new one is generated.
+        //
+
+        var componentIndices = lineComponents.Keys.ToList();
+        componentIndices.Sort();
+
+        var playerLineId = string.Empty;
+        foreach (var i in componentIndices)
+        {
+            var component = lineComponents[i];
 
             //
             // Get the character id
@@ -246,20 +279,37 @@ public class ScreenplayActivity : IActivity
             if (string.IsNullOrEmpty(correctLineId))
             {
                 // No line id has been assigned yet, assign a new random one
-                // Todo: Ensure this new id does not match any existing id in the namespace
-                var random = new Random();
-                int number = random.Next(0x1000, 0x10000); // Generates a number between 0x1000 (4096) and 0xFFFF (65535)
-                correctLineId = number.ToString("X4");
+                // Generate random line ids until a unique one is found.
+                do
+                {
+                    // Generate a random 4 digit hex code for line id
+                    var random = new Random();
+                    int number = random.Next(0x1000, 0x10000);
+                    correctLineId = number.ToString("X4");
+                }
+                while (activeLineIds.Contains(correctLineId));
+                activeLineIds.Add(correctLineId);
             }
              
-            // Ensure a that a valid dialogue key is assigned.
+            // Ensure that a valid dialogue key is always assigned.
             var correctDialogueKey = $"{characterId}-{@namespace}-{correctLineId}";
             if (dialogueKey != correctDialogueKey)
             {
                 // Set the property directly rather than using a command because we
                 // don't want to register an undo operation in this case.
                 component.SetString("/dialogueKey", correctDialogueKey);
+                dialogueKey = correctDialogueKey;
             }
+
+            if (activeDialogueKeys.Contains(dialogueKey))
+            {
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Duplicate dialogue key",
+                    "Dialogue keys must be unique for each line");
+                entityAnnotation.AddError(i, error);
+            }
+            activeDialogueKeys.Add(dialogueKey);
 
             // Indent player variant lines
             if (isPlayerVariantLine)
