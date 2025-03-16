@@ -266,8 +266,7 @@ public partial class TextBoxElement : FormElement
             {
                 // Text can be selected but not edited
                 textBox.IsReadOnly = true;
-                textBox.BorderThickness = new Thickness(0);
-                textBox.Background = new SolidColorBrush(Colors.Transparent);
+                textBox.Opacity = 0.6;
             }
         }
 
