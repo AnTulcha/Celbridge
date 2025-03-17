@@ -97,7 +97,8 @@
             <Grid Grid.Column="2"
                   Margin="8 0 0 0"
                   Background="Transparent" 
-                  ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}">
+                  ToolTipService.ToolTip="{x:Bind Tooltip, Mode=OneWay}"
+                  ToolTipService.Placement="Bottom">
               <StackPanel Orientation="Horizontal">
 
                 <!-- Error icon -->
