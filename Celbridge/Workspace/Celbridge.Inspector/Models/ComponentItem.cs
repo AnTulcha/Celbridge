@@ -53,13 +53,20 @@ public partial class ComponentItem : ObservableObject
         var showErrorIcon = Visibility.Collapsed;
         var showWarningIcon = Visibility.Collapsed;
 
+        if (Summary is not null)
+        {
+            description = Summary.SummaryText;
+            tooltip = Summary.Tooltip;
+            showErrorIcon = Visibility.Collapsed;
+            showWarningIcon = Visibility.Collapsed;
+        }
+
         if (Annotation is not null)
         {
             if (Annotation.Errors.Count > 0)
             {
                 var error = Annotation.Errors[0];
-                description = error.Message;
-                tooltip = error.Description;
+                tooltip = $"Error: {error.Message}\n{error.Description}";
 
                 if (error.Severity == ComponentErrorSeverity.Critical ||
                     error.Severity == ComponentErrorSeverity.Error)
@@ -71,16 +78,6 @@ public partial class ComponentItem : ObservableObject
                 {
                     showErrorIcon = Visibility.Collapsed;
                     showWarningIcon = Visibility.Visible;
-                }
-            }
-            else
-            {
-                if (Summary is not null)
-                {
-                    description = Summary.SummaryText;
-                    tooltip = Summary.Tooltip;
-                    showErrorIcon = Visibility.Collapsed;
-                    showWarningIcon = Visibility.Collapsed;
                 }
             }
 
