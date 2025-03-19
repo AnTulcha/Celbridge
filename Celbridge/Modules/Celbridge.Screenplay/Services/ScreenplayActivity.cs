@@ -118,7 +118,7 @@ public class ScreenplayActivity : IActivity
             entityAnnotation.AddError(0, error);
         }
 
-        // Lookup character list from the screenplay component
+        // Get the character list from the screenplay component
         var getCharactersResult = GetCharacters(entity);
         if (getCharactersResult.IsFailure)
         {
@@ -164,7 +164,8 @@ public class ScreenplayActivity : IActivity
             // Mark Line component as recognized
             entityAnnotation.SetIsRecognized(i);
 
-            //Build a list of existing line ids so we can safely allocate a random one later if needed 
+            // Build a list of the existing line ids so that we can allocate a new random line id that won't clash
+            // with any existing one.
             var dialogueKey = component.GetString("/dialogueKey");
             var segments = dialogueKey.Split('-');
             if (segments.Length == 3)
@@ -177,7 +178,7 @@ public class ScreenplayActivity : IActivity
         }
 
         //
-        // Second pass checks all line components are valid, and check that
+        // Second pass checks all line components are valid, and checks that
         // each line has a valid character id, line id and dialogue key.
         // If the current line id is invalid then a new one is generated.
         //
@@ -272,7 +273,7 @@ public class ScreenplayActivity : IActivity
             }
             else
             {
-                // This is an NPC line, so stop tracking any player line group
+                // This is an NPC line, so stop tracking the player line group
                 playerLineId = string.Empty;
             }
 
