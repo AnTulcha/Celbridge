@@ -26,11 +26,11 @@ public class ScreenplayImporter
         _workspaceWrapper = workspaceWrapper;
     }
 
-    public async Task<Result> ImportScreenplayAsync(ResourceKey excelFile)
+    public async Task<Result> ImportScreenplayAsync(ResourceKey workbookFile)
     {
         try
         {
-            var extension = Path.GetExtension(excelFile);
+            var extension = Path.GetExtension(workbookFile);
             if (extension != ".xlsx")
             {
                 return Result.Fail($"Unsupported file type: {extension}");
@@ -38,21 +38,21 @@ public class ScreenplayImporter
 
             var entityService = _workspaceWrapper.WorkspaceService.EntityService;
             var resourceRegistry = _explorerService.ResourceRegistry;
-            var excelFilePath = resourceRegistry.GetResourcePath(excelFile);
-            var screenplayFolderPath = Path.GetFileNameWithoutExtension(excelFilePath);
+            var workbookFilePath = resourceRegistry.GetResourcePath(workbookFile);
+            var screenplayFolderPath = Path.GetFileNameWithoutExtension(workbookFilePath);
 
-            // Acquire the ScreenplayData component from the Excel file resource
-            var getComponentResult = entityService.GetComponentOfType(excelFile, ScreenplayDataEditor.ComponentType);
+            // Acquire the ScreenplayData component from the workbook resource
+            var getComponentResult = entityService.GetComponentOfType(workbookFile, ScreenplayDataEditor.ComponentType);
             if (getComponentResult.IsFailure)
             {
-                return Result.Fail($"Failed to get ScreenplayData component from Excel file resource '{excelFile}'")
+                return Result.Fail($"Failed to get ScreenplayData component from workbook file resource '{workbookFile}'")
                     .WithErrors(getComponentResult);
             }
             var screenplayData = getComponentResult.Value;
 
-            // Open the Excel file.
+            // Open the workbook file.
             // It's best to do this before we make any other changes, e.g. in case the file is locked.
-            using var workbook = new XLWorkbook(excelFilePath);
+            using var workbook = new XLWorkbook(workbookFilePath);
 
             // Create a new screenplay folder for the screenplay
             if (Directory.Exists(screenplayFolderPath))
@@ -117,7 +117,7 @@ public class ScreenplayImporter
             }
 
             // Save a .scene file for each scene
-            var saveResult = await SaveSceneFilesAsync(scenes, excelFile);
+            var saveResult = await SaveSceneFilesAsync(scenes, workbookFile);
             if (saveResult.IsFailure)
             {
                 return Result.Fail($"Failed to save .scene files")
@@ -135,7 +135,7 @@ public class ScreenplayImporter
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to import screenplay data from Excel")
+            return Result.Fail($"Failed to import screenplay data from workbook")
                 .WithException(ex);
         }
     }
@@ -199,7 +199,7 @@ public class ScreenplayImporter
             }
             catch (Exception ex)
             {
-                return Result<List<Character>>.Fail($"An error occurred when reading characters from Excel")
+                return Result<List<Character>>.Fail($"An error occurred when loading characters from workbook")
                     .WithException(ex);
             }
         }
@@ -266,7 +266,7 @@ public class ScreenplayImporter
             }
             catch (Exception ex)
             {
-                return Result<List<Scene>>.Fail($"An error occurred when reading characters from Excel")
+                return Result<List<Scene>>.Fail($"An error occurred when loading scenes from workbook")
                     .WithException(ex);
             }
         }
@@ -344,7 +344,7 @@ public class ScreenplayImporter
             }
             catch (Exception ex)
             {
-                return Result<List<DialogueLine>>.Fail($"An error occurred when reading lines from Excel")
+                return Result<List<DialogueLine>>.Fail($"An error occurred when loading lines from workbook")
                     .WithException(ex);
             }
         }
@@ -462,9 +462,9 @@ public class ScreenplayImporter
         return Result.Ok();
     }
 
-    private async Task<Result> SaveSceneFilesAsync(List<Scene> scenes, ResourceKey excelResource)
+    private async Task<Result> SaveSceneFilesAsync(List<Scene> scenes, ResourceKey workbookResource)
     {
-        var screenplayFolderResource = Path.GetFileNameWithoutExtension(excelResource);
+        var screenplayFolderResource = Path.GetFileNameWithoutExtension(workbookResource);
 
         var resourceRegistry = _explorerService.ResourceRegistry;
         var sceneFolderPath = resourceRegistry.GetResourcePath(screenplayFolderResource);
@@ -493,7 +493,7 @@ public class ScreenplayImporter
             // Create the .scene resource and entity data
 
             await SaveSceneFileAsync(sceneFolderPath, category, scene.AssetPath);
-            await SaveEntityFileAsync(excelResource, entityFolderPath, category, scene.Namespace, scene.AssetPath, scene.Lines);
+            await SaveEntityFileAsync(workbookResource, entityFolderPath, category, scene.Namespace, scene.AssetPath, scene.Lines);
         }
 
         return Result.Ok();
@@ -517,7 +517,7 @@ public class ScreenplayImporter
         await File.WriteAllTextAsync(sceneFilePath, string.Empty);
     }
 
-    private static async Task SaveEntityFileAsync(ResourceKey excelResource, string entityFolderPath, string category, string @namespace, string assetPath, List<DialogueLine> lineList)
+    private static async Task SaveEntityFileAsync(ResourceKey workbookResource, string entityFolderPath, string category, string @namespace, string assetPath, List<DialogueLine> lineList)
     {
         var subFolder = Path.GetDirectoryName(assetPath) ?? string.Empty;
         var assetName = Path.GetFileNameWithoutExtension(assetPath);
@@ -537,7 +537,7 @@ public class ScreenplayImporter
         // Add scene component
         var sceneComponent = new JsonObject();
         sceneComponent["_type"] = "Screenplay.Scene#1";
-        sceneComponent["dialogueFile"] = excelResource.ToString();
+        sceneComponent["dialogueFile"] = workbookResource.ToString();
         sceneComponent["category"] = category;
         sceneComponent["namespace"] = @namespace;
         components.Add(sceneComponent);
