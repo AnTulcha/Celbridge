@@ -261,10 +261,11 @@ public class ScreenplayActivity : IActivity
                 }
                 else
                 {
-                    // Indent player variant lines
+                    // Flag this as a player variant line
                     isPlayerVariantLine = true;
 
-                    // Ensure that the line id matches the player line id of the group
+                    // Force the line id to match the player line id of the group.
+                    // This happens for example when a player variant line is moved to a different group.
                     if (lineId != playerLineId)
                     {
                         correctLineId = playerLineId;
@@ -280,15 +281,15 @@ public class ScreenplayActivity : IActivity
             if (string.IsNullOrEmpty(correctLineId))
             {
                 // No line id has been assigned yet, assign a new random one
-                // Generate random line ids until a unique one is found.
+                var random = new Random();
                 do
                 {
-                    // Generate a random 4 digit hex code for line id
-                    var random = new Random();
+                    // Try a random 4 digit hex code until a unique one is found.
                     int number = random.Next(0x1000, 0x10000);
                     correctLineId = number.ToString("X4");
                 }
                 while (activeLineIds.Contains(correctLineId));
+                
                 activeLineIds.Add(correctLineId);
             }
              
@@ -296,8 +297,8 @@ public class ScreenplayActivity : IActivity
             var correctDialogueKey = $"{characterId}-{@namespace}-{correctLineId}";
             if (dialogueKey != correctDialogueKey)
             {
-                // Set the property directly rather than using a command because we
-                // don't want to register an undo operation in this case.
+                // This operation currently can't be undone because the undo triggers the activity update. 
+                // Todo: Fix the undo / redo logic to support this case.
                 component.SetString("/dialogueKey", correctDialogueKey);
                 dialogueKey = correctDialogueKey;
             }
@@ -315,7 +316,6 @@ public class ScreenplayActivity : IActivity
             // Indent player variant lines
             if (isPlayerVariantLine)
             {
-                // Indent the line
                 entityAnnotation.SetIndent(i, 1);
             }
         }
@@ -441,7 +441,7 @@ public class ScreenplayActivity : IActivity
             return Result<List<Character>>.Fail($"Failed to get dialogue file property");
         }
 
-        // Get the ScreenplayData component on the Excel resource
+        // Get the ScreenplayData component from the dialogue file resource
         var getScreenplayDataResult = _entityService.GetComponentOfType(dialogueFileResource, ScreenplayDataEditor.ComponentType);
         if (getScreenplayDataResult.IsFailure)
         {
