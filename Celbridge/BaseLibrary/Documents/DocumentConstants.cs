@@ -1,10 +1,10 @@
-namespace Celbridge.Entities;
+namespace Celbridge.Documents;
 
 /// <summary>
-/// Property path strings for markdown component properties
+/// Property path strings for document component properties
 /// Paths use JSON Pointer (RFC 6901) syntax.
 /// </summary>
-public static class MarkdownComponentConstants
+public static class DocumentConstants
 {
     /// <summary>
     /// Editor mode property path.

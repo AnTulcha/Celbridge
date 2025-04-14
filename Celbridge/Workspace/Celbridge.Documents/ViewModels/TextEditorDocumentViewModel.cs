@@ -1,18 +1,17 @@
-using System.Text.Json.Nodes;
 using Celbridge.Documents.Services;
 using Celbridge.Entities;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
 using CommunityToolkit.Mvvm.ComponentModel;
-
+using System.Text.Json.Nodes;
 using Path = System.IO.Path;
 
 namespace Celbridge.Documents.ViewModels;
 
 public partial class TextEditorDocumentViewModel : ObservableObject
 {
-    private const string MarkdownComponentType = "Markdown.Markdown";
+    //private const string MarkdownComponentType = "Markdown.Markdown";
 
     private readonly ILogger<TextEditorDocumentViewModel> _logger;
     private readonly IMessengerService _messengerService;
@@ -89,8 +88,7 @@ public partial class TextEditorDocumentViewModel : ObservableObject
     private void OnComponentChangedMessage(object recipient, ComponentChangedMessage message)
     {
         if (message.ComponentKey.Resource == _fileResource &&
-            message.ComponentType == MarkdownComponentType &&
-            message.PropertyPath == MarkdownComponentConstants.EditorMode)
+            message.ComponentKey.ComponentIndex == 0)
         {
             UpdateEditorMode();
         }
@@ -102,29 +100,37 @@ public partial class TextEditorDocumentViewModel : ObservableObject
         {
             var editorMode = EditorMode.Editor;
 
-            var getComponentResult = _entityService.GetComponentOfType(_fileResource, MarkdownComponentType);
+            // The root component controls the editor mode.
+            // It must have the "isPreviewController" attribute set to "true".
+
+            var componentKey = new ComponentKey(_fileResource, 0);
+            var getComponentResult = _entityService.GetComponent(componentKey);
             if (getComponentResult.IsSuccess)
             {
-                // Get the editor mode from the markdown component.
                 var component = getComponentResult.Value;
-                
-                var getPropertyResult = component.GetProperty(MarkdownComponentConstants.EditorMode);
-                if (getPropertyResult.IsSuccess)
+
+                var isPreviewController = component.Schema.GetBooleanAttribute("isPreviewController");
+
+                if (isPreviewController)
                 {
-                    var jsonValue = getPropertyResult.Value;
-
-                    var jsonNode = JsonNode.Parse(jsonValue);
-                    if (jsonNode is null)
+                    // Get the editor mode property from the root component.
+                    var getPropertyResult = component.GetProperty(DocumentConstants.EditorMode);
+                    if (getPropertyResult.IsSuccess)
                     {
-                        _logger.LogError($"Failed to parse JSON property: '{MarkdownComponentConstants.EditorMode}'");
-                        return;
-                    }
+                        var jsonValue = getPropertyResult.Value;
+                        var jsonNode = JsonNode.Parse(jsonValue);
+                        if (jsonNode is null)
+                        {
+                            _logger.LogError($"Failed to parse JSON property: '{DocumentConstants.EditorMode}'");
+                            return;
+                        }
 
-                    var modeString = jsonNode.ToString();
+                        var modeString = jsonNode.ToString();
 
-                    if (!Enum.TryParse(modeString, out editorMode))
-                    {
-                        editorMode = EditorMode.Editor;
+                        if (!Enum.TryParse(modeString, out editorMode))
+                        {
+                            editorMode = EditorMode.Editor;
+                        }
                     }
                 }
             }

@@ -4,26 +4,26 @@ using Celbridge.Entities;
 using Celbridge.Logging;
 using System.Text.Json;
 
-namespace Celbridge.Markdown.ComponentEditors;
+namespace Celbridge.HTML.Components;
 
-public class MarkdownEditor : ComponentEditorBase
+public class HTMLEditor : ComponentEditorBase
 {
-    private readonly ILogger<MarkdownEditor> _logger;
+    private readonly ILogger<HTMLEditor> _logger;
     private readonly ICommandService _commandService;
 
-    private const string _configPath = "Celbridge.Markdown.Assets.Components.MarkdownComponent.json";
-    private const string _componentFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownForm.json";
-    private const string _componentRootFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownRootForm.json";
+    private const string _configPath = "Celbridge.HTML.Assets.Components.HTMLComponent.json";
+    private const string _componentFormPath = "Celbridge.HTML.Assets.Forms.HTMLForm.json";
+    private const string _componentRootFormPath = "Celbridge.HTML.Assets.Forms.HTMLRootForm.json";
 
     private const string _openDocumentButtonId = "OpenDocument";
     private const string _editorButtonId = "Editor";
     private const string _editorAndPreviewButtonId = "EditorAndPreview";
     private const string _previewButtonId = "Preview";
 
-    public const string ComponentType = "Markdown.Markdown";
+    public const string ComponentType = "HTML.HTML";
 
-    public MarkdownEditor(
-        ILogger<MarkdownEditor> logger,
+    public HTMLEditor(
+        ILogger<HTMLEditor> logger,
         ICommandService commandService)
     {
         _logger = logger;
@@ -95,7 +95,7 @@ public class MarkdownEditor : ComponentEditorBase
             bool isEnabled = editorMode == "EditorAndPreview" || editorMode == "Preview";
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
-            return Result<string>.Ok(jsonValue);
+            return Result<String>.Ok(jsonValue);
         }
         else if (propertyPath == "/editorAndPreviewEnabled")
         {
@@ -104,7 +104,7 @@ public class MarkdownEditor : ComponentEditorBase
             bool isEnabled = editorMode == "Editor" || editorMode == "Preview";
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
-            return Result<string>.Ok(jsonValue);
+            return Result<String>.Ok(jsonValue);
         }
         else if (propertyPath == "/previewEnabled")
         {
@@ -113,7 +113,7 @@ public class MarkdownEditor : ComponentEditorBase
             bool isEnabled = editorMode == "Editor" || editorMode == "EditorAndPreview";
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
-            return Result<string>.Ok(jsonValue);
+            return Result<String>.Ok(jsonValue);
         }
 
         return Result<string>.Fail();
@@ -123,7 +123,7 @@ public class MarkdownEditor : ComponentEditorBase
     {
         var resource = Component.Key.Resource;
 
-        // Execute a command to open the markdown document.
+        // Execute a command to open the HTML document.
         _commandService.Execute<IOpenDocumentCommand>(command =>
         {
             command.FileResource = resource;
