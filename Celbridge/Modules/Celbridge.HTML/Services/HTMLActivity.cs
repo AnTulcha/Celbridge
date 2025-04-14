@@ -23,7 +23,7 @@ public class HTMLActivity : IActivity
 
     public async Task<Result> ActivateAsync()
     {
-        // Register the Markdown preview provider
+        // Register the HTML preview provider
         var provider = _serviceProvider.AcquireService<HTMLPreviewProvider>();
         var addProviderResult = _documentsService.AddPreviewProvider(provider);
         if (addProviderResult.IsFailure)

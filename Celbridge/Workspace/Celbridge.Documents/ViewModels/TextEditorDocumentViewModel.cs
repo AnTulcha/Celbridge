@@ -11,8 +11,6 @@ namespace Celbridge.Documents.ViewModels;
 
 public partial class TextEditorDocumentViewModel : ObservableObject
 {
-    //private const string MarkdownComponentType = "Markdown.Markdown";
-
     private readonly ILogger<TextEditorDocumentViewModel> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IDocumentsService _documentsService;
@@ -100,8 +98,9 @@ public partial class TextEditorDocumentViewModel : ObservableObject
         {
             var editorMode = EditorMode.Editor;
 
-            // The root component controls the editor mode.
-            // It must have the "isPreviewController" attribute set to "true".
+            // Any root component may specify the "/editorMode" property, but it must have the
+            // "isPreviewController" attribute set to "true". This is roughly equivalent to implementing an
+            // interface in a language like C#.
 
             var componentKey = new ComponentKey(_fileResource, 0);
             var getComponentResult = _entityService.GetComponent(componentKey);
@@ -114,14 +113,14 @@ public partial class TextEditorDocumentViewModel : ObservableObject
                 if (isPreviewController)
                 {
                     // Get the editor mode property from the root component.
-                    var getPropertyResult = component.GetProperty(DocumentConstants.EditorMode);
+                    var getPropertyResult = component.GetProperty(DocumentConstants.EditorModeProperty);
                     if (getPropertyResult.IsSuccess)
                     {
                         var jsonValue = getPropertyResult.Value;
                         var jsonNode = JsonNode.Parse(jsonValue);
                         if (jsonNode is null)
                         {
-                            _logger.LogError($"Failed to parse JSON property: '{DocumentConstants.EditorMode}'");
+                            _logger.LogError($"Failed to parse JSON property: '{DocumentConstants.EditorModeProperty}'");
                             return;
                         }
 

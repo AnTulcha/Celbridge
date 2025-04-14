@@ -11,14 +11,14 @@ public class MarkdownEditor : ComponentEditorBase
     private readonly ILogger<MarkdownEditor> _logger;
     private readonly ICommandService _commandService;
 
-    private const string _configPath = "Celbridge.Markdown.Assets.Components.MarkdownComponent.json";
-    private const string _componentFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownForm.json";
-    private const string _componentRootFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownRootForm.json";
+    private const string ConfigPath = "Celbridge.Markdown.Assets.Components.MarkdownComponent.json";
+    private const string ComponentFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownForm.json";
+    private const string ComponentRootFormPath = "Celbridge.Markdown.Assets.Forms.MarkdownRootForm.json";
 
-    private const string _openDocumentButtonId = "OpenDocument";
-    private const string _editorButtonId = "Editor";
-    private const string _editorAndPreviewButtonId = "EditorAndPreview";
-    private const string _previewButtonId = "Preview";
+    private const string OpenDocumentButtonId = "OpenDocument";
+    private const string EditorButtonId = "Editor";
+    private const string EditorAndPreviewButtonId = "EditorAndPreview";
+    private const string PreviewButtonId = "Preview";
 
     public const string ComponentType = "Markdown.Markdown";
 
@@ -32,17 +32,17 @@ public class MarkdownEditor : ComponentEditorBase
 
     public override string GetComponentConfig()
     {
-        return LoadEmbeddedResource(_configPath);
+        return LoadEmbeddedResource(ConfigPath);
     }
 
     public override string GetComponentForm()
     {
-        return LoadEmbeddedResource(_componentFormPath);
+        return LoadEmbeddedResource(ComponentFormPath);
     }
 
     public override string GetComponentRootForm()
     {
-        return LoadEmbeddedResource(_componentRootFormPath);
+        return LoadEmbeddedResource(ComponentRootFormPath);
     }
 
     public override ComponentSummary GetComponentSummary()
@@ -52,12 +52,12 @@ public class MarkdownEditor : ComponentEditorBase
 
     protected override void OnFormPropertyChanged(string propertyPath)
     {
-        if (propertyPath == "/editorMode")
+        if (propertyPath == DocumentConstants.EditorModeProperty)
         {
             // Notify updates to "virtual" form properties
-            NotifyFormPropertyChanged("/editorEnabled");
-            NotifyFormPropertyChanged("/editorAndPreviewEnabled");
-            NotifyFormPropertyChanged("/previewEnabled");
+            NotifyFormPropertyChanged(DocumentConstants.EditorEnabledProperty);
+            NotifyFormPropertyChanged(DocumentConstants.EditorAndPreviewEnabledProperty);
+            NotifyFormPropertyChanged(DocumentConstants.PreviewEnabledProperty);
         }
     }
 
@@ -65,21 +65,21 @@ public class MarkdownEditor : ComponentEditorBase
     {
         switch (buttonId)
         {
-            case _openDocumentButtonId:
+            case OpenDocumentButtonId:
                 OpenDocument();
                 break;
 
-            case _editorButtonId:
+            case EditorButtonId:
                 SetEditorMode(EditorMode.Editor);
                 OpenDocument();
                 break;
 
-            case _editorAndPreviewButtonId:
+            case EditorAndPreviewButtonId:
                 SetEditorMode(EditorMode.EditorAndPreview);
                 OpenDocument();
                 break;
 
-            case _previewButtonId:
+            case PreviewButtonId:
                 SetEditorMode(EditorMode.Preview);
                 OpenDocument();
                 break;
@@ -88,29 +88,29 @@ public class MarkdownEditor : ComponentEditorBase
 
     protected override Result<string> TryGetProperty(string propertyPath)
     {
-        if (propertyPath == "/editorEnabled")
+        if (propertyPath == DocumentConstants.EditorEnabledProperty)
         {
-            var editorMode = Component.GetString(DocumentConstants.EditorMode);
+            var editorMode = Component.GetString(DocumentConstants.EditorModeProperty);
 
-            bool isEnabled = editorMode == "EditorAndPreview" || editorMode == "Preview";
+            bool isEnabled = editorMode == nameof(EditorMode.EditorAndPreview) || editorMode == nameof(EditorMode.Preview);
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
             return Result<string>.Ok(jsonValue);
         }
-        else if (propertyPath == "/editorAndPreviewEnabled")
+        else if (propertyPath == DocumentConstants.EditorAndPreviewEnabledProperty)
         {
-            var editorMode = Component.GetString(DocumentConstants.EditorMode);
+            var editorMode = Component.GetString(DocumentConstants.EditorModeProperty);
 
-            bool isEnabled = editorMode == "Editor" || editorMode == "Preview";
+            bool isEnabled = editorMode == nameof(EditorMode.Editor) || editorMode == nameof(EditorMode.Preview);
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
             return Result<string>.Ok(jsonValue);
         }
-        else if (propertyPath == "/previewEnabled")
+        else if (propertyPath == DocumentConstants.PreviewEnabledProperty)
         {
-            var editorMode = Component.GetString(DocumentConstants.EditorMode);
+            var editorMode = Component.GetString(DocumentConstants.EditorModeProperty);
 
-            bool isEnabled = editorMode == "Editor" || editorMode == "EditorAndPreview";
+            bool isEnabled = editorMode == nameof(EditorMode.Editor) || editorMode == nameof(EditorMode.EditorAndPreview);
             var jsonValue = JsonSerializer.Serialize(isEnabled);
 
             return Result<string>.Ok(jsonValue);
@@ -133,6 +133,6 @@ public class MarkdownEditor : ComponentEditorBase
 
     private void SetEditorMode(EditorMode editorMode)
     {
-        Component.SetString(DocumentConstants.EditorMode, editorMode.ToString());
+        Component.SetString(DocumentConstants.EditorModeProperty, editorMode.ToString());
     }
 }

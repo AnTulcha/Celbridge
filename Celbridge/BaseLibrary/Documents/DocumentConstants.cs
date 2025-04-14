@@ -9,5 +9,20 @@ public static class DocumentConstants
     /// <summary>
     /// Editor mode property path.
     /// </summary>
-    public const string EditorMode = "/editorMode";
+    public const string EditorModeProperty = "/editorMode";
+
+    /// <summary>
+    /// Editor enabled property path.
+    /// </summary>
+    public const string EditorEnabledProperty = "/editorEnabled";
+
+    /// <summary>
+    /// Editor and preview enabled property path.
+    /// </summary>
+    public const string EditorAndPreviewEnabledProperty = "/editorAndPreviewEnabled";
+
+    /// <summary>
+    /// Editor and preview enabled property path.
+    /// </summary>
+    public const string PreviewEnabledProperty = "/previewEnabled";
 }
