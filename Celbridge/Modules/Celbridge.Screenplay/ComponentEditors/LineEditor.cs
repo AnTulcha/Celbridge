@@ -144,7 +144,9 @@ public class LineEditor : ComponentEditorBase
             return;
         }
 
-        // Get a new line id
+        // Assign a new line id
+
+        // Todo: If this is a player variant line then use the preceeding player line id
 
         // Build the set of line ids currently in use
         var activeLineIds = new HashSet<string>();

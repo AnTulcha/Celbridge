@@ -144,7 +144,6 @@ public class ScreenplayActivity : IActivity
         //
 
         var lineComponents = new Dictionary<int, IComponentProxy>();
-        var activeLineIds = new HashSet<string>();
         var activeDialogueKeys = new HashSet<string>();
 
         //
@@ -176,23 +175,12 @@ public class ScreenplayActivity : IActivity
             // Mark Line component as recognized
             entityAnnotation.SetIsRecognized(i);
 
-            // Build a list of the existing line ids so that we can allocate a new random line id that won't clash
-            // with any existing one.
-            var dialogueKey = component.GetString("/dialogueKey");
-            var segments = dialogueKey.Split('-');
-            if (segments.Length == 3)
-            {
-                var lineId = segments[2];
-                activeLineIds.Add(lineId);
-            }
-
             lineComponents[i] = component;
         }
 
         //
         // Second pass checks all line components are valid, and checks that
         // each line has a valid character id, line id and dialogue key.
-        // If the current line id is invalid then a new one is generated.
         //
 
         var componentIndices = lineComponents.Keys.ToList();
@@ -246,11 +234,16 @@ public class ScreenplayActivity : IActivity
 
             var dialogueKey = component.GetString("/dialogueKey");
             var segments = dialogueKey.Split('-');
-            var lineId = string.Empty;
-            if (segments.Length == 3)
+            if (segments.Length != 3)
             {
-                lineId = segments[2];
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid dialogue key",
+                    "Dialogue keys must be non-empty and contain 3 segments.");
+                entityAnnotation.AddError(i, error);
             }
+
+            var lineId = segments[2];
 
             bool isPlayerVariantLine = false;
             var correctLineId = lineId;
@@ -275,13 +268,7 @@ public class ScreenplayActivity : IActivity
                 {
                     // Flag this as a player variant line
                     isPlayerVariantLine = true;
-
-                    // Force the line id to match the player line id of the group.
-                    // This happens for example when a player variant line is moved to a different group.
-                    if (lineId != playerLineId)
-                    {
-                        correctLineId = playerLineId;
-                    }
+                    correctLineId = playerLineId; // Variant lines must have the same line id as the player line
                 }
             }
             else
@@ -289,30 +276,16 @@ public class ScreenplayActivity : IActivity
                 // This is an NPC line, so stop tracking the player line group
                 playerLineId = string.Empty;
             }
-
-            if (string.IsNullOrEmpty(correctLineId))
-            {
-                // No line id has been assigned yet, assign a new random one
-                var random = new Random();
-                do
-                {
-                    // Try a random 4 digit hex code until a unique one is found.
-                    int number = random.Next(0x1000, 0x10000);
-                    correctLineId = number.ToString("X4");
-                }
-                while (activeLineIds.Contains(correctLineId));
-                
-                activeLineIds.Add(correctLineId);
-            }
              
             // Ensure that a valid dialogue key is always assigned.
             var correctDialogueKey = $"{characterId}-{@namespace}-{correctLineId}";
             if (dialogueKey != correctDialogueKey)
             {
-                // This operation currently can't be undone because the undo triggers the activity update. 
-                // Todo: Fix the undo / redo logic to support this case.
-                component.SetString("/dialogueKey", correctDialogueKey);
-                dialogueKey = correctDialogueKey;
+                var error = new ComponentError(
+                    ComponentErrorSeverity.Critical,
+                    "Invalid dialogue key",
+                    "A dialogue key segment is not correct. Update the dialogue key.");
+                entityAnnotation.AddError(i, error);
             }
 
             if (activeDialogueKeys.Contains(dialogueKey))
