@@ -98,6 +98,108 @@ public class LineEditor : ComponentEditorBase
         return Result<string>.Fail();
     }
 
+    public override void OnButtonClicked(string buttonId)
+    {
+        if (buttonId == "UpdateDialogueKey")
+        {
+            UpdateDialogueKey();
+        }
+    }
+
+    private void UpdateDialogueKey()
+    {
+        var sceneResource = Component.Key.Resource;
+        var getComponentsResult = _entityService.GetComponents(sceneResource);
+        if (getComponentsResult.IsFailure)
+        {
+            throw new InvalidProgramException($"Failed to get components for resource: '{sceneResource}'");
+        }
+        var components = getComponentsResult.Value;
+
+        if (components.Count == 0)
+        {
+            return;
+        }
+
+        // Get the character id
+
+        var characterId = Component.GetString(CharacterId);
+        if (string.IsNullOrEmpty(characterId))
+        {
+            // Todo: Log error
+            return;
+        }
+
+        // Get the namespace from the Scene component
+
+        if (components[0].Schema.ComponentType != SceneEditor.ComponentType)
+        {
+            throw new InvalidProgramException($"First component is not a Scene component");
+        }
+
+        var @namespace = components[0].GetString(SceneEditor.Namespace);
+        if (string.IsNullOrEmpty(@namespace))
+        {
+            // Todo: Log error
+            return;
+        }
+
+        // Get a new line id
+
+        // Build the set of line ids currently in use
+        var activeLineIds = new HashSet<string>();
+        foreach (var component in components)
+        {
+            if (component.Schema.ComponentType != ComponentType)
+            {
+                // Skip non-line components
+                continue;
+            }
+
+            // Get the dialogue key property
+            var dialogueKey = component.GetString(DialogueKey);
+            if (string.IsNullOrEmpty(dialogueKey))
+            {
+                // Skip empty dialogue keys
+                continue;
+            }
+
+            var lineId = string.Empty;
+            var segments = dialogueKey.Split('-');
+            if (segments.Length == 3)
+            {
+                lineId = segments[2];
+            }
+
+            if (!string.IsNullOrEmpty(lineId))
+            {
+                activeLineIds.Add(lineId);
+            }
+        }
+
+        // Find a new line id that is not already in use
+        string newLineId;
+        var random = new Random();
+        do
+        {
+            // Try a random 4 digit hex code until a unique one is found.
+            int number = random.Next(0x1000, 0x10000);
+            newLineId = number.ToString("X4");
+        }
+        while (activeLineIds.Contains(newLineId));
+
+        if (string.IsNullOrEmpty(newLineId))
+        {
+            // Todo: Log error
+            return;
+        }
+
+        // Set the new dialogue key
+        var newDialogueKey = $"{characterId}-{@namespace}-{newLineId}";
+        var jsonValue = JsonSerializer.Serialize(newDialogueKey);
+        Component.SetProperty(DialogueKey, jsonValue);
+    }
+
     private Result<string> GetCharacterIds()
     {
         // Get the scene component on this entity
