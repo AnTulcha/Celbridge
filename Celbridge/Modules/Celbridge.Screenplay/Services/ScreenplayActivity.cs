@@ -241,6 +241,9 @@ public class ScreenplayActivity : IActivity
                     "Invalid dialogue key",
                     "Dialogue keys must be non-empty and contain 3 segments.");
                 entityAnnotation.AddError(i, error);
+
+                // Can't do any more checks until the user assigns a valid dialogue key
+                continue;
             }
 
             var lineId = segments[2];
@@ -284,7 +287,7 @@ public class ScreenplayActivity : IActivity
                 var error = new ComponentError(
                     ComponentErrorSeverity.Critical,
                     "Invalid dialogue key",
-                    "A dialogue key segment is not correct. Update the dialogue key.");
+                    "The dialogue key is not correctly formed. Update the dialogue key to assign a correct one.");
                 entityAnnotation.AddError(i, error);
             }
 
@@ -293,7 +296,7 @@ public class ScreenplayActivity : IActivity
                 var error = new ComponentError(
                     ComponentErrorSeverity.Critical,
                     "Duplicate dialogue key",
-                    "Dialogue keys must be unique for each line");
+                    "Dialogue keys must be unique for each line. Update the dialogue key to assign a new one.");
                 entityAnnotation.AddError(i, error);
             }
             activeDialogueKeys.Add(dialogueKey);
@@ -368,7 +371,7 @@ public class ScreenplayActivity : IActivity
         // Check the component is a scene component
         if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
         {
-            return Result<List<Character>>.Fail($"Primary component of resource '{sceneResource}' is not a scene component");
+            return Result<List<Character>>.Fail($"Root component of resource '{sceneResource}' is not a scene component");
         }
 
         // Get the dialogue file resource from the scene component
@@ -497,7 +500,7 @@ public class ScreenplayActivity : IActivity
         sb.AppendLine("body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: transparent; }");
         sb.AppendLine(".screenplay { max-width: 800px; width: 100%; margin: 0 auto; }");
         sb.AppendLine(".page { max-width: 794px; margin: 0 auto; }");
-        sb.AppendLine(".scene { text-align: left; margin-bottom: 2em; font-weight: bold; }");
+        sb.AppendLine(".scene { text-align: left; margin-bottom: 2em; font-size: 2em; font-weight: bold; margin: 0 0 0.67em 0;}");
         sb.AppendLine(".scene-note { text-align: left; margin-bottom: 2em; font-style: italic; }");
         sb.AppendLine(".line { margin-bottom: 2em; text-align: center; }");
         sb.AppendLine(".character { display: block; font-weight: bold; text-transform: uppercase; margin-bottom: 0.5em; }");
