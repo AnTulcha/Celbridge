@@ -285,7 +285,7 @@ public class LineEditor : ComponentEditorBase
                 activeLineIds.Add(lineId);
             }
 
-            // If this is a player variant line, attempt to find a preceding player line id.
+            // If this is a player variant line, attempt to find the line id of the preceding player line.
             if (isPlayerVariant &&
                 i < lineComponentIndex)
             {

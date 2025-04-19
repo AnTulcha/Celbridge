@@ -4,7 +4,7 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Screenplay.Commands;
 
-public class ImportScreenplayCommand : CommandBase
+public class LoadScreenplayCommand : CommandBase
 {
     private readonly IServiceProvider _serviceProvider;
 
@@ -12,7 +12,7 @@ public class ImportScreenplayCommand : CommandBase
 
     public ResourceKey ExcelFile { get; set; } = ResourceKey.Empty;
 
-    public ImportScreenplayCommand(IServiceProvider serviceProvider)
+    public LoadScreenplayCommand(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }

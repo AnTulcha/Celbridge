@@ -35,7 +35,7 @@ public class Module : IModule
         // Register commands
         //
 
-        services.AddTransient<ImportScreenplayCommand>();
+        services.AddTransient<LoadScreenplayCommand>();
     }
 
     public Result Initialize()
