@@ -4,15 +4,13 @@ using Celbridge.Workspace;
 
 namespace Celbridge.Screenplay.Commands;
 
-public class LoadScreenplayCommand : CommandBase
+public class SaveScreenplayCommand : CommandBase
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public override CommandFlags CommandFlags => CommandFlags.UpdateResources;
-
     public ResourceKey ExcelFile { get; set; } = ResourceKey.Empty;
 
-    public LoadScreenplayCommand(IServiceProvider serviceProvider)
+    public SaveScreenplayCommand(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider;
     }
@@ -36,11 +34,11 @@ public class LoadScreenplayCommand : CommandBase
                 .WithErrors(getActivityResult);
         }
 
-        var loadResult = await screenplayActivity.LoadScreenplayAsync(ExcelFile);
-        if (loadResult.IsFailure)
+        var saveResult = await screenplayActivity.SaveScreenplayAsync(ExcelFile);
+        if (saveResult.IsFailure)
         {
-            return Result.Fail($"Failed to load screenplay from Workbook")
-                .WithErrors(loadResult);
+            return Result.Fail($"Failed to save screenplay to Workbook")
+                .WithErrors(saveResult);
         }
 
         return Result.Ok();
