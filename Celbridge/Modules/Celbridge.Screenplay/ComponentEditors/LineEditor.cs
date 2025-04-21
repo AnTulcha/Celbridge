@@ -21,6 +21,12 @@ public class LineEditor : ComponentEditorBase
     public const string SourceText = "/sourceText";
     public const string ContextNotes = "/contextNotes";
     public const string Direction = "/direction";
+    public const string GameArea = "/gameArea";
+    public const string TimeConstraint = "/timeConstraint";
+    public const string SoundProcessing = "/soundProcessing";
+    public const string Platform = "/platform";
+    public const string LinePriority = "/linePriority";
+    public const string ProductionStatus = "/productionStatus";
 
     private readonly ILogger<LineEditor> _logger;
     private readonly IEntityService _entityService;
