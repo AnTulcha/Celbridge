@@ -39,14 +39,14 @@ public class ScreenplayDataEditor : ComponentEditorBase
         {
             _commandService.Execute<LoadScreenplayCommand>(command =>
             {
-                command.ExcelFile = Component.Key.Resource;
+                command.WorkbookResource = Component.Key.Resource;
             });
         }
         else if (buttonId == "SaveScreenplay")
         {
             _commandService.Execute<SaveScreenplayCommand>(command =>
             {
-                command.ExcelFile = Component.Key.Resource;
+                command.WorkbookResource = Component.Key.Resource;
             });
         }
     }

@@ -10,7 +10,7 @@ public class LoadScreenplayCommand : CommandBase
 
     public override CommandFlags CommandFlags => CommandFlags.UpdateResources;
 
-    public ResourceKey ExcelFile { get; set; } = ResourceKey.Empty;
+    public ResourceKey WorkbookResource { get; set; } = ResourceKey.Empty;
 
     public LoadScreenplayCommand(IServiceProvider serviceProvider)
     {
@@ -25,21 +25,21 @@ public class LoadScreenplayCommand : CommandBase
         var getActivityResult = activityService.GetActivity(nameof(ScreenplayActivity));
         if (getActivityResult.IsFailure)
         {
-            return Result.Fail($"Failed to get activity")
+            return Result.Fail($"Failed to get Screenplay activity")
                 .WithErrors(getActivityResult);
         }
 
         var screenplayActivity = getActivityResult.Value as ScreenplayActivity;
         if (screenplayActivity is null)
         {
-            return Result.Fail($"Activity is not a screenplay activity")
+            return Result.Fail($"Activity is not a Screenplay activity")
                 .WithErrors(getActivityResult);
         }
 
-        var loadResult = await screenplayActivity.LoadScreenplayAsync(ExcelFile);
+        var loadResult = await screenplayActivity.LoadScreenplayAsync(WorkbookResource);
         if (loadResult.IsFailure)
         {
-            return Result.Fail($"Failed to load screenplay from Workbook")
+            return Result.Fail($"Failed to load screenplay from workbook")
                 .WithErrors(loadResult);
         }
 

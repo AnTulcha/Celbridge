@@ -74,7 +74,7 @@ public class ScreenplaySaver
             var collectResult = CollectSceneData(entityService, sceneFiles);
             if (collectResult.IsFailure)
             {
-                return Result.Fail($"Failed to collect scene data from workbook file resource '{screenplayResource}'")
+                return Result.Fail($"Failed to collect dialogue data from scene files")
                     .WithErrors(collectResult);
             }
             var sceneDataList = collectResult.Value;
@@ -96,13 +96,14 @@ public class ScreenplaySaver
 
         var dialogueSheet = workbook.Worksheet("Dialogue");
 
-        // Duplicate the "Dialogue" worksheet
         if (workbook.Worksheets.Contains("TempDialogue"))
         {
             // Delete the existing "TempDialogue" worksheet
             workbook.Worksheet("TempDialogue").Delete();
             workbook.Save();
         }
+
+        // Duplicate the "Dialogue" worksheet to a temp worksheet.
         var editedSheet = dialogueSheet.CopyTo("TempDialogue");
 
         // Find the last row containing dialogue lines
@@ -205,7 +206,7 @@ public class ScreenplaySaver
             }
         }
 
-        // Copy bark dialogue lines from the "Dialogue" sheet to the "TempDialogue" sheet
+        // Copy all bark dialogue lines from the "Dialogue" sheet to the bottom of the "TempDialogue" sheet
         var startBarkRow = -1;
         for (int i = 2; i <= lastRow; i++)
         {
