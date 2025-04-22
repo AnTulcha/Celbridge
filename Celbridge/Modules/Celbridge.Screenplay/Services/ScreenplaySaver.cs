@@ -189,7 +189,7 @@ public class ScreenplaySaver
 
                     var commentText = dialogueComponent.GetString("/comment");
 
-                    var dialogueKey = $"SceneNote.{sceneNamespace}.Note{sceneNoteIndex}";
+                    var dialogueKey = $"SceneNote-{sceneNamespace}-Note{sceneNoteIndex}";
                     editedSheet.Cell(rowIndex, 3).Value = dialogueKey;
                     editedSheet.Cell(rowIndex, 4).Value = "SceneNote";
                     editedSheet.Cell(rowIndex, 6).Value = commentText;
