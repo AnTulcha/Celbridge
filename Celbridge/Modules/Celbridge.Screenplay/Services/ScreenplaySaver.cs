@@ -9,6 +9,15 @@ namespace Celbridge.Screenplay.Services;
 
 public class ScreenplaySaver
 {
+    private const string CinematicColor = "f6d6ad";
+    private const string ConversationColor = "f4b6c2";
+    private const string BarkColor = "ccc0da";
+    private const string NamespaceColorA = "b5d8f6";
+    private const string NamespaceColorB = "dce6f1";
+    private const string PlayerColor = "c0c7d6";
+    private const string PlayerVariantColor = "e3e3e3";
+    private const string SceneNoteColor = "a8e6a3";
+
     private ILogger<ScreenplayLoader> _logger;
     private IExplorerService _explorerService;
     private IWorkspaceWrapper _workspaceWrapper;
@@ -54,12 +63,6 @@ public class ScreenplaySaver
             }
             var screenplayData = getComponentResult.Value;
 
-            // Open the workbook file.
-            // It's best to do this before we make any other changes, e.g. in case the file is locked.
-            using var workbook = new XLWorkbook(workbookFilePath);
-
-            var dialogueSheet = workbook.Worksheet("Dialogue");
-
             // Find all .scene files in the screenplay folder
             var sceneFiles = Directory.GetFiles(screenplayFolderPath, "*.scene", SearchOption.AllDirectories).ToList();
             if (sceneFiles.Count == 0)
@@ -76,73 +79,164 @@ public class ScreenplaySaver
             }
             var sceneDataList = collectResult.Value;
 
-            // Duplicate the Dialogue worksheet
-            if (workbook.Worksheets.Contains("EditedDialogue"))
-            {
-                workbook.Worksheet("EditedDialogue").Delete();
-                workbook.Save();
-            }
-            var editedSheet = dialogueSheet.CopyTo("EditedDialogue");
-
-            // Delete all rows except the header
-            var lastRow = editedSheet.LastRowUsed()?.RowNumber() ?? 1;
-            var range = editedSheet.Range(2, 1, lastRow, 14);
-            range.Clear();
-
-            // Output all dialogue lines to the "Dialogue" spreadsheet.
-            // Todo: Copy bark lines from the Dialogue worksheet at the end.
-
-            int rowIndex = 2;
-            foreach (var sceneData in sceneDataList)
-            {
-                var sceneCategory = sceneData.Category;
-                var sceneNamespace = sceneData.Namespace;
-
-                int sceneNoteIndex = 1;
-                foreach (var dialogueComponent in sceneData.DialogueComponents)
-                {
-                    editedSheet.Cell(rowIndex, 1).Value = sceneCategory;
-                    editedSheet.Cell(rowIndex, 2).Value = sceneNamespace;
-
-                    if (dialogueComponent.Schema.ComponentType == LineEditor.ComponentType)
-                    {
-                        editedSheet.Cell(rowIndex, 3).Value = dialogueComponent.GetString(LineEditor.DialogueKey);
-                        editedSheet.Cell(rowIndex, 4).Value = dialogueComponent.GetString(LineEditor.CharacterId);
-                        editedSheet.Cell(rowIndex, 5).Value = dialogueComponent.GetString(LineEditor.SpeakingTo);
-                        editedSheet.Cell(rowIndex, 6).Value = dialogueComponent.GetString(LineEditor.SourceText);
-                        editedSheet.Cell(rowIndex, 7).Value = dialogueComponent.GetString(LineEditor.ContextNotes);
-                        editedSheet.Cell(rowIndex, 8).Value = dialogueComponent.GetString(LineEditor.Direction);
-                        editedSheet.Cell(rowIndex, 9).Value = dialogueComponent.GetString(LineEditor.GameArea);
-                        editedSheet.Cell(rowIndex, 10).Value = dialogueComponent.GetString(LineEditor.TimeConstraint);
-                        editedSheet.Cell(rowIndex, 11).Value = dialogueComponent.GetString(LineEditor.SoundProcessing);
-                        editedSheet.Cell(rowIndex, 12).Value = dialogueComponent.GetString(LineEditor.Platform);
-                        editedSheet.Cell(rowIndex, 13).Value = dialogueComponent.GetString(LineEditor.LinePriority);
-                        editedSheet.Cell(rowIndex, 14).Value = dialogueComponent.GetString(LineEditor.ProductionStatus);
-                    }
-                    else if (dialogueComponent.Schema.ComponentType == EntityConstants.EmptyComponentType)
-                    {
-                        var commentText = dialogueComponent.GetString("/comment");
-
-                        var dialogueKey = $"SceneNote.{sceneNamespace}.Note{sceneNoteIndex}";
-                        editedSheet.Cell(rowIndex, 3).Value = dialogueKey;
-                        editedSheet.Cell(rowIndex, 4).Value = "SceneNote";
-                        editedSheet.Cell(rowIndex, 6).Value = commentText;
-                        sceneNoteIndex++;
-                    }
-                    rowIndex++;
-                }
-            }
-
-            // Save the workbook
-            workbook.Save();
-
-            return Result.Ok();
+            return SaveDialogueWorksheet(workbookFilePath, sceneDataList);
         }
         catch (Exception ex)
         {
             return Result.Fail($"Failed to import screenplay data from workbook")
                 .WithException(ex);
         }
+    }
+
+    private Result SaveDialogueWorksheet(string workbookFilePath, List<SceneData> sceneDataList)
+    {
+        // Open the workbook file.
+        // It's best to do this before we make any other changes, e.g. in case the file is locked.
+        using var workbook = new XLWorkbook(workbookFilePath);
+
+        var dialogueSheet = workbook.Worksheet("Dialogue");
+
+        // Duplicate the "Dialogue" worksheet
+        if (workbook.Worksheets.Contains("TempDialogue"))
+        {
+            // Delete the existing "TempDialogue" worksheet
+            workbook.Worksheet("TempDialogue").Delete();
+            workbook.Save();
+        }
+        var editedSheet = dialogueSheet.CopyTo("TempDialogue");
+
+        // Find the last row containing dialogue lines
+        var lastRow = editedSheet.LastRowUsed()?.RowNumber() ?? 1;
+
+        // Delete all rows except the header
+        var range = editedSheet.Range(2, 1, lastRow, 14);
+        range.Clear();
+
+        // Output all conversation dialogue lines to the "TempDialogue" spreadsheet.
+        int namespaceIndex = 0;
+        int rowIndex = 2;
+        foreach (var sceneData in sceneDataList)
+        {
+            var sceneCategory = sceneData.Category;
+            var sceneNamespace = sceneData.Namespace;
+
+            var categoryColor = sceneCategory switch
+            {
+                "Cinematic" => CinematicColor,
+                "Conversation" => ConversationColor,
+                "Bark" => BarkColor,
+                _ => "FFFFFF"
+            };
+
+            var namespaceColor = namespaceIndex % 2 == 1 ? NamespaceColorA : NamespaceColorB;
+            namespaceIndex++;
+
+            var playerLineId = string.Empty;
+            int sceneNoteIndex = 1;
+            foreach (var dialogueComponent in sceneData.DialogueComponents)
+            {
+                editedSheet.Cell(rowIndex, 1).Value = sceneCategory;
+                editedSheet.Cell(rowIndex, 1).Style.Fill.BackgroundColor = XLColor.FromHtml(categoryColor);
+
+                editedSheet.Cell(rowIndex, 2).Value = sceneNamespace;
+                editedSheet.Cell(rowIndex, 2).Style.Fill.BackgroundColor = XLColor.FromHtml(namespaceColor);
+
+                if (dialogueComponent.Schema.ComponentType == LineEditor.ComponentType)
+                {
+                    var characterId = dialogueComponent.GetString(LineEditor.CharacterId);
+                    var dialogueKey = dialogueComponent.GetString(LineEditor.DialogueKey);
+                    var separatorIndex = dialogueKey.LastIndexOf('-');
+                    var lineId = separatorIndex >= 0 ? dialogueKey.Substring(separatorIndex + 1) : dialogueKey;
+
+                    editedSheet.Cell(rowIndex, 3).Value = dialogueKey;
+
+                    editedSheet.Cell(rowIndex, 4).Value = characterId;
+                    if (characterId == "Player")
+                    {
+                        // Player line
+                        playerLineId = lineId;
+
+                        editedSheet.Cell(rowIndex, 3).Style.Fill.BackgroundColor = XLColor.FromHtml(PlayerColor);
+                        editedSheet.Cell(rowIndex, 4).Style.Fill.BackgroundColor = XLColor.FromHtml(PlayerColor);
+                    }
+                    else if (lineId == playerLineId)
+                    {
+                        // Player variant line
+                        editedSheet.Cell(rowIndex, 3).Style.Fill.BackgroundColor = XLColor.FromHtml(PlayerVariantColor);
+                        editedSheet.Cell(rowIndex, 4).Style.Fill.BackgroundColor = XLColor.FromHtml(PlayerVariantColor);
+                    }
+                    else
+                    {
+                        // NPC line
+                        playerLineId = string.Empty;
+                    }
+
+                    editedSheet.Cell(rowIndex, 5).Value = dialogueComponent.GetString(LineEditor.SpeakingTo);
+                    editedSheet.Cell(rowIndex, 6).Value = dialogueComponent.GetString(LineEditor.SourceText);
+                    editedSheet.Cell(rowIndex, 7).Value = dialogueComponent.GetString(LineEditor.ContextNotes);
+                    editedSheet.Cell(rowIndex, 8).Value = dialogueComponent.GetString(LineEditor.Direction);
+                    editedSheet.Cell(rowIndex, 9).Value = dialogueComponent.GetString(LineEditor.GameArea);
+                    editedSheet.Cell(rowIndex, 10).Value = dialogueComponent.GetString(LineEditor.TimeConstraint);
+                    editedSheet.Cell(rowIndex, 11).Value = dialogueComponent.GetString(LineEditor.SoundProcessing);
+                    editedSheet.Cell(rowIndex, 12).Value = dialogueComponent.GetString(LineEditor.Platform);
+                    editedSheet.Cell(rowIndex, 13).Value = dialogueComponent.GetString(LineEditor.LinePriority);
+                    editedSheet.Cell(rowIndex, 14).Value = dialogueComponent.GetString(LineEditor.ProductionStatus);
+                }
+                else if (dialogueComponent.Schema.ComponentType == EntityConstants.EmptyComponentType)
+                {
+                    // Scene note
+                    playerLineId = string.Empty;
+
+                    var commentText = dialogueComponent.GetString("/comment");
+
+                    var dialogueKey = $"SceneNote.{sceneNamespace}.Note{sceneNoteIndex}";
+                    editedSheet.Cell(rowIndex, 3).Value = dialogueKey;
+                    editedSheet.Cell(rowIndex, 4).Value = "SceneNote";
+                    editedSheet.Cell(rowIndex, 6).Value = commentText;
+
+                    for (int i = 3; i <= 14; i++)
+                    {
+                        editedSheet.Cell(rowIndex, i).Style.Fill.BackgroundColor = XLColor.FromHtml(SceneNoteColor);
+                    }
+
+                    sceneNoteIndex++;
+                }
+                rowIndex++;
+            }
+        }
+
+        // Copy bark dialogue lines from the "Dialogue" sheet to the "TempDialogue" sheet
+        var startBarkRow = -1;
+        for (int i = 2; i <= lastRow; i++)
+        {
+            // Find fisrt row containing bark dialogue
+            var category = dialogueSheet.Cell(i, 1).Value.ToString();
+            if (category == "Bark")
+            {
+                startBarkRow = i;
+                break;
+            }
+        }
+        if (startBarkRow >= 0)
+        {
+            var barkRange = dialogueSheet.Range(startBarkRow, 1, lastRow, 14);
+            barkRange.CopyTo(editedSheet.Cell(rowIndex, 1));
+        }
+
+        // Set the scroll position when the sheet is first opened
+        editedSheet.SheetView.TopLeftCellAddress = editedSheet.FirstCell().Address;
+        editedSheet.SelectedRanges.RemoveAll();
+        editedSheet.FirstCell().SetActive();
+
+        // Replace the "Dialogue" sheet with the "TempDialogue" sheet
+        workbook.Worksheets.Delete(dialogueSheet.Name);
+        editedSheet.Name = dialogueSheet.Name;
+        editedSheet.Position = 1;
+
+        // Save the workbook
+        workbook.Save();
+
+        return Result.Ok();
     }
 
     private Result<List<SceneData>> CollectSceneData(IEntityService entityService, IReadOnlyList<string> sceneFiles)
