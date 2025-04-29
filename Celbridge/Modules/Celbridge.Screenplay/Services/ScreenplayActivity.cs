@@ -2,6 +2,7 @@ using Celbridge.Activities;
 using Celbridge.Dialog;
 using Celbridge.Documents;
 using Celbridge.Entities;
+using Celbridge.Localization;
 using Celbridge.Screenplay.Components;
 using Celbridge.Screenplay.Models;
 using Celbridge.Workspace;
@@ -17,16 +18,19 @@ namespace Celbridge.Screenplay.Services;
 public class ScreenplayActivity : IActivity
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ILocalizerService _localizerService;
     private readonly IDialogService _dialogService;
     private readonly IEntityService _entityService;
     private readonly IDocumentsService _documentsService;
 
     public ScreenplayActivity(
         IServiceProvider serviceProvider,
+        ILocalizerService localizerService,
         IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _serviceProvider = serviceProvider;
+        _localizerService = localizerService;
         _dialogService = dialogService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _documentsService = workspaceWrapper.WorkspaceService.DocumentsService;
@@ -340,8 +344,9 @@ public class ScreenplayActivity : IActivity
 
     public async Task<Result> LoadScreenplayAsync(ResourceKey screenplayResource)
     {
-        // Todo: Localize the dialogue title
-        var progressToken = _dialogService.AcquireProgressDialog("Loading screenplay");
+        // Display a progress dialog
+        var dialogueTitleText = _localizerService.GetString("Screenplay_LoadingScreenplayTitle");
+        var progressToken = _dialogService.AcquireProgressDialog(dialogueTitleText);
 
         // Give the progress dialog a chance to display
         await Task.Delay(100);
@@ -360,11 +365,20 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    public Result SaveScreenplay(ResourceKey screenplayResource)
+    public async Task<Result> SaveScreenplayAsync(ResourceKey screenplayResource)
     {
+        // Display a progress dialog
+        var dialogueTitleText = _localizerService.GetString("Screenplay_SavingScreenplayTitle");
+        var progressToken = _dialogService.AcquireProgressDialog(dialogueTitleText);
+
+        // Give the progress dialog a chance to display
+        await Task.Delay(100);
+
         var saver = _serviceProvider.AcquireService<ScreenplaySaver>();
 
-        var saveResult = saver.SaveScreenplayAsync(screenplayResource);
+        var saveResult = saver.SaveScreenplay(screenplayResource);
+        _dialogService.ReleaseProgressDialog(progressToken);
+
         if (saveResult.IsFailure)
         {
             return Result.Fail($"Failed to save screenplay data to Workbook")
