@@ -1,8 +1,7 @@
 using Celbridge.Activities;
-using Celbridge.Commands;
+using Celbridge.Dialog;
 using Celbridge.Documents;
 using Celbridge.Entities;
-using Celbridge.Logging;
 using Celbridge.Screenplay.Components;
 using Celbridge.Screenplay.Models;
 using Celbridge.Workspace;
@@ -18,20 +17,17 @@ namespace Celbridge.Screenplay.Services;
 public class ScreenplayActivity : IActivity
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<ScreenplayActivity> _logger;
-    private readonly ICommandService _commandService;
+    private readonly IDialogService _dialogService;
     private readonly IEntityService _entityService;
     private readonly IDocumentsService _documentsService;
 
     public ScreenplayActivity(
         IServiceProvider serviceProvider,
-        ILogger<ScreenplayActivity> logger,        
-        ICommandService commandService,
+        IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _serviceProvider = serviceProvider;
-        _logger = logger;
-        _commandService = commandService;
+        _dialogService = dialogService;
         _entityService = workspaceWrapper.WorkspaceService.EntityService;
         _documentsService = workspaceWrapper.WorkspaceService.DocumentsService;
     }
@@ -344,9 +340,17 @@ public class ScreenplayActivity : IActivity
 
     public async Task<Result> LoadScreenplayAsync(ResourceKey screenplayResource)
     {
+        // Todo: Localize the dialogue title
+        var progressToken = _dialogService.AcquireProgressDialog("Loading screenplay");
+
+        // Give the progress dialog a chance to display
+        await Task.Delay(100);
+
         var loader = _serviceProvider.AcquireService<ScreenplayLoader>();
 
         var loadResult = await loader.LoadScreenplayAsync(screenplayResource);
+        _dialogService.ReleaseProgressDialog(progressToken);
+
         if (loadResult.IsFailure)
         {
             return Result.Fail($"Failed to load screenplay data from Workbook")
