@@ -68,13 +68,13 @@ public partial class ComponentItem : ObservableObject
                 var error = Annotation.Errors[0];
                 tooltip = $"Error: {error.Message}\n{error.Description}";
 
-                if (error.Severity == ComponentErrorSeverity.Critical ||
-                    error.Severity == ComponentErrorSeverity.Error)
+                if (error.Severity == EntityErrorSeverity.Critical ||
+                    error.Severity == EntityErrorSeverity.Error)
                 {
                     showErrorIcon = Visibility.Visible;
                     showWarningIcon = Visibility.Collapsed;
                 }
-                else if (error.Severity == ComponentErrorSeverity.Warning)
+                else if (error.Severity == EntityErrorSeverity.Warning)
                 {
                     showErrorIcon = Visibility.Collapsed;
                     showWarningIcon = Visibility.Visible;

@@ -93,7 +93,7 @@ public class MarkdownActivity : IActivity
         }
         var components = getComponents.Value;
 
-        if (components.Count != entityAnnotation.Count)
+        if (components.Count != entityAnnotation.ComponentAnnotationCount)
         {
             return Result.Fail(entity, $"Component count does not match annotation count: '{entity}'");
         }

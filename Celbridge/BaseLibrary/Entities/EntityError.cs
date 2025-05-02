@@ -1,9 +1,9 @@
 namespace Celbridge.Entities;
 
 /// <summary>
-/// Error states for reporting component configuration issues.
+/// Error states for reporting entity and component configuration issues.
 /// </summary>
-public enum ComponentErrorSeverity
+public enum EntityErrorSeverity
 {
     /// <summary>
     /// A major issue that should be addressed immediately.
@@ -22,6 +22,6 @@ public enum ComponentErrorSeverity
 }
 
 /// <summary>
-/// Describes an error condition for a component.
+/// Describes an error condition for a entity or component.
 /// </summary>
-public record ComponentError(ComponentErrorSeverity Severity, string Message, string Description);
+public record EntityError(EntityErrorSeverity Severity, string Message, string Description);

@@ -176,9 +176,6 @@ public class ActivityDispatcher
     {
         Guard.IsNotNull(_activityRegistry);
 
-        // Todo: In almost all cases, this method should succeed and return an entity annotation
-        // Add properties to IEntityAnnotation to describe errors at the entity level.
-
         // Get the component list for this entity
         var getComponentsResult = _entityService.GetComponents(fileResource);
         if (getComponentsResult.IsFailure)
@@ -198,21 +195,19 @@ public class ActivityDispatcher
             return Result<IEntityAnnotation>.Ok(entityAnnotation);
         }
 
-        bool hasValidActivity = true;
+        bool hasValidRootComponent = true;
 
         // Get the root component and check that it has a "rootActivity" attribute
         var rootComponent = components[0];
         var activityName = rootComponent.Schema.GetStringAttribute("rootActivity");
         if (string.IsNullOrEmpty(activityName))
         {
-            hasValidActivity = false;
+            hasValidRootComponent = false;
 
-            // Invalid root component.
-            var error = new ComponentError(
-                ComponentErrorSeverity.Critical,
+            entityAnnotation.AddComponentError(0, new EntityError(
+                EntityErrorSeverity.Critical,
                 "Invalid root component",
-                "This component is not a valid root component for this resource type.");
-            entityAnnotation.AddError(0, error);
+                "This component is not a valid root component for this resource."));
         }
 
         // Perform some basic configuation checks for all components
@@ -226,38 +221,62 @@ public class ActivityDispatcher
             }
             else if (i > 0)
             {
+                // Check if this is a root component that's in the wrong position
                 var rootActivity = component.Schema.GetStringAttribute("rootActivity");
                 if (!string.IsNullOrEmpty(rootActivity))
                 {
-                    hasValidActivity = false;
+                    hasValidRootComponent = false;
 
-                    var error = new ComponentError(
-                        ComponentErrorSeverity.Critical,
+                    entityAnnotation.AddComponentError(i, new EntityError(
+                        EntityErrorSeverity.Critical,
                         "Invalid position",
-                        "The root component must be the first component in the list.");
-                    entityAnnotation.AddError(i, error);
+                        "The root component must be the first component in the list."));
                 }
             }
         }
 
-        if (!hasValidActivity ||
+        if (!hasValidRootComponent ||
             activityName == "None")
         {
             // The Empty root component uses the "None" activity to indicate that no activity should be
             // applied to the entity.
 
-            // Todo: Flag any non-empty component as an error in this case
-
-            return Result<IEntityAnnotation>.Fail($"Root component is the Empty component");
+            // Flag any non-empty component as an error.
+            for (int i = 0; i < components.Count; i++)
+            {
+                var component = components[i];
+                if (component.Schema.ComponentType != EntityConstants.EmptyComponentType)
+                {
+                    entityAnnotation.AddComponentError(i, new EntityError(
+                        EntityErrorSeverity.Critical,
+                        "Invalid component",
+                        "This component is not valid because the root component for this resource is not valid."));
+                }
+            }
         }
 
         // Lookup the activity by name
-        if (!_activityRegistry.Activities.TryGetValue(activityName, out var activity))
+        IActivity? activity = null;
+        if (hasValidRootComponent &&
+            !_activityRegistry.Activities.TryGetValue(activityName, out activity))
         {
-            return Result<IEntityAnnotation>.Fail($"Invalid activity name: '{activityName}'");
+            // An activity name was specified, but the activity doesn't actually exist
+            hasValidRootComponent = false;
+        }
+
+        if (!hasValidRootComponent)
+        {
+            entityAnnotation.AddEntityError(new EntityError(
+                EntityErrorSeverity.Critical,
+                "Invalid root component",
+                "The root component is not valid for this resource."));
+
+            // We can't do any more annotating of this entity because it does not specify a valid activity.
+            return Result<IEntityAnnotation>.Ok(entityAnnotation);
         }
 
         // Use the activity to update the entity annotation
+        Guard.IsNotNull(activity);
         var updateAnnotationResult = activity.UpdateEntityAnnotation(fileResource, entityAnnotation);
         if (updateAnnotationResult.IsFailure)
         {

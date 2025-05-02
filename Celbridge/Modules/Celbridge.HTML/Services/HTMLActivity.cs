@@ -68,7 +68,7 @@ public class HTMLActivity : IActivity
         }
         var components = getComponents.Value;
 
-        if (components.Count != entityAnnotation.Count)
+        if (components.Count != entityAnnotation.ComponentAnnotationCount)
         {
             return Result.Fail(entity, $"Component count does not match annotation count: '{entity}'");
         }
@@ -84,12 +84,12 @@ public class HTMLActivity : IActivity
         }
         else
         {
-            var error = new ComponentError(
-                ComponentErrorSeverity.Critical,
+            var error = new EntityError(
+                EntityErrorSeverity.Critical,
                 "Invalid component position",
                 "This component must be the first component.");
 
-            entityAnnotation.AddError(0, error);
+            entityAnnotation.AddComponentError(0, error);
         }
 
         return Result.Ok();

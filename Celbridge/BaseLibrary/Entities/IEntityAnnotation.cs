@@ -11,9 +11,14 @@ public interface IEntityAnnotation
     void Initialize(int count);
 
     /// <summary>
-    /// Returns the number of component annotations.
+    /// Returns the list of error messages associated with the entity.
     /// </summary>
-    int Count { get; }
+    IReadOnlyList<EntityError> EntityErrors { get; }
+
+    /// <summary>
+    /// Associates an error message with the entity.
+    /// </summary>
+    void AddEntityError(EntityError error);
 
     /// <summary>
     /// Sets a flag to indicate that the specified component has been recognised by the activity system.
@@ -29,7 +34,12 @@ public interface IEntityAnnotation
     /// <summary>
     /// Associates an error message with the specified component.
     /// </summary>
-    void AddError(int componentIndex, ComponentError error);
+    void AddComponentError(int componentIndex, EntityError error);
+
+    /// <summary>
+    /// Returns the number of component annotations.
+    /// </summary>
+    int ComponentAnnotationCount { get; }
 
     /// <summary>
     /// Returns the annotation data for the specified component.
