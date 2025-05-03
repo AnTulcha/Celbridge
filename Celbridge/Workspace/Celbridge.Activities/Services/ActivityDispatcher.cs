@@ -147,13 +147,8 @@ public class ActivityDispatcher
 
                 if (_activityRegistry.Activities.TryGetValue(entityAnnotation.ActivityName, out var activity))
                 {
-                    // Todo: Pass the entity annotation into UpdateResourceAsync
-                    // Todo: Rename UpdateResourceAsync?
-                    // Todo: Make AnnotateEntity public
-
-                    // Give the activity an opportunity to update the resource.
-                    // For example, this step may update the content of the resource based on the component configuration and annotation state.
-                    var updateResourceResult = await activity.UpdateResourceAsync(fileResource);
+                    // Give the activity an opportunity to update the resource content.
+                    var updateResourceResult = await activity.UpdateResourceContentAsync(fileResource, entityAnnotation);
                     if (updateResourceResult.IsFailure)
                     {
                         return Result<IEntityAnnotation>.Fail($"Failed to update entity resource '{fileResource}'")

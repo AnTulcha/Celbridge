@@ -307,7 +307,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateResourceAsync(ResourceKey resource)
+    public async Task<Result> UpdateResourceContentAsync(ResourceKey resource, IEntityAnnotation entityAnnotation)
     {
         var count = _entityService.GetComponentCount(resource);
         if (count == 0)

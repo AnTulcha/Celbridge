@@ -95,7 +95,7 @@ public class HTMLActivity : IActivity
         return Result.Ok();
     }
 
-    public async Task<Result> UpdateResourceAsync(ResourceKey resource)
+    public async Task<Result> UpdateResourceContentAsync(ResourceKey resource, IEntityAnnotation entityAnnotation)
     {
         await Task.CompletedTask;
 

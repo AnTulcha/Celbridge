@@ -38,5 +38,5 @@ public interface IActivity
     /// Updates the specified resource, typically by generating document data.
     /// The resource must be of a type that is supported by this activity.
     /// </summary>
-    Task<Result> UpdateResourceAsync(ResourceKey resource);    
+    Task<Result> UpdateResourceContentAsync(ResourceKey resource, IEntityAnnotation entityAnnotation);    
 }
