@@ -137,13 +137,29 @@ public class ActivityDispatcher
         {
             try
             {
-                var updateEntityResult = await UpdateEntityAsync(fileResource, true);
-                if (updateEntityResult.IsFailure)
+                var annotateResult = AnnotateEntity(fileResource);
+                if (annotateResult.IsFailure)
                 {
-                    _logger.LogError(updateEntityResult.Error);
+                    _logger.LogError(annotateResult.Error);
                     continue;
                 }
-                var entityAnnotation = updateEntityResult.Value;
+                var entityAnnotation = annotateResult.Value;
+
+                if (_activityRegistry.Activities.TryGetValue(entityAnnotation.ActivityName, out var activity))
+                {
+                    // Todo: Pass the entity annotation into UpdateResourceAsync
+                    // Todo: Rename UpdateResourceAsync?
+                    // Todo: Make AnnotateEntity public
+
+                    // Give the activity an opportunity to update the resource.
+                    // For example, this step may update the content of the resource based on the component configuration and annotation state.
+                    var updateResourceResult = await activity.UpdateResourceAsync(fileResource);
+                    if (updateResourceResult.IsFailure)
+                    {
+                        return Result<IEntityAnnotation>.Fail($"Failed to update entity resource '{fileResource}'")
+                            .WithErrors(updateResourceResult);
+                    }
+                }
 
                 entityAnnotations[fileResource] = entityAnnotation;
             }
@@ -172,7 +188,7 @@ public class ActivityDispatcher
         return Result.Ok();
     }
 
-    private async Task<Result<IEntityAnnotation>> UpdateEntityAsync(ResourceKey fileResource, bool updateResource)
+    private Result<IEntityAnnotation> AnnotateEntity(ResourceKey fileResource)
     {
         Guard.IsNotNull(_activityRegistry);
 
@@ -264,7 +280,11 @@ public class ActivityDispatcher
             hasValidRootComponent = false;
         }
 
-        if (!hasValidRootComponent)
+        if (hasValidRootComponent)
+        { 
+            entityAnnotation.ActivityName = activityName;
+        }
+        else
         {
             entityAnnotation.AddEntityError(new EntityError(
                 EntityErrorSeverity.Critical,
@@ -275,27 +295,13 @@ public class ActivityDispatcher
             return Result<IEntityAnnotation>.Ok(entityAnnotation);
         }
 
-        // Use the activity to update the entity annotation
+        // Use the activity to finish annotating the entity
         Guard.IsNotNull(activity);
-        var updateAnnotationResult = activity.UpdateEntityAnnotation(fileResource, entityAnnotation);
+        var updateAnnotationResult = activity.AnnotateEntity(fileResource, entityAnnotation);
         if (updateAnnotationResult.IsFailure)
         {
             return Result<IEntityAnnotation>.Fail($"Failed to update entity annotation for resource '{fileResource}'")
                 .WithErrors(updateAnnotationResult);
-        }
-
-        // Todo: Pass the entity annotation into UpdateResourceAsync in case it wants to also handle error conditions
-
-        if (updateResource)
-        {
-            // Use the activity to update the resource.
-            // For example, this step may update the content of the resource based on the component configuration.
-            var updateResourceResult = await activity.UpdateResourceAsync(fileResource);
-            if (updateResourceResult.IsFailure)
-            {
-                return Result<IEntityAnnotation>.Fail($"Failed to update entity resource '{fileResource}'")
-                    .WithErrors(updateResourceResult);
-            }
         }
 
         return Result<IEntityAnnotation>.Ok(entityAnnotation);

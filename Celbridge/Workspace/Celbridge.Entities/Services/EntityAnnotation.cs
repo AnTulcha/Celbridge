@@ -9,6 +9,8 @@ public class EntityAnnotation : IEntityAnnotation
     private readonly List<ComponentAnnotation> _componentAnnotations = new();
     private readonly ComponentAnnotation _invalidAnnotation;
 
+    public  string ActivityName { get; set; } = string.Empty;
+
     public EntityAnnotation()
     {
         // Create a default invalid annotation.

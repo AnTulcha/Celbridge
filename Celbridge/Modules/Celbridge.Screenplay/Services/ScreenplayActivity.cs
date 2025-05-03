@@ -85,7 +85,7 @@ public class ScreenplayActivity : IActivity
         return Result.Ok();
     }
 
-    public Result UpdateEntityAnnotation(ResourceKey entity, IEntityAnnotation entityAnnotation)
+    public Result AnnotateEntity(ResourceKey entity, IEntityAnnotation entityAnnotation)
     {
         //
         // These cases should never happen, so they are hard errors instead of annotation errors

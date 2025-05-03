@@ -71,7 +71,7 @@ public class SpreadsheetActivity : IActivity
         return Result.Ok();
     }
 
-    public Result UpdateEntityAnnotation(ResourceKey entity, IEntityAnnotation entityAnnotation)
+    public Result AnnotateEntity(ResourceKey entity, IEntityAnnotation entityAnnotation)
     {
         var getComponents = _entityService.GetComponents(entity);
         if (getComponents.IsFailure)

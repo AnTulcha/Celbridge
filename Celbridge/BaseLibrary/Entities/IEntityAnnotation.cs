@@ -11,6 +11,11 @@ public interface IEntityAnnotation
     void Initialize(int count);
 
     /// <summary>
+    /// The name of the Activity associated with this entity (if any).
+    /// </summary>
+    string ActivityName { get; set; }
+
+    /// <summary>
     /// Returns the list of error messages associated with the entity.
     /// </summary>
     IReadOnlyList<EntityError> EntityErrors { get; }
