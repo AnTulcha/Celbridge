@@ -39,6 +39,32 @@ public class EntityAnnotation : IEntityAnnotation
         }
     }
 
+    public bool TryGetError(out EntityError? entityError)
+    {
+        entityError = null;
+
+        bool hasError = false;
+        if (EntityErrors.Count > 0)
+        {
+            entityError = EntityErrors[0];
+            hasError = true;
+        }
+        else
+        {
+            foreach (var componentAnnotation in _componentAnnotations)
+            {
+                if (componentAnnotation.Errors.Count > 0)
+                {
+                    entityError = componentAnnotation.Errors[0];
+                    hasError = true;
+                    break;
+                }
+            }
+        }
+
+        return hasError;
+    }
+
     public IReadOnlyList<EntityError> EntityErrors => _entityErrors;
 
     public void AddEntityError(EntityError error)

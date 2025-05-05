@@ -16,6 +16,12 @@ public interface IEntityAnnotation
     string ActivityName { get; set; }
 
     /// <summary>
+    /// Return true if there are any entity or component errors.
+    /// The highest priority error is returned in entityError.
+    /// </summary>
+    bool TryGetError(out EntityError? entityError);
+
+    /// <summary>
     /// Returns the list of error messages associated with the entity.
     /// </summary>
     IReadOnlyList<EntityError> EntityErrors { get; }

@@ -6,9 +6,9 @@ namespace Celbridge.Entities;
 public enum EntityErrorSeverity
 {
     /// <summary>
-    /// A major issue that should be addressed immediately.
+    /// An issue that may result in unexpected behaviour.
     /// </summary>
-    Critical,
+    Warning,
 
     /// <summary>
     /// An issue that prevents the component from functioning.
@@ -16,9 +16,9 @@ public enum EntityErrorSeverity
     Error,
 
     /// <summary>
-    /// An issue that may result in unexpected behaviour.
+    /// A major issue that should be addressed immediately.
     /// </summary>
-    Warning
+    Critical
 }
 
 /// <summary>

@@ -1,5 +1,7 @@
+using Celbridge.Dialog;
 using Celbridge.Entities;
 using Celbridge.Explorer;
+using Celbridge.Logging;
 using Celbridge.Screenplay.Components;
 using Celbridge.Workspace;
 using ClosedXML.Excel;
@@ -17,13 +19,18 @@ public class ScreenplaySaver
     private const string PlayerVariantColor = "e3e3e3";
     private const string SceneNoteColor = "a8e6a3";
 
+    private readonly ILogger<ScreenplaySaver> _logger;
     private readonly IExplorerService _explorerService;
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
-    private record SceneData(string Category, string Namespace, IComponentProxy SceneComponent, List<IComponentProxy> DialogueComponents);
+    private record SceneData(ResourceKey SceneResource, string Category, string Namespace, IComponentProxy SceneComponent, List<IComponentProxy> DialogueComponents);
 
-    public ScreenplaySaver(IWorkspaceWrapper workspaceWrapper)
+    public ScreenplaySaver(
+        ILogger<ScreenplaySaver> logger,
+        IDialogService dialogService,
+        IWorkspaceWrapper workspaceWrapper)
     {
+        _logger = logger;
         _workspaceWrapper = workspaceWrapper;
         _explorerService = workspaceWrapper.WorkspaceService.ExplorerService;
     }
@@ -63,17 +70,44 @@ public class ScreenplaySaver
             }
             var sceneDataList = collectSceneDataResult.Value;
 
-            // Todo: Validate the collected scene data
-            // Figure out how to reuse the validation checks in ScreenplayActivity here.
-            // Maybe we could run UpdateAnnotation manually to perform the same checks on demand?
-            // Could we move some of the validation checks from CollectSceneData to UpdateAnnotation?
+            bool succeeded = true;
+            var errorMessage = string.Empty;
+            var activityService = _workspaceWrapper.WorkspaceService.ActivityService;
+            foreach (var sceneData in sceneDataList)
+            {
+                var sceneResource = sceneData.SceneResource;
+                var annotateResult = activityService.AnnotateEntity(sceneResource);
+                if (annotateResult.IsFailure)
+                {
+                    // Todo: Log the error?
+                    succeeded = false;
+                    break;
+                }
+                var annotation = annotateResult.Value;
+
+                if (annotation.TryGetError(out var entityError) &&
+                    entityError!.Severity >= EntityErrorSeverity.Error)
+                {
+                    _logger.LogError($"Failed to save screenplay. Please fix errors in '{sceneResource}' and try again.");
+                    succeeded = false;
+                    break;
+                }
+            }
+
+            if (!succeeded)
+            {
+                return Result.Fail($"Failed to annotate resource");
+            }
+
+            // Todo: Could we move some of the validation checks in CollectSceneData to the annotation checks instead?
 
             var saveWorksheetResult = SaveDialogueWorksheet(workbookPath, sceneDataList);
             return saveWorksheetResult;
         }
         catch (Exception ex)
         {
-            return Result.Fail("Failed to import screenplay data from workbook").WithException(ex);
+            return Result.Fail("Failed to save screenplay data to workbook")
+                .WithException(ex);
         }
     }
 
@@ -132,7 +166,7 @@ public class ScreenplaySaver
                             c.Schema.ComponentType == EntityConstants.EmptyComponentType)
                 .ToList();
 
-            var sceneData = new SceneData(category, ns, sceneComponent, dialogueComponents);
+            var sceneData = new SceneData(sceneResource, category, ns, sceneComponent, dialogueComponents);
             sceneDataList.Add(sceneData);
         }
 
