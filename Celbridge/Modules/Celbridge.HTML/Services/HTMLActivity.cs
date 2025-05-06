@@ -84,8 +84,8 @@ public class HTMLActivity : IActivity
         }
         else
         {
-            var error = new EntityReportItem(
-                EntityReportType.Error,
+            var error = new AnnotationError(
+                AnnotationErrorSeverity.Error,
                 "Invalid component position",
                 "This component must be the first component.");
 

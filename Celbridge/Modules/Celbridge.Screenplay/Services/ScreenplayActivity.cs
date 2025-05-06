@@ -115,8 +115,8 @@ public class ScreenplayActivity : IActivity
         }
         else
         {
-            entityAnnotation.AddComponentError(0, new EntityReportItem(
-                EntityReportType.Error,
+            entityAnnotation.AddComponentError(0, new AnnotationError(
+                AnnotationErrorSeverity.Critical,
                 "Invalid component position",
                 "This component must be the first component."));
         }
@@ -125,8 +125,8 @@ public class ScreenplayActivity : IActivity
         var @namespace = sceneComponent.GetString(SceneEditor.Namespace);
         if (string.IsNullOrEmpty(@namespace))
         {
-            entityAnnotation.AddComponentError(0, new EntityReportItem(
-                EntityReportType.Error,
+            entityAnnotation.AddComponentError(0, new AnnotationError(
+                AnnotationErrorSeverity.Error,
                 "Invalid namespace",
                 "The namespace must not be empty"));
         }
@@ -135,8 +135,8 @@ public class ScreenplayActivity : IActivity
         var getCharactersResult = GetCharacters(entity);
         if (getCharactersResult.IsFailure)
         {
-            entityAnnotation.AddEntityError(new EntityReportItem(
-                EntityReportType.Error,
+            entityAnnotation.AddEntityError(new AnnotationError(
+                AnnotationErrorSeverity.Error,
                 "Failed to get characters",
                 "Failed to get character list from screenplay component"));
         }
@@ -166,8 +166,8 @@ public class ScreenplayActivity : IActivity
 
             if (component.Schema.ComponentType != LineEditor.ComponentType)
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid component type",
                     "This component must be a 'Line' component"));
 
@@ -200,8 +200,8 @@ public class ScreenplayActivity : IActivity
             var characterId = component.GetString(LineEditor.CharacterId);
             if (string.IsNullOrEmpty(characterId))
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid character id",
                     "The character id must not be empty"));
 
@@ -219,8 +219,8 @@ public class ScreenplayActivity : IActivity
             }
             if (character is null)
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid character id",
                     "A valid character must be selected"));
 
@@ -236,8 +236,8 @@ public class ScreenplayActivity : IActivity
             var segments = dialogueKey.Split('-');
             if (segments.Length != 3)
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid dialogue key",
                     "Dialogue keys must be non-empty and contain 3 segments."));
 
@@ -260,8 +260,8 @@ public class ScreenplayActivity : IActivity
                 // Player variants lines must be part of a player line group
                 if (string.IsNullOrEmpty(playerLineId))
                 {
-                    entityAnnotation.AddComponentError(i, new EntityReportItem(
-                        EntityReportType.Error,
+                    entityAnnotation.AddComponentError(i, new AnnotationError(
+                        AnnotationErrorSeverity.Error,
                         "Invalid player variant line",
                         "Player variant lines must be part of a player line group"));
                 }
@@ -282,16 +282,16 @@ public class ScreenplayActivity : IActivity
             var correctDialogueKey = $"{characterId}-{@namespace}-{correctLineId}";
             if (dialogueKey != correctDialogueKey)
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid dialogue key",
                     "The dialogue key is not correctly formed. Update the dialogue key to assign a correct one."));
             }
 
             if (activeDialogueKeys.Contains(dialogueKey))
             {
-                entityAnnotation.AddComponentError(i, new EntityReportItem(
-                    EntityReportType.Error,
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Duplicate dialogue key",
                     "Dialogue keys must be unique for each line. Update the dialogue key to assign a new one."));
             }

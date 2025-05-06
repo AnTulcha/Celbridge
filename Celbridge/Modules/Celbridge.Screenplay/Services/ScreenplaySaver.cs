@@ -86,7 +86,7 @@ public class ScreenplaySaver
                 var annotation = annotateResult.Value;
 
                 if (annotation.TryGetError(out var entityError) &&
-                    entityError!.ReportType >= EntityReportType.Error)
+                    entityError!.Severity >= AnnotationErrorSeverity.Error)
                 {
                     _logger.LogError($"Failed to save screenplay. Please fix errors in '{sceneResource}' and try again.");
                     succeeded = false;

@@ -97,8 +97,8 @@ public class SpreadsheetActivity : IActivity
         }
         else
         {
-            var error = new EntityReportItem(
-                EntityReportType.Error,
+            var error = new AnnotationError(
+                AnnotationErrorSeverity.Error,
                 "Invalid root component",
                 $"The root component must be a '{SpreadsheetEditor.ComponentType}'.");
 
@@ -127,8 +127,8 @@ public class SpreadsheetActivity : IActivity
             }
             else
             {
-                var error = new EntityReportItem(
-                    EntityReportType.Error,
+                var error = new AnnotationError(
+                    AnnotationErrorSeverity.Error,
                     "Invalid component type",
                     "This component is not compatible with the 'Data.Spreadsheet' component");
 

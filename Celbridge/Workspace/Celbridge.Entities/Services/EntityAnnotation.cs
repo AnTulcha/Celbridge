@@ -4,7 +4,7 @@ namespace Celbridge.Activities.Services;
 
 public class EntityAnnotation : IEntityAnnotation
 {
-    private readonly List<EntityReportItem> _entityErrors = new();
+    private readonly List<AnnotationError> _entityErrors = new();
     private readonly HashSet<int> _recognizedComponents = new();
     private readonly List<ComponentAnnotation> _componentAnnotations = new();
     private readonly ComponentAnnotation _invalidAnnotation;
@@ -15,15 +15,15 @@ public class EntityAnnotation : IEntityAnnotation
     {
         // Create a default invalid annotation.
         // This is returned for any unrecognized components.
-        List<EntityReportItem> errors = new()
+        List<AnnotationError> componentErrors = new()
         {
-            new EntityReportItem(
-                EntityReportType.Error, 
+            new AnnotationError(
+                AnnotationErrorSeverity.Error, 
                 "Invalid component", 
                 "This component is not valid in this position.")
         };
 
-        _invalidAnnotation = new ComponentAnnotation(0, errors);
+        _invalidAnnotation = new ComponentAnnotation(0, componentErrors);
     }
 
     public void Initialize(int count)
@@ -39,23 +39,23 @@ public class EntityAnnotation : IEntityAnnotation
         }
     }
 
-    public bool TryGetError(out EntityReportItem? entityError)
+    public bool TryGetError(out AnnotationError? error)
     {
-        entityError = null;
+        error = null;
 
         bool hasError = false;
         if (EntityErrors.Count > 0)
         {
-            entityError = EntityErrors[0];
+            error = EntityErrors[0];
             hasError = true;
         }
         else
         {
             foreach (var componentAnnotation in _componentAnnotations)
             {
-                if (componentAnnotation.ReportItems.Count > 0)
+                if (componentAnnotation.ComponentErrors.Count > 0)
                 {
-                    entityError = componentAnnotation.ReportItems[0];
+                    error = componentAnnotation.ComponentErrors[0];
                     hasError = true;
                     break;
                 }
@@ -65,15 +65,15 @@ public class EntityAnnotation : IEntityAnnotation
         return hasError;
     }
 
-    public IReadOnlyList<EntityReportItem> EntityErrors => _entityErrors;
+    public IReadOnlyList<AnnotationError> EntityErrors => _entityErrors;
 
-    public void AddEntityError(EntityReportItem error)
+    public void AddEntityError(AnnotationError error)
     {
         _entityErrors.Add(error);
 
         _entityErrors.Sort((a, b) =>
         {
-            return (int)a.ReportType - (int)b.ReportType;
+            return (int)a.Severity - (int)b.Severity;
         });
     }
 
@@ -102,7 +102,7 @@ public class EntityAnnotation : IEntityAnnotation
         _componentAnnotations[componentIndex] = updatedAnnotation;
     }
 
-    public void AddComponentError(int componentIndex, EntityReportItem error)
+    public void AddComponentError(int componentIndex, AnnotationError error)
     {
         if (componentIndex < 0 || componentIndex >= _componentAnnotations.Count)
         {
@@ -116,13 +116,13 @@ public class EntityAnnotation : IEntityAnnotation
 
         var annotation = _componentAnnotations[componentIndex];
 
-        var errorList = annotation.ReportItems;
+        var errorList = annotation.ComponentErrors;
         errorList.Add(error);
 
         // Sort errors so most severe errors are listed first
         errorList.Sort((a, b) =>
         {
-            return (int)a.ReportType - (int)b.ReportType;
+            return (int)a.Severity - (int)b.Severity;
         });
     }
 
