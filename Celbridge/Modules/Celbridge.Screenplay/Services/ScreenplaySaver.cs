@@ -86,7 +86,7 @@ public class ScreenplaySaver
                 var annotation = annotateResult.Value;
 
                 if (annotation.TryGetError(out var entityError) &&
-                    entityError!.Severity >= EntityErrorSeverity.Error)
+                    entityError!.ReportType >= EntityReportType.Error)
                 {
                     _logger.LogError($"Failed to save screenplay. Please fix errors in '{sceneResource}' and try again.");
                     succeeded = false;
@@ -98,8 +98,6 @@ public class ScreenplaySaver
             {
                 return Result.Fail($"Failed to annotate resource");
             }
-
-            // Todo: Could we move some of the validation checks in CollectSceneData to the annotation checks instead?
 
             var saveWorksheetResult = SaveDialogueWorksheet(workbookPath, sceneDataList);
             return saveWorksheetResult;

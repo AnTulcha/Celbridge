@@ -63,18 +63,18 @@ public partial class ComponentItem : ObservableObject
 
         if (Annotation is not null)
         {
-            if (Annotation.Errors.Count > 0)
+            if (Annotation.ReportItems.Count > 0)
             {
-                var error = Annotation.Errors[0];
+                var error = Annotation.ReportItems[0];
                 tooltip = $"Error: {error.Message}\n{error.Description}";
 
-                if (error.Severity == EntityErrorSeverity.Critical ||
-                    error.Severity == EntityErrorSeverity.Error)
+                if (error.ReportType == EntityReportType.Error ||
+                    error.ReportType == EntityReportType.Error)
                 {
                     showErrorIcon = Visibility.Visible;
                     showWarningIcon = Visibility.Collapsed;
                 }
-                else if (error.Severity == EntityErrorSeverity.Warning)
+                else if (error.ReportType == EntityReportType.Warning)
                 {
                     showErrorIcon = Visibility.Collapsed;
                     showWarningIcon = Visibility.Visible;

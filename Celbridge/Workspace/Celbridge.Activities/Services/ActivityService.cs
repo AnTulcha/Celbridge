@@ -104,8 +104,8 @@ public class ActivityService : IActivityService, IDisposable
         {
             hasValidRootComponent = false;
 
-            entityAnnotation.AddComponentError(0, new EntityError(
-                EntityErrorSeverity.Critical,
+            entityAnnotation.AddComponentError(0, new EntityReportItem(
+                EntityReportType.Error,
                 "Invalid root component",
                 "This component is not a valid root component for this resource."));
         }
@@ -127,8 +127,8 @@ public class ActivityService : IActivityService, IDisposable
                 {
                     hasValidRootComponent = false;
 
-                    entityAnnotation.AddComponentError(i, new EntityError(
-                        EntityErrorSeverity.Critical,
+                    entityAnnotation.AddComponentError(i, new EntityReportItem(
+                        EntityReportType.Error,
                         "Invalid position",
                         "The root component must be the first component in the list."));
                 }
@@ -147,8 +147,8 @@ public class ActivityService : IActivityService, IDisposable
                 var component = components[i];
                 if (component.Schema.ComponentType != EntityConstants.EmptyComponentType)
                 {
-                    entityAnnotation.AddComponentError(i, new EntityError(
-                        EntityErrorSeverity.Critical,
+                    entityAnnotation.AddComponentError(i, new EntityReportItem(
+                        EntityReportType.Error,
                         "Invalid component",
                         "This component is not valid because the root component for this resource is not valid."));
                 }
@@ -170,8 +170,8 @@ public class ActivityService : IActivityService, IDisposable
         }
         else
         {
-            entityAnnotation.AddEntityError(new EntityError(
-                EntityErrorSeverity.Critical,
+            entityAnnotation.AddEntityError(new EntityReportItem(
+                EntityReportType.Error,
                 "Invalid root component",
                 "The root component is not valid for this resource."));
 

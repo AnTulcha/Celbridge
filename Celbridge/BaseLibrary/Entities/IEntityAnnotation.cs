@@ -19,17 +19,17 @@ public interface IEntityAnnotation
     /// Return true if there are any entity or component errors.
     /// The highest priority error is returned in entityError.
     /// </summary>
-    bool TryGetError(out EntityError? entityError);
+    bool TryGetError(out EntityReportItem? entityError);
 
     /// <summary>
     /// Returns the list of error messages associated with the entity.
     /// </summary>
-    IReadOnlyList<EntityError> EntityErrors { get; }
+    IReadOnlyList<EntityReportItem> EntityErrors { get; }
 
     /// <summary>
     /// Associates an error message with the entity.
     /// </summary>
-    void AddEntityError(EntityError error);
+    void AddEntityError(EntityReportItem error);
 
     /// <summary>
     /// Sets a flag to indicate that the specified component has been recognised by the activity system.
@@ -45,7 +45,7 @@ public interface IEntityAnnotation
     /// <summary>
     /// Associates an error message with the specified component.
     /// </summary>
-    void AddComponentError(int componentIndex, EntityError error);
+    void AddComponentError(int componentIndex, EntityReportItem error);
 
     /// <summary>
     /// Returns the number of component annotations.

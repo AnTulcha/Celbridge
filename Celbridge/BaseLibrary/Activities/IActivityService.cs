@@ -23,7 +23,7 @@ public interface IActivityService
     Task<Result> UpdateAsync();
 
     /// <summary>
-    /// Generates annotation data for a resource.
+    /// Generates annotation information for a resource.
     /// </summary>
     Result<IEntityAnnotation> AnnotateEntity(ResourceKey fileResource);
 }

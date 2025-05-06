@@ -4,7 +4,7 @@ namespace Celbridge.Activities.Services;
 
 public class EntityAnnotation : IEntityAnnotation
 {
-    private readonly List<EntityError> _entityErrors = new();
+    private readonly List<EntityReportItem> _entityErrors = new();
     private readonly HashSet<int> _recognizedComponents = new();
     private readonly List<ComponentAnnotation> _componentAnnotations = new();
     private readonly ComponentAnnotation _invalidAnnotation;
@@ -15,10 +15,10 @@ public class EntityAnnotation : IEntityAnnotation
     {
         // Create a default invalid annotation.
         // This is returned for any unrecognized components.
-        List<EntityError> errors = new()
+        List<EntityReportItem> errors = new()
         {
-            new EntityError(
-                EntityErrorSeverity.Critical, 
+            new EntityReportItem(
+                EntityReportType.Error, 
                 "Invalid component", 
                 "This component is not valid in this position.")
         };
@@ -39,7 +39,7 @@ public class EntityAnnotation : IEntityAnnotation
         }
     }
 
-    public bool TryGetError(out EntityError? entityError)
+    public bool TryGetError(out EntityReportItem? entityError)
     {
         entityError = null;
 
@@ -53,9 +53,9 @@ public class EntityAnnotation : IEntityAnnotation
         {
             foreach (var componentAnnotation in _componentAnnotations)
             {
-                if (componentAnnotation.Errors.Count > 0)
+                if (componentAnnotation.ReportItems.Count > 0)
                 {
-                    entityError = componentAnnotation.Errors[0];
+                    entityError = componentAnnotation.ReportItems[0];
                     hasError = true;
                     break;
                 }
@@ -65,15 +65,15 @@ public class EntityAnnotation : IEntityAnnotation
         return hasError;
     }
 
-    public IReadOnlyList<EntityError> EntityErrors => _entityErrors;
+    public IReadOnlyList<EntityReportItem> EntityErrors => _entityErrors;
 
-    public void AddEntityError(EntityError error)
+    public void AddEntityError(EntityReportItem error)
     {
         _entityErrors.Add(error);
 
         _entityErrors.Sort((a, b) =>
         {
-            return (int)a.Severity - (int)b.Severity;
+            return (int)a.ReportType - (int)b.ReportType;
         });
     }
 
@@ -102,7 +102,7 @@ public class EntityAnnotation : IEntityAnnotation
         _componentAnnotations[componentIndex] = updatedAnnotation;
     }
 
-    public void AddComponentError(int componentIndex, EntityError error)
+    public void AddComponentError(int componentIndex, EntityReportItem error)
     {
         if (componentIndex < 0 || componentIndex >= _componentAnnotations.Count)
         {
@@ -116,13 +116,13 @@ public class EntityAnnotation : IEntityAnnotation
 
         var annotation = _componentAnnotations[componentIndex];
 
-        var errorList = annotation.Errors;
+        var errorList = annotation.ReportItems;
         errorList.Add(error);
 
         // Sort errors so most severe errors are listed first
         errorList.Sort((a, b) =>
         {
-            return (int)a.Severity - (int)b.Severity;
+            return (int)a.ReportType - (int)b.ReportType;
         });
     }
 
