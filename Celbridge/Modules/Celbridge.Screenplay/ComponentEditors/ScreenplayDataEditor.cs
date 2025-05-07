@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Celbridge.Commands;
 using Celbridge.Entities;
 using Celbridge.Screenplay.Commands;
@@ -12,6 +13,15 @@ public class ScreenplayDataEditor : ComponentEditorBase
     private const string _formPath = "Celbridge.Screenplay.Assets.Forms.ScreenplayDataForm.json";
 
     public const string ComponentType = "Screenplay.ScreenplayData";
+
+    [ComponentProperty]
+    public string TestProperty
+    {
+        get
+        {
+            return "Hi there";
+        }
+    }
 
     public ScreenplayDataEditor(ICommandService commandService)
     {

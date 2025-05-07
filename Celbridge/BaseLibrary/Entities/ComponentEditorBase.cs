@@ -1,4 +1,6 @@
 using Celbridge.Utilities;
+using System.Reflection;
+using System.Text.Json;
 
 namespace Celbridge.Entities;
 
@@ -66,15 +68,28 @@ public abstract class ComponentEditorBase : IComponentEditor
 
     public Result<string> GetProperty(string propertyPath)
     {
-        var getResult = TryGetProperty(propertyPath);
-        if (getResult.IsSuccess)
+        var overrideResult = TryGetProperty(propertyPath);
+        if (overrideResult.IsSuccess)
         {
-            // Derived class has intercepted this property get
-            return getResult;
+            // Derived class has intercepted this property
+            return overrideResult;
         }
 
-        // Get the property from the component
-        return Component.GetProperty(propertyPath);
+        // Try to get the property via the component system
+        var componentResult = Component.GetProperty(propertyPath);
+
+        if (componentResult.IsFailure)
+        {
+            // Use reflection to check if the derived ComponentEditor class exposes a matching public property.
+            var editorResult = GetComponentEditorProperty(propertyPath);
+            if (editorResult.IsSuccess)
+            {
+                var json = editorResult.Value;
+                return Result<string>.Ok(json);
+            }
+        }
+
+        return componentResult;
     }
 
     public Result SetProperty(string propertyPath, string jsonValue, bool insert = false)
@@ -144,5 +159,46 @@ public abstract class ComponentEditorBase : IComponentEditor
     {
         // Forward component property changes to the form
         NotifyFormPropertyChanged(propertyPath);
+    }
+
+    private Result<string> GetComponentEditorProperty(string propertyPath)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(propertyPath) || !propertyPath.StartsWith("/"))
+            {
+                return Result<string>.Fail();
+            }
+
+            // Convert to PascalCase with no leading slash
+            var name = propertyPath.Substring(1);
+            var propertyName = char.ToUpperInvariant(name[0]) + name.Substring(1);
+
+            // Search for a matching property (case sensitive)
+            var ownerType = this.GetType();
+            var properties = ownerType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var propertyInfo = properties.FirstOrDefault(prop =>
+                Attribute.IsDefined(prop, typeof(ComponentPropertyAttribute)) &&
+                 string.Equals(propertyName, prop.Name, StringComparison.Ordinal)
+            );
+
+            if (propertyInfo is null)
+            {
+                return Result<string>.Fail();
+            }
+
+            var value = propertyInfo.GetValue(this);
+            if (value is null)
+            {
+                return Result<string>.Fail();
+            }
+
+            var json = JsonSerializer.Serialize(value);
+            return Result<string>.Ok(json);
+        }
+        catch
+        {
+            return Result<string>.Fail();
+        }
     }
 }

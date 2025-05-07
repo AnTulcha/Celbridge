@@ -14,5 +14,9 @@
     "tooltip": "Save screenplay data to the Excel file",
     "icon": "Save",
     "buttonId": "SaveScreenplay"
+  },
+  {
+    "element": "TextBlock",
+    "text": "/testProperty"
   }
 ]
