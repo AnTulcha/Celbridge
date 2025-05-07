@@ -68,41 +68,59 @@ public abstract class ComponentEditorBase : IComponentEditor
 
     public Result<string> GetProperty(string propertyPath)
     {
-        var overrideResult = TryGetProperty(propertyPath);
-        if (overrideResult.IsSuccess)
+        var getOverrideResult = TryGetProperty(propertyPath);
+        if (getOverrideResult.IsSuccess)
         {
             // Derived class has intercepted this property
-            return overrideResult;
+            return getOverrideResult;
         }
 
         // Try to get the property via the component system
-        var componentResult = Component.GetProperty(propertyPath);
+        var getComponentResult = Component.GetProperty(propertyPath);
 
-        if (componentResult.IsFailure)
+        if (getComponentResult.IsFailure)
         {
-            // Use reflection to check if the derived ComponentEditor class exposes a matching public property.
-            var editorResult = GetComponentEditorProperty(propertyPath);
-            if (editorResult.IsSuccess)
+            // Use reflection to check if the derived ComponentEditor class exposes a matching public getter.
+            var getEditorResult = GetComponentEditorProperty(propertyPath);
+            if (getEditorResult.IsSuccess)
             {
-                var json = editorResult.Value;
+                var json = getEditorResult.Value;
                 return Result<string>.Ok(json);
             }
         }
 
-        return componentResult;
+        return getComponentResult;
     }
 
     public Result SetProperty(string propertyPath, string jsonValue, bool insert = false)
     {
-        var setResult = TrySetProperty(propertyPath, jsonValue);
-        if (setResult.IsSuccess)
+        var setOverrideResult = TrySetProperty(propertyPath, jsonValue);
+        if (setOverrideResult.IsSuccess)
         {
             // The derived class has intercepted this property get
             return Result.Ok();
         }
 
         // Set the property on the component
-        return Component.SetProperty(propertyPath, jsonValue, insert);
+        var setComponentResult = Component.SetProperty(propertyPath, jsonValue, insert);
+
+        if (setComponentResult.IsFailure)
+        {
+            // Use reflection to check if the derived ComponentEditor class exposes a matching public setter.
+            var setEditorResult = SetComponentEditorProperty(propertyPath, jsonValue);
+            if (setEditorResult.IsSuccess)
+            {
+                var changed = setEditorResult.Value;
+                if (changed)
+                {
+                    NotifyFormPropertyChanged(propertyPath);
+                }
+
+                return Result.Ok();
+            }
+        }
+
+        return setComponentResult;
     }
 
     protected virtual Result<string> TryGetProperty(string propertyPath)
@@ -165,23 +183,7 @@ public abstract class ComponentEditorBase : IComponentEditor
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(propertyPath) || !propertyPath.StartsWith("/"))
-            {
-                return Result<string>.Fail();
-            }
-
-            // Convert to PascalCase with no leading slash
-            var name = propertyPath.Substring(1);
-            var propertyName = char.ToUpperInvariant(name[0]) + name.Substring(1);
-
-            // Search for a matching property (case sensitive)
-            var ownerType = this.GetType();
-            var properties = ownerType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            var propertyInfo = properties.FirstOrDefault(prop =>
-                Attribute.IsDefined(prop, typeof(ComponentPropertyAttribute)) &&
-                 string.Equals(propertyName, prop.Name, StringComparison.Ordinal)
-            );
-
+            PropertyInfo? propertyInfo = GetPropertyInfo(propertyPath);
             if (propertyInfo is null)
             {
                 return Result<string>.Fail();
@@ -200,5 +202,67 @@ public abstract class ComponentEditorBase : IComponentEditor
         {
             return Result<string>.Fail();
         }
+    }
+
+    private Result<bool> SetComponentEditorProperty(string propertyPath, string jsonValue)
+    {
+        try
+        {
+            PropertyInfo? propertyInfo = GetPropertyInfo(propertyPath);
+            if (propertyInfo is null)
+            {
+                return Result<bool>.Fail();
+            }
+
+            if (propertyInfo.CanRead)
+            {
+                var value = propertyInfo.GetValue(this);
+                if (value is null)
+                {
+                    return Result<bool>.Fail();
+                }
+
+                var currentValue = JsonSerializer.Serialize(value);
+                if (jsonValue == currentValue)
+                {
+                    // Value has not changed
+                    return Result<bool>.Ok(false);
+                }
+            }
+
+            // Set the new value
+
+            var deserialized = JsonSerializer.Deserialize(jsonValue, propertyInfo.PropertyType);
+            propertyInfo.SetValue(this, deserialized, null);
+
+            // Value has changed
+            return Result<bool>.Ok(true);
+        }
+        catch
+        {
+            return Result<bool>.Fail();
+        }
+    }
+
+    private PropertyInfo? GetPropertyInfo(string propertyPath)
+    {
+        if (string.IsNullOrWhiteSpace(propertyPath) || !propertyPath.StartsWith("/"))
+        {
+            return null;
+        }
+
+        // Convert propertyPath to PascalCase with no leading slash
+        var name = propertyPath.Substring(1);
+        var propertyName = char.ToUpperInvariant(name[0]) + name.Substring(1);
+
+        // Search for a matching property (case sensitive)
+        var ownerType = this.GetType();
+        var properties = ownerType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var propertyInfo = properties.FirstOrDefault(prop =>
+            Attribute.IsDefined(prop, typeof(ComponentPropertyAttribute)) &&
+             string.Equals(propertyName, prop.Name, StringComparison.Ordinal)
+        );
+
+        return propertyInfo;
     }
 }

@@ -17,6 +17,6 @@
   },
   {
     "element": "TextBlock",
-    "text": "/testProperty"
+    "text": "/errorMessage"
   }
 ]

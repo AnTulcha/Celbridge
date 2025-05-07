@@ -2,6 +2,7 @@ using Celbridge.Dialog;
 using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.Logging;
+using Celbridge.Messaging;
 using Celbridge.Screenplay.Components;
 using Celbridge.Workspace;
 using ClosedXML.Excel;
@@ -20,6 +21,7 @@ public class ScreenplaySaver
     private const string SceneNoteColor = "a8e6a3";
 
     private readonly ILogger<ScreenplaySaver> _logger;
+    private readonly IMessengerService _messengerService;
     private readonly IExplorerService _explorerService;
     private readonly IWorkspaceWrapper _workspaceWrapper;
 
@@ -27,10 +29,12 @@ public class ScreenplaySaver
 
     public ScreenplaySaver(
         ILogger<ScreenplaySaver> logger,
+        IMessengerService messengerService,
         IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
+        _messengerService = messengerService;
         _workspaceWrapper = workspaceWrapper;
         _explorerService = workspaceWrapper.WorkspaceService.ExplorerService;
     }
@@ -65,38 +69,43 @@ public class ScreenplaySaver
             var collectSceneDataResult = CollectSceneData(entityService, sceneFiles);
             if (collectSceneDataResult.IsFailure)
             {
-                return Result.Fail("Failed to collect dialogue data")
+                return Result.Fail("Failed to collect scene data")
                     .WithErrors(collectSceneDataResult);
             }
             var sceneDataList = collectSceneDataResult.Value;
 
             bool succeeded = true;
-            var errorMessage = string.Empty;
             var activityService = _workspaceWrapper.WorkspaceService.ActivityService;
             foreach (var sceneData in sceneDataList)
             {
                 var sceneResource = sceneData.SceneResource;
                 var annotateResult = activityService.AnnotateEntity(sceneResource);
-                if (annotateResult.IsFailure)
+                if (annotateResult.IsSuccess)
                 {
-                    // Todo: Log the error?
-                    succeeded = false;
-                    break;
-                }
-                var annotation = annotateResult.Value;
+                    var annotation = annotateResult.Value;
 
-                if (annotation.TryGetError(out var entityError) &&
-                    entityError!.Severity >= AnnotationErrorSeverity.Error)
+                    if (annotation.TryGetError(out var entityError) &&
+                        entityError!.Severity >= AnnotationErrorSeverity.Error)
+                    {
+                        succeeded = false;
+                    }
+                }
+                else
                 {
-                    _logger.LogError($"Failed to save screenplay. Please fix errors in '{sceneResource}' and try again.");
                     succeeded = false;
-                    break;
+                }
+
+                if (!succeeded)
+                {
+                    // Broadcast a message to notify the user about the error via the inspector panel for the ScreenplayData component.
+                    var message = new SaveScreenplayErrorMessage(sceneResource);
+                    _messengerService.Send(message);
                 }
             }
 
             if (!succeeded)
             {
-                return Result.Fail($"Failed to annotate resource");
+                return Result.Fail($"Failed to annotate scene resources");
             }
 
             var saveWorksheetResult = SaveDialogueWorksheet(workbookPath, sceneDataList);
