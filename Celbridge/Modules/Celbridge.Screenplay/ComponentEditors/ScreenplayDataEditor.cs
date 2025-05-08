@@ -1,9 +1,11 @@
-using System.Text.Json;
 using Celbridge.Commands;
+using Celbridge.Documents;
 using Celbridge.Entities;
+using Celbridge.Explorer;
 using Celbridge.Messaging;
 using Celbridge.Screenplay.Commands;
 using Celbridge.Screenplay.Services;
+using System.Text.Json;
 
 namespace Celbridge.Screenplay.Components;
 
@@ -19,6 +21,11 @@ public class ScreenplayDataEditor : ComponentEditorBase
 
     [ComponentProperty]
     public string ErrorMessage { get; set; } = string.Empty;
+
+    [ComponentProperty]
+    public string ErrorVisibility { get; set; } = Visibility.Collapsed.ToString();
+
+    private ResourceKey _errorSceneResource;
 
     public ScreenplayDataEditor(
         IMessengerService messengerService,
@@ -57,20 +64,18 @@ public class ScreenplayDataEditor : ComponentEditorBase
 
     private void OnSaveScreenplayErrorMessage(object recipient, SaveScreenplayErrorMessage message)
     {
-        var sceneResource = message.SceneResource;
-        var sceneFile = Path.GetFileName(sceneResource);
+        _errorSceneResource = message.SceneResource;
+        var sceneFile = Path.GetFileName(_errorSceneResource);
 
         var errorMessage = $"Save failed. Please fix all errors in '{sceneFile}' and try again.";
 
-        var json = JsonSerializer.Serialize(errorMessage);
-        SetProperty("/errorMessage", json);
+        SetProperty("/errorMessage", JsonSerializer.Serialize(errorMessage));
+        SetProperty("/errorVisibility", JsonSerializer.Serialize(Visibility.Visible.ToString()));
     }
 
     public override void OnButtonClicked(string buttonId)
     {
-        // Clear the error message
-        var json = JsonSerializer.Serialize(string.Empty);
-        SetProperty("/errorMessage", json);
+        bool clearErrorMessage = false;
 
         if (buttonId == "LoadScreenplay")
         {
@@ -78,6 +83,8 @@ public class ScreenplayDataEditor : ComponentEditorBase
             {
                 command.WorkbookResource = Component.Key.Resource;
             });
+
+            clearErrorMessage = true;
         }
         else if (buttonId == "SaveScreenplay")
         {
@@ -85,6 +92,27 @@ public class ScreenplayDataEditor : ComponentEditorBase
             {
                 command.WorkbookResource = Component.Key.Resource;
             });
+
+            clearErrorMessage = true;
+        }
+        else if (buttonId == "OpenScene")
+        {
+            _commandService.Execute<IOpenDocumentCommand>(command =>
+            {
+                command.FileResource= _errorSceneResource;
+            });
+
+            _commandService.Execute<ISelectResourceCommand>(command =>
+            {
+                command.Resource = _errorSceneResource;
+            });
+        }
+
+        if (clearErrorMessage)
+        {
+            SetProperty("/errorMessage", JsonSerializer.Serialize(string.Empty));
+            SetProperty("/errorVisibility", JsonSerializer.Serialize(Visibility.Collapsed.ToString()));
+            _errorSceneResource = string.Empty;
         }
     }
 }

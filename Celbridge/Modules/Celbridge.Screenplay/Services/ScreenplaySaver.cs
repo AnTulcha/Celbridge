@@ -74,11 +74,14 @@ public class ScreenplaySaver
             }
             var sceneDataList = collectSceneDataResult.Value;
 
-            bool succeeded = true;
+            bool allSucceeded = true;
+
             var activityService = _workspaceWrapper.WorkspaceService.ActivityService;
             foreach (var sceneData in sceneDataList)
             {
+                bool annotateSucceeded = true;
                 var sceneResource = sceneData.SceneResource;
+
                 var annotateResult = activityService.AnnotateEntity(sceneResource);
                 if (annotateResult.IsSuccess)
                 {
@@ -87,23 +90,25 @@ public class ScreenplaySaver
                     if (annotation.TryGetError(out var entityError) &&
                         entityError!.Severity >= AnnotationErrorSeverity.Error)
                     {
-                        succeeded = false;
+                        annotateSucceeded = false;
                     }
                 }
                 else
                 {
-                    succeeded = false;
+                    annotateSucceeded = false;
                 }
 
-                if (!succeeded)
+                if (!annotateSucceeded)
                 {
+                    allSucceeded = false;
+
                     // Broadcast a message to notify the user about the error via the inspector panel for the ScreenplayData component.
                     var message = new SaveScreenplayErrorMessage(sceneResource);
                     _messengerService.Send(message);
                 }
             }
 
-            if (!succeeded)
+            if (!allSucceeded)
             {
                 return Result.Fail($"Failed to annotate scene resources");
             }

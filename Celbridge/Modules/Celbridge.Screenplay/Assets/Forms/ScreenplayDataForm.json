@@ -16,7 +16,23 @@
     "buttonId": "SaveScreenplay"
   },
   {
-    "element": "TextBlock",
-    "text": "/errorMessage"
+    "element": "StackPanel",
+    "orientation": "Vertical",
+    "horizontalAlignment": "Center",
+    "visibility": "/errorVisibility",
+    "children": [
+      {
+        "element": "TextBlock",
+        "text": "/errorMessage"
+      },
+      {
+        "element": "Button",
+        "horizontalAlignment": "Center",
+        "text": "Open scene",
+        "tooltip": "Open the scene document containing the error",
+        "icon": "OpenFile",
+        "buttonId": "OpenScene"
+      }
+    ]
   }
 ]
