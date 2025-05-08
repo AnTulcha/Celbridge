@@ -20,7 +20,6 @@ public class ScreenplaySaver
     private const string PlayerVariantColor = "e3e3e3";
     private const string SceneNoteColor = "a8e6a3";
 
-    private readonly ILogger<ScreenplaySaver> _logger;
     private readonly IMessengerService _messengerService;
     private readonly IExplorerService _explorerService;
     private readonly IWorkspaceWrapper _workspaceWrapper;
@@ -28,12 +27,10 @@ public class ScreenplaySaver
     private record SceneData(ResourceKey SceneResource, string Category, string Namespace, IComponentProxy SceneComponent, List<IComponentProxy> DialogueComponents);
 
     public ScreenplaySaver(
-        ILogger<ScreenplaySaver> logger,
         IMessengerService messengerService,
         IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
-        _logger = logger;
         _messengerService = messengerService;
         _workspaceWrapper = workspaceWrapper;
         _explorerService = workspaceWrapper.WorkspaceService.ExplorerService;

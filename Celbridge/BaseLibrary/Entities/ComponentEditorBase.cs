@@ -255,7 +255,7 @@ public abstract class ComponentEditorBase : IComponentEditor
         var name = propertyPath.Substring(1);
         var propertyName = char.ToUpperInvariant(name[0]) + name.Substring(1);
 
-        // Search for a matching property (case sensitive)
+        // Search for a matching property on this class (case sensitive)
         var ownerType = this.GetType();
         var properties = ownerType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
         var propertyInfo = properties.FirstOrDefault(prop =>
