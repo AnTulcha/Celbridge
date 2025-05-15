@@ -20,10 +20,16 @@ public class ScreenplayDataEditor : ComponentEditorBase
     public const string ComponentType = "Screenplay.ScreenplayData";
 
     [ComponentProperty]
-    public string ErrorMessage { get; set; } = string.Empty;
+    public bool ShowInfo { get; set; }
 
     [ComponentProperty]
-    public string ErrorVisibility { get; set; } = Visibility.Collapsed.ToString();
+    public string InfoMessage { get; set; } = string.Empty;
+
+    [ComponentProperty]
+    public string InfoTitle { get; set; } = string.Empty;
+
+    [ComponentProperty]
+    public string InfoSeverity { get; set; } = nameof(InfoBarSeverity.Informational);
 
     private ResourceKey _errorSceneResource;
 
@@ -67,10 +73,13 @@ public class ScreenplayDataEditor : ComponentEditorBase
         _errorSceneResource = message.SceneResource;
         var sceneFile = Path.GetFileName(_errorSceneResource);
 
-        var errorMessage = $"Save failed. Please fix all errors in '{sceneFile}' and try again.";
+        var infoTitle = "Save failed";
+        var infoMessage = $"Please fix '{sceneFile}' and try again.";
 
-        SetProperty("/errorMessage", JsonSerializer.Serialize(errorMessage));
-        SetProperty("/errorVisibility", JsonSerializer.Serialize(Visibility.Visible.ToString()));
+        SetProperty("/showInfo", JsonSerializer.Serialize(true));
+        SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
+        SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
+        SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Error)));
     }
 
     public override void OnButtonClicked(string buttonId)
@@ -110,8 +119,10 @@ public class ScreenplayDataEditor : ComponentEditorBase
 
         if (clearErrorMessage)
         {
-            SetProperty("/errorMessage", JsonSerializer.Serialize(string.Empty));
-            SetProperty("/errorVisibility", JsonSerializer.Serialize(Visibility.Collapsed.ToString()));
+            SetProperty("/showInfo", JsonSerializer.Serialize(Visibility.Collapsed.ToString()));
+            SetProperty("/infoTitle", JsonSerializer.Serialize(string.Empty));
+            SetProperty("/infoMessage", JsonSerializer.Serialize(string.Empty));
+            SetProperty("/infoSeverity", JsonSerializer.Serialize(InfoBarSeverity.Informational));
             _errorSceneResource = string.Empty;
         }
     }
