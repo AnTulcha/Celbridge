@@ -59,16 +59,18 @@ public class ScreenplayDataEditor : ComponentEditorBase
     public override void OnFormLoaded()
     {
         base.OnFormLoaded();
-        _messengerService.Register<SaveScreenplayErrorMessage>(this, OnSaveScreenplayErrorMessage);
+        _messengerService.Register<SaveScreenplayFailedMessage>(this, OnSaveScreenplayErrorMessage);
+        _messengerService.Register<SaveScreenplaySucceededMessage>(this, OnSaveScreenplaySucceededMessage);
     }
 
     public override void OnFormUnloaded()
     {
         base.OnFormUnloaded();
-        _messengerService.Unregister<SaveScreenplayErrorMessage>(this);
+        _messengerService.Unregister<SaveScreenplayFailedMessage>(this);
+        _messengerService.Unregister<SaveScreenplaySucceededMessage>(this);
     }
 
-    private void OnSaveScreenplayErrorMessage(object recipient, SaveScreenplayErrorMessage message)
+    private void OnSaveScreenplayErrorMessage(object recipient, SaveScreenplayFailedMessage message)
     {
         _errorSceneResource = message.SceneResource;
         var sceneFile = Path.GetFileName(_errorSceneResource);
@@ -80,6 +82,18 @@ public class ScreenplayDataEditor : ComponentEditorBase
         SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
         SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
         SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Error)));
+    }
+
+    private void OnSaveScreenplaySucceededMessage(object recipient, SaveScreenplaySucceededMessage message)
+    {
+        var infoTitle = "Save succeeded";
+        var infoMessage = $"The screenplay saved successfully.";
+
+        SetProperty("/showInfo", JsonSerializer.Serialize(true));
+        SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
+        SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
+        SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Success)));
+        SetProperty("/buttonId", JsonSerializer.Serialize(string.Empty));
     }
 
     public override void OnButtonClicked(string buttonId)
@@ -119,7 +133,7 @@ public class ScreenplayDataEditor : ComponentEditorBase
 
         if (clearErrorMessage)
         {
-            SetProperty("/showInfo", JsonSerializer.Serialize(Visibility.Collapsed.ToString()));
+            SetProperty("/showInfo", JsonSerializer.Serialize(false));
             SetProperty("/infoTitle", JsonSerializer.Serialize(string.Empty));
             SetProperty("/infoMessage", JsonSerializer.Serialize(string.Empty));
             SetProperty("/infoSeverity", JsonSerializer.Serialize(InfoBarSeverity.Informational));

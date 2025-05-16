@@ -266,6 +266,7 @@ public partial class InfoBarElement : FormElement
 
         return Result.Ok();
     }
+
     private Result ApplyButtonConfig(JsonElement config, InfoBar infoBar)
     {
         if (config.TryGetProperty("buttonId", out var buttonIdProperty))
