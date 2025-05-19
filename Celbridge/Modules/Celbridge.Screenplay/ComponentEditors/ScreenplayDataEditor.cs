@@ -31,6 +31,12 @@ public class ScreenplayDataEditor : ComponentEditorBase
     [ComponentProperty]
     public string InfoSeverity { get; set; } = nameof(InfoBarSeverity.Informational);
 
+    [ComponentProperty]
+    public Visibility ButtonVisibility { get; set; } = Visibility.Collapsed;
+
+    [ComponentProperty]
+    public string ButtonText { get; set; } = string.Empty;
+
     private ResourceKey _errorSceneResource;
 
     public ScreenplayDataEditor(
@@ -82,6 +88,8 @@ public class ScreenplayDataEditor : ComponentEditorBase
         SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
         SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
         SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Error)));
+        SetProperty("/buttonVisibility", JsonSerializer.Serialize(Visibility.Visible));
+        SetProperty("/buttonText", JsonSerializer.Serialize("Open the scene"));
     }
 
     private void OnSaveScreenplaySucceededMessage(object recipient, SaveScreenplaySucceededMessage message)
@@ -93,7 +101,8 @@ public class ScreenplayDataEditor : ComponentEditorBase
         SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
         SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
         SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Success)));
-        SetProperty("/buttonId", JsonSerializer.Serialize(string.Empty));
+        SetProperty("/buttonVisibility", JsonSerializer.Serialize(Visibility.Collapsed));
+        SetProperty("/buttonText", JsonSerializer.Serialize(string.Empty));
     }
 
     public override void OnButtonClicked(string buttonId)
@@ -136,7 +145,10 @@ public class ScreenplayDataEditor : ComponentEditorBase
             SetProperty("/showInfo", JsonSerializer.Serialize(false));
             SetProperty("/infoTitle", JsonSerializer.Serialize(string.Empty));
             SetProperty("/infoMessage", JsonSerializer.Serialize(string.Empty));
-            SetProperty("/infoSeverity", JsonSerializer.Serialize(InfoBarSeverity.Informational));
+            SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Informational)));
+            SetProperty("/buttonVisibility", JsonSerializer.Serialize(Visibility.Collapsed));
+            SetProperty("/buttonText", JsonSerializer.Serialize(string.Empty));
+
             _errorSceneResource = string.Empty;
         }
     }
