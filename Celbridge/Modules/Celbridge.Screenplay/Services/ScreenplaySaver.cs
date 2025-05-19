@@ -70,7 +70,7 @@ public class ScreenplaySaver
             }
             var sceneDataList = collectSceneDataResult.Value;
 
-            ResourceKey errorScene = ResourceKey.Empty;
+            var errorScene = ResourceKey.Empty;
 
             var activityService = _workspaceWrapper.WorkspaceService.ActivityService;
             foreach (var sceneData in sceneDataList)
