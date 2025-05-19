@@ -21,8 +21,11 @@
     "isClosable": true,
     "title": "/infoTitle",
     "message": "/infoMessage",
-    "severity":  "/infoSeverity",
-    "buttonId": "OpenScene",
-    "buttonText": "Open scene"
+    "severity": "/infoSeverity",
+    "actionButton": {
+      "visibility": "/buttonVisibility",
+      "text": "/buttonText",
+      "buttonId": "OpenScene"
+    }
   }
 ]
