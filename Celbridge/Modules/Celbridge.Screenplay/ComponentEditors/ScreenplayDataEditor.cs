@@ -29,7 +29,7 @@ public class ScreenplayDataEditor : ComponentEditorBase
     public string InfoTitle { get; set; } = string.Empty;
 
     [ComponentProperty]
-    public string InfoSeverity { get; set; } = nameof(InfoBarSeverity.Informational);
+    public InfoBarSeverity InfoSeverity { get; set; } = InfoBarSeverity.Informational;
 
     [ComponentProperty]
     public Visibility ButtonVisibility { get; set; } = Visibility.Collapsed;
@@ -87,7 +87,7 @@ public class ScreenplayDataEditor : ComponentEditorBase
         SetProperty("/showInfo", JsonSerializer.Serialize(true));
         SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
         SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
-        SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Error)));
+        SetProperty("/infoSeverity", JsonSerializer.Serialize(InfoBarSeverity.Error));
         SetProperty("/buttonVisibility", JsonSerializer.Serialize(Visibility.Visible));
         SetProperty("/buttonText", JsonSerializer.Serialize("Open the scene"));
     }
@@ -100,7 +100,7 @@ public class ScreenplayDataEditor : ComponentEditorBase
         SetProperty("/showInfo", JsonSerializer.Serialize(true));
         SetProperty("/infoTitle", JsonSerializer.Serialize(infoTitle));
         SetProperty("/infoMessage", JsonSerializer.Serialize(infoMessage));
-        SetProperty("/infoSeverity", JsonSerializer.Serialize(nameof(InfoBarSeverity.Success)));
+        SetProperty("/infoSeverity", JsonSerializer.Serialize(InfoBarSeverity.Success));
         SetProperty("/buttonVisibility", JsonSerializer.Serialize(Visibility.Collapsed));
         SetProperty("/buttonText", JsonSerializer.Serialize(string.Empty));
     }

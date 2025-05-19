@@ -29,7 +29,7 @@ public partial class InfoBarElement : FormElement
 
     [ObservableProperty]
     private InfoBarSeverity _severity = InfoBarSeverity.Informational;
-    private PropertyBinder<string>? _severityBinder;
+    private PropertyBinder<InfoBarSeverity>? _severityBinder;
 
     protected override Result<FrameworkElement> CreateUIElement(JsonElement config, FormBuilder formBuilder)
     {
@@ -238,16 +238,15 @@ public partial class InfoBarElement : FormElement
         {
             if (configValue.IsBindingConfig())
             {
-                _severityBinder = PropertyBinder<string>.Create(infoBar, this)
+                _severityBinder = PropertyBinder<InfoBarSeverity>.Create(infoBar, this)
                     .Binding(InfoBar.SeverityProperty, BindingMode.OneWay, nameof(Severity))
                     .Setter((value) =>
                     {
-                        var severity = Enum.Parse<InfoBarSeverity>(value);
-                        Severity = severity;
+                        Severity = value;
                     })
                     .Getter(() =>
                     {
-                        return Severity.ToString();
+                        return Severity;
                     });
 
                 return _severityBinder.Initialize(configValue);
@@ -318,10 +317,5 @@ public partial class InfoBarElement : FormElement
         _messageBinder?.OnElementUnloaded();
         _isClosableBinder?.OnElementUnloaded();
         _severityBinder?.OnElementUnloaded();
-    }
-
-    private void OnButtonClicked(string buttonId)
-    {
-        FormDataProvider?.OnButtonClicked(buttonId);
     }
 }
