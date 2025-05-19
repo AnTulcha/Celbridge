@@ -51,8 +51,7 @@ public partial class InfoBarElement : FormElement
             "title",
             "message",
             "severity",
-            "buttonId",
-            "buttonText"
+            "actionButton"
         });
 
         if (validateResult.IsFailure)
@@ -111,11 +110,11 @@ public partial class InfoBarElement : FormElement
                 .WithErrors(severityResult);
         }
 
-        var buttonIdResult = ApplyButtonConfig(config, infoBar);
-        if (buttonIdResult.IsFailure)
+        var buttonResult = ApplyActionButtonConfig(config, formBuilder, infoBar);
+        if (buttonResult.IsFailure)
         {
-            return Result<FrameworkElement>.Fail($"Failed to apply 'buttonId' config property")
-                .WithErrors(buttonIdResult);
+            return Result<FrameworkElement>.Fail($"Failed to apply 'actionButton' config property")
+                .WithErrors(buttonResult);
         }
 
         return Result<FrameworkElement>.Ok(infoBar);
@@ -267,44 +266,27 @@ public partial class InfoBarElement : FormElement
         return Result.Ok();
     }
 
-    private Result ApplyButtonConfig(JsonElement config, InfoBar infoBar)
+    private Result ApplyActionButtonConfig(JsonElement config, FormBuilder formBuilder, InfoBar infoBar)
     {
-        if (config.TryGetProperty("buttonId", out var buttonIdProperty))
+        if (config.TryGetProperty("actionButton", out var actionButtonProperty))
         {
             // Check the type
-            if (buttonIdProperty.ValueKind != JsonValueKind.String)
+            if (actionButtonProperty.ValueKind != JsonValueKind.Object)
             {
-                return Result.Fail("'buttonId' property must be a string");
+                return Result.Fail("'actionButton' property must be an object");
             }
 
-            // Apply the property
-            var buttonId = buttonIdProperty.GetString();
-            if (string.IsNullOrEmpty(buttonId))
+            var createButtonResult = ButtonElement.CreateButton(actionButtonProperty, formBuilder);
+            if (createButtonResult.IsFailure)
             {
-                return Result.Fail("'buttonId' property must not be empty");
+                return Result.Fail($"Failed to create action button")
+                    .WithErrors(createButtonResult);
             }
+            var actionButton = createButtonResult.Value as Button;
 
-            var buttonText = buttonId;
-            if (config.TryGetProperty("buttonText", out var buttonTextProperty))
-            {
-                if (buttonTextProperty.ValueKind != JsonValueKind.String)
-                {
-                    return Result.Fail("'buttonText' property must be a string");
-                }
+            Guard.IsNotNull(actionButton);
 
-                buttonText = buttonTextProperty.GetString();
-            }
-
-            var button = new Button
-            {
-                Content = buttonText
-            };
-            button.Click += (sender, e) =>
-            {
-                OnButtonClicked(buttonId);
-            };
-
-            infoBar.ActionButton = button;
+            infoBar.ActionButton = actionButton;
         }
 
         return Result.Ok();
