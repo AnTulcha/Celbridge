@@ -183,7 +183,7 @@ public partial class ComponentValueEditorViewModel : ObservableObject
             {
                 var entityAnnotation = getAnnotationResult.Value;
 
-                if (entityAnnotation.ComponentAnnotationCount >= componentKey.ComponentIndex)
+                if (componentKey.ComponentIndex < entityAnnotation.ComponentAnnotationCount)
                 {
                     var componentAnnotation = entityAnnotation.GetComponentAnnotation(componentKey.ComponentIndex);
 
