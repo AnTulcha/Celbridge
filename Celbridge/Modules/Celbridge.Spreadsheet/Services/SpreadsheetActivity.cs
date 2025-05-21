@@ -115,7 +115,7 @@ public class SpreadsheetActivity : IActivity
                 continue;
             }
 
-            var isSpreadsheetComponent = component.Schema.GetBooleanAttribute("isSpreadsheetComponent");
+            var isSpreadsheetComponent = component.SchemaReader.GetBooleanAttribute("isSpreadsheetComponent");
 
             if (isSpreadsheetComponent)
             {

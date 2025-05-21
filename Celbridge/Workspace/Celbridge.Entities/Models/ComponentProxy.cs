@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Celbridge.Entities.Services;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -18,7 +19,7 @@ public class ComponentProxy : IComponentProxy
     {
         get
         {
-            var rootActivity = Schema.GetStringAttribute("rootActivity");
+            var rootActivity = SchemaReader.GetStringAttribute("rootActivity");
             return !string.IsNullOrEmpty(rootActivity);
         }
     }
@@ -26,6 +27,8 @@ public class ComponentProxy : IComponentProxy
     public ComponentKey Key { get; }
 
     public ComponentSchema Schema { get; }
+
+    public IComponentSchemaReader SchemaReader { get; }
 
     public event Action<string>? ComponentPropertyChanged;
 
@@ -38,6 +41,9 @@ public class ComponentProxy : IComponentProxy
 
         Key = componentKey;
         Schema = schema;
+
+        // Create a schema reader for easier access to schema attributes
+        SchemaReader = serviceProvider.GetRequiredService<IComponentSchemaReaderFactory>().Create(schema);
 
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
     }

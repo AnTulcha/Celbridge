@@ -99,7 +99,7 @@ public class ActivityService : IActivityService, IDisposable
 
         // Get the root component and check that it has a "rootActivity" attribute
         var rootComponent = components[0];
-        var activityName = rootComponent.Schema.GetStringAttribute("rootActivity");
+        var activityName = rootComponent.SchemaReader.GetStringAttribute("rootActivity");
         if (string.IsNullOrEmpty(activityName))
         {
             hasValidRootComponent = false;
@@ -122,7 +122,7 @@ public class ActivityService : IActivityService, IDisposable
             else if (i > 0)
             {
                 // Check if this is a root component that's in the wrong position
-                var rootActivity = component.Schema.GetStringAttribute("rootActivity");
+                var rootActivity = component.SchemaReader.GetStringAttribute("rootActivity");
                 if (!string.IsNullOrEmpty(rootActivity))
                 {
                     hasValidRootComponent = false;
