@@ -9,6 +9,10 @@
       "type": "string",
       "const": "Screenplay.Line#1"
     },
+    "lineType": {
+      "type": "string",
+      "enum": ["NPC", "Player", "PlayerVariant", "SceneNote" ]
+    },
     "dialogueKey": {
       "type": "string"
     },
@@ -49,6 +53,7 @@
 
   "required": [
     "_type",
+    "lineType",
     "dialogueKey",
     "characterId",
     "sourceText",
@@ -64,6 +69,7 @@
   ],
 
   "prototype": {
+    "lineType": "NPC",
     "dialogueKey": "",
     "characterId": "",
     "sourceText": "",
@@ -75,6 +81,6 @@
     "direction": "",
     "platform": "",
     "soundProcessing": "",
-    "productionStatus": ""
+    "productionStatus": "Placeholder"
   }
 }

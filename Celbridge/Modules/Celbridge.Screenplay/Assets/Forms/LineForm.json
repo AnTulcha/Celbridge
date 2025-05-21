@@ -1,5 +1,10 @@
 [
   {
+    "element": "ComboBox",
+    "header": "Line Type",
+    "selectedValue": "/lineType"
+  },
+  {
     "element": "StackPanel",
     "orientation": "Horizontal",
     "children": [

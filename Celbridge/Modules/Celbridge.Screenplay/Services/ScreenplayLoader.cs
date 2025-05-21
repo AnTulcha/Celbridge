@@ -573,6 +573,7 @@ public class ScreenplayLoader
                 {
                     var lineComponent = new JsonObject();
                     lineComponent["_type"] = "Screenplay.Line#1";
+                    lineComponent["lineType"] = "NPC"; // Todo: Use correct type
                     lineComponent["dialogueKey"] = line.DialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = line.SpeakingTo;
