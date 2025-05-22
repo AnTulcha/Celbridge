@@ -86,7 +86,7 @@ public class ScreenplayLoader
 
             // Load the dialogue lines from the "Dialogue" worksheet
             var dialogueWorksheet = workbook.Worksheet("Dialogue");
-            var loadLinesResult = LoadLines(dialogueWorksheet);
+            var loadLinesResult = LoadLines(dialogueWorksheet, characters);
             if (loadLinesResult.IsFailure)
             {
                 return Result.Fail($"Failed to load dialogue lines from 'Dialogue' worksheet")
@@ -268,7 +268,7 @@ public class ScreenplayLoader
         return Result<List<Scene>>.Ok(scenes);
     }
 
-    private Result<List<DialogueLine>> LoadLines(IXLWorksheet linesSheet)
+    private Result<List<DialogueLine>> LoadLines(IXLWorksheet linesSheet, List<Character> characters)
     {
         var lines = new List<DialogueLine>();
 
@@ -316,8 +316,13 @@ public class ScreenplayLoader
         {
             try
             {
+                var characterId = TryGetValue<string>(row, columnMap, nameof(DialogueLine.CharacterId));
+
+                var lineType = GetLineType(characterId, characters);
+
                 var line = new DialogueLine
                 (
+                    LineType: lineType,
                     DialogueKey: TryGetValue<string>(row, columnMap, nameof(DialogueLine.DialogueKey)),
                     Category: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Category)),
                     Namespace: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Namespace)),
@@ -344,6 +349,38 @@ public class ScreenplayLoader
         }
 
         return Result<List<DialogueLine>>.Ok(lines);
+    }
+
+    private static string GetLineType(string characterId, List<Character> characters)
+    {
+        if (characterId == "SceneNote")
+        {
+            return "SceneNote";
+        }
+        else if (characterId == "Player")
+        {
+            return "Player";
+        }
+        else
+        {
+            foreach (var character in characters)
+            {
+                if (character.CharacterId == characterId)
+                {
+                    if (character.Tag.StartsWith("Character.Player."))
+                    {
+                        return "PlayerVariant";
+                    }
+                    else if (character.Tag.StartsWith("Character."))
+                    {
+                        return "NPC";
+                    }
+                    break;
+                }
+            }
+        }
+        
+        return "None";
     }
 
     private Result ValidateDialogue(List<Scene> scenes, List<Character> characters, List<DialogueLine> lines)
@@ -573,7 +610,7 @@ public class ScreenplayLoader
                 {
                     var lineComponent = new JsonObject();
                     lineComponent["_type"] = "Screenplay.Line#1";
-                    lineComponent["lineType"] = "NPC"; // Todo: Use correct type
+                    lineComponent["lineType"] = line.LineType;
                     lineComponent["dialogueKey"] = line.DialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = line.SpeakingTo;

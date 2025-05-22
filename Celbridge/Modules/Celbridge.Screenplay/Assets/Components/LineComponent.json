@@ -11,7 +11,7 @@
     },
     "lineType": {
       "type": "string",
-      "enum": ["NPC", "Player", "PlayerVariant", "SceneNote" ]
+      "enum": [ "Player", "PlayerVariant", "NPC", "SceneNote" ]
     },
     "dialogueKey": {
       "type": "string"
@@ -69,12 +69,12 @@
   ],
 
   "prototype": {
-    "lineType": "NPC",
+    "lineType": "Player",
     "dialogueKey": "",
-    "characterId": "",
+    "characterId": "Player",
     "sourceText": "",
     "contextNotes": "",
-    "linePriority": "",
+    "linePriority": "Default",
     "speakingTo": "",
     "gameArea": "",
     "timeConstraint": "",
