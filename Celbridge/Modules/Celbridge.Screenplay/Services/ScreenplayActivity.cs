@@ -196,6 +196,25 @@ public class ScreenplayActivity : IActivity
             var component = lineComponents[i];
 
             //
+            // Get the line type
+            //
+
+            var lineType = component.GetString(LineEditor.LineType);
+            if (lineType != "Player" &&
+                lineType != "PlayerVariant" &&
+                lineType != "NPC" &&
+                lineType != "SceneNote")
+            {
+                entityAnnotation.AddComponentError(i, new AnnotationError(
+                    AnnotationErrorSeverity.Error,
+                    "Invalid line type",
+                    "The line type must be Player, PlayerVariant, NPC or SceneNote"));
+
+                continue;
+            }
+
+
+            //
             // Get the character id
             //
 
@@ -219,7 +238,8 @@ public class ScreenplayActivity : IActivity
                     break;
                 }
             }
-            if (character is null)
+            if (lineType != "SceneNote" &&
+                character is null)
             {
                 entityAnnotation.AddComponentError(i, new AnnotationError(
                     AnnotationErrorSeverity.Error,
@@ -254,43 +274,48 @@ public class ScreenplayActivity : IActivity
             bool isPlayerVariantLine = false;
             var correctLineId = lineId;
 
-            if (character.Tag == "Character.Player")
+            if (lineType != "SceneNote")
             {
-                // Start of a new player line group
-                playerLineId = lineId;
-                playerSpeakingTo = speakingTo;
-            }
-            else if (character.Tag.StartsWith("Character.Player."))
-            {
-                // Player variants lines must be part of a player line group
-                if (string.IsNullOrEmpty(playerLineId))
-                {
-                    entityAnnotation.AddComponentError(i, new AnnotationError(
-                        AnnotationErrorSeverity.Error,
-                        "Invalid player variant line",
-                        "Player variant lines must be part of a player line group"));
-                }
-                else
-                {
-                    // Flag this as a player variant line
-                    isPlayerVariantLine = true;
-                    correctLineId = playerLineId; // Variant lines must have the same line id as the player line
+                Guard.IsNotNull(character);
 
-                    // Speaking To property must match the player line
-                    if (speakingTo != playerSpeakingTo)
+                if (character.Tag == "Character.Player")
+                {
+                    // Start of a new player line group
+                    playerLineId = lineId;
+                    playerSpeakingTo = speakingTo;
+                }
+                else if (character.Tag.StartsWith("Character.Player."))
+                {
+                    // Player variants lines must be part of a player line group
+                    if (string.IsNullOrEmpty(playerLineId))
                     {
                         entityAnnotation.AddComponentError(i, new AnnotationError(
                             AnnotationErrorSeverity.Error,
                             "Invalid player variant line",
-                            "Player variant line 'Speaking To' value must exactly match the player line 'Speaking To' value"));
+                            "Player variant lines must be part of a player line group"));
+                    }
+                    else
+                    {
+                        // Flag this as a player variant line
+                        isPlayerVariantLine = true;
+                        correctLineId = playerLineId; // Variant lines must have the same line id as the player line
+
+                        // Speaking To property must match the player line
+                        if (speakingTo != playerSpeakingTo)
+                        {
+                            entityAnnotation.AddComponentError(i, new AnnotationError(
+                                AnnotationErrorSeverity.Error,
+                                "Invalid player variant line",
+                                "Player variant line 'Speaking To' value must exactly match the player line 'Speaking To' value"));
+                        }
                     }
                 }
-            }
-            else
-            {
-                // This is an NPC line, so stop tracking the player line group
-                playerLineId = string.Empty;
-                playerSpeakingTo = string.Empty;
+                else
+                {
+                    // This is an NPC line, so stop tracking the player line group
+                    playerLineId = string.Empty;
+                    playerSpeakingTo = string.Empty;
+                }
             }
              
             // Ensure that a valid dialogue key is always assigned.

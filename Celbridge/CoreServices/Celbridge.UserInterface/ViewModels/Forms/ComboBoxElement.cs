@@ -173,9 +173,8 @@ public partial class ComboBoxElement : FormElement
                 if (configValue.IsBindingConfig())
                 {
                     _valuesBinder = PropertyBinder<List<string>>.Create(comboBox, this)
-                        .Binding(ComboBox.ItemsSourceProperty,
-                            BindingMode.OneWay,
-                            nameof(Values))
+                        .Binding(ComboBox.ItemsSourceProperty, BindingMode.TwoWay, nameof(Values))
+                        .Getter(() => Values )
                         .Setter((value) =>
                         {
                             Values = value;
@@ -267,16 +266,19 @@ public partial class ComboBoxElement : FormElement
     {
         _isEnabledBinder?.OnFormDataChanged(propertyPath);
         _selectedValueBinder?.OnFormDataChanged(propertyPath);
+        _valuesBinder?.OnFormDataChanged(propertyPath);
     }
 
     protected override void OnMemberDataChanged(string propertyName)
     {
         _selectedValueBinder?.OnMemberDataChanged(propertyName);
+        _valuesBinder?.OnMemberDataChanged(propertyName);
     }
 
     protected override void OnElementUnloaded()
     {
         _isEnabledBinder?.OnElementUnloaded();
         _selectedValueBinder?.OnElementUnloaded();
+        _valuesBinder?.OnElementUnloaded();
     }
 }

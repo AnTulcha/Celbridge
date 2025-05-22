@@ -15,6 +15,7 @@ public class LineEditor : ComponentEditorBase
     private const string _formPath = "Celbridge.Screenplay.Assets.Forms.LineForm.json";
 
     public const string ComponentType = "Screenplay.Line";
+    public const string LineType = "/lineType";
     public const string DialogueKey = "/dialogueKey";
     public const string CharacterId = "/characterId";
     public const string SpeakingTo = "/speakingTo";
@@ -96,15 +97,18 @@ public class LineEditor : ComponentEditorBase
         // Get list of available characters to populate the Character combo box
         if (propertyPath == "/characterIds")
         {
-            var getCharactersResult = GetCharactersAsJSON();
+            var getCharactersResult = GetFilteredCharacterIds();
             if (getCharactersResult.IsFailure)
             {
                 return Result<string>.Fail($"Failed to get character ids")
                     .WithErrors(getCharactersResult);
             }
-            var characterIdJson = getCharactersResult.Value;
+            var characterIds = getCharactersResult.Value;
 
-            return Result<string>.Ok(characterIdJson);
+            // Convert the character id list to JSON so we can return it as a component property
+            var charactersJson = JsonSerializer.Serialize(characterIds);
+
+            return Result<string>.Ok(charactersJson);
         }
 
         return Result<string>.Fail();
@@ -118,32 +122,90 @@ public class LineEditor : ComponentEditorBase
         }
     }
 
-    private Result<string> GetCharactersAsJSON()
-    {
-        // Get the list of characters
-        var getCharactersResult = GetCharacters();
-        if (getCharactersResult.IsFailure)
+    protected override void OnFormPropertyChanged(string propertyPath)
+    { 
+        if (propertyPath == "/lineType")
         {
-            return Result<string>.Fail($"Failed to get characters")
-                .WithErrors(getCharactersResult);
+            // Update the character id list, filtered for the new line type
+            NotifyFormPropertyChanged("/characterIds");
+
+            // Get the filtered list of character ids            
+            var getResult = GetProperty("/characterIds");
+            if (getResult.IsFailure)
+            {
+                return;
+            }
+            var characterIdsJson = getResult.Value;
+            var characterIds = JsonSerializer.Deserialize<List<string>>(characterIdsJson) ?? new List<string>();
+
+            // Get the currently selected character id
+            var characterId = Component.GetString(CharacterId);
+            if (string.IsNullOrEmpty(characterId) ||
+                !characterIds.Contains(characterId))
+            {
+                // If the current character id is not in the filtered list, default to the first character id in the list
+                if (characterIds.Count > 0)
+                {
+                    var characterIdJson = JsonSerializer.Serialize(characterIds[0]);
+                    Component.SetProperty(CharacterId, characterIdJson);
+                }
+                else
+                {
+                    Component.SetProperty(CharacterId, JsonSerializer.Serialize(string.Empty));
+                }
+            }
         }
-        var characters = getCharactersResult.Value;
-
-        // Build a list of character ids
-        var characterIds = new List<string>();
-        foreach (var character in characters)
-        {
-            var characterId = character.CharacterId;
-            characterIds.Add(characterId);
-        }
-
-        // Convert the character id list to JSON so we can return it as a component property
-        var characterIdsJson = JsonSerializer.Serialize(characterIds);
-
-        return Result<string>.Ok(characterIdsJson);
     }
 
-    private Result<List<Character>> GetCharacters()
+    private Result<List<string>> GetFilteredCharacterIds()
+    {
+        var characterIds = new List<string>();
+
+        var lineType = Component.GetString(LineEditor.LineType);
+
+        // Filter the character list based on the line type
+        if (lineType == "NPC" || lineType == "PlayerVariant")
+        {
+            var getCharactersResult = GetAllCharacters();
+            if (getCharactersResult.IsFailure)
+            {
+                return Result<List<string>>.Fail($"Failed to get characters")
+                    .WithErrors(getCharactersResult);
+            }
+            var characters = getCharactersResult.Value;
+
+            // Build a list of character ids
+            foreach (var character in characters)
+            {
+                if (lineType == "PlayerVariant" && !character.Tag.StartsWith("Character.Player."))
+                {
+                    continue;
+                }
+
+                if (lineType == "NPC" && character.Tag.StartsWith("Character.Player"))
+                {
+                    continue;
+                }
+
+                var characterId = character.CharacterId;
+                characterIds.Add(characterId);
+            }
+        }
+        else if (lineType == "Player")
+        {
+            // Single character id in list: "Player"
+            characterIds.Add("Player");
+        }
+        else if (lineType == "SceneNote")
+        {
+            // Single character id in list: "SceneNote"
+            characterIds.Add("SceneNote");
+        }
+
+        return Result<List<string>>.Ok(characterIds);
+    }
+
+    private Result<List<Character>> GetAllCharacters()
     {
         // Get the scene component on this entity
         var sceneComponentKey = new ComponentKey(Component.Key.Resource, 0);
@@ -207,7 +269,7 @@ public class LineEditor : ComponentEditorBase
         // Get the list of characters from the screenplay
         //
 
-        var getCharactersResult = GetCharacters();
+        var getCharactersResult = GetAllCharacters();
         if (getCharactersResult.IsFailure)
         {
             _logger.LogError($"Failed to update dialogue key. {getCharactersResult.Error}");
@@ -225,15 +287,21 @@ public class LineEditor : ComponentEditorBase
             _logger.LogError($"Failed to update dialogue key. Character id is empty.");
             return;
         }
-        var speakingCharacter = characters.FirstOrDefault(c => c.CharacterId == characterId);
-        if (speakingCharacter is null)
+
+        bool isPlayerVariant = false;
+        if (characterId != "SceneNote")
         {
-            _logger.LogError($"Failed to update dialogue key. No character matching '{characterId}' was found.");
-            return;
+            var speakingCharacter = characters.FirstOrDefault(c => c.CharacterId == characterId);
+            if (speakingCharacter is null)
+            {
+                _logger.LogError($"Failed to update dialogue key. No character matching '{characterId}' was found.");
+                return;
+            }
+
+            // Note if the current line is a player variant line
+            isPlayerVariant = speakingCharacter.Tag.StartsWith("Character.Player.");
         }
 
-        // Note if the current line is a player variant line
-        bool isPlayerVariant = speakingCharacter.Tag.StartsWith("Character.Player.");
 
         //
         // Get the namespace from the Scene component on this entity
