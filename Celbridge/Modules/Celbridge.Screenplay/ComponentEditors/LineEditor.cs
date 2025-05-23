@@ -112,18 +112,48 @@ public class LineEditor : ComponentEditorBase
         }
         else if (propertyPath == "/characterIdVisibility")
         {
+            // Determine visiblity for Character Id field
             var lineType = Component.GetString(LineEditor.LineType);
             switch (lineType)
             {
                 case "Player":
                     return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
-
                 case "PlayerVariant":
                     return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
-
                 case "NPC":
                     return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
-
+                case "SceneNote":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+            }
+        }
+        else if (propertyPath == "/variantVisibility")
+        {
+            // Determine visiblity for several different fields
+            var lineType = Component.GetString(LineEditor.LineType);
+            switch (lineType)
+            {
+                case "Player":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+                case "PlayerVariant":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+                case "NPC":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+                case "SceneNote":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+            }
+        }
+        else if (propertyPath == "/directionVisibility")
+        {
+            // Determine visibility for Direction field
+            var lineType = Component.GetString(LineEditor.LineType);
+            switch (lineType)
+            {
+                case "Player":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+                case "PlayerVariant":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+                case "NPC":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
                 case "SceneNote":
                     return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
             }
@@ -144,9 +174,12 @@ public class LineEditor : ComponentEditorBase
     { 
         if (propertyPath == "/lineType")
         {
-            // Update the character id list, filtered for the new line type
+            // Update virtual properties when the line type changes
+            // The character ids list will be filtered depending on the line type.
             NotifyFormPropertyChanged("/characterIds");
             NotifyFormPropertyChanged("/characterIdVisibility");
+            NotifyFormPropertyChanged("/variantVisibility");
+            NotifyFormPropertyChanged("/directionVisibility");
 
             // Get the filtered list of character ids            
             var getResult = GetProperty("/characterIds");
