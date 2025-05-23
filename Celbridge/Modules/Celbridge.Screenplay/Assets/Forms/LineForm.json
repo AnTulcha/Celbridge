@@ -25,6 +25,7 @@
   },
   {
     "element": "ComboBox",
+    "visibility": "/characterIdVisibility",
     "header": "Character",
     "values": "/characterIds",
     "selectedValue": "/characterId"

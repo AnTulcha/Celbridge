@@ -110,6 +110,24 @@ public class LineEditor : ComponentEditorBase
 
             return Result<string>.Ok(charactersJson);
         }
+        else if (propertyPath == "/characterIdVisibility")
+        {
+            var lineType = Component.GetString(LineEditor.LineType);
+            switch (lineType)
+            {
+                case "Player":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+
+                case "PlayerVariant":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+
+                case "NPC":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+
+                case "SceneNote":
+                    return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+            }
+        }
 
         return Result<string>.Fail();
     }
@@ -128,6 +146,7 @@ public class LineEditor : ComponentEditorBase
         {
             // Update the character id list, filtered for the new line type
             NotifyFormPropertyChanged("/characterIds");
+            NotifyFormPropertyChanged("/characterIdVisibility");
 
             // Get the filtered list of character ids            
             var getResult = GetProperty("/characterIds");
