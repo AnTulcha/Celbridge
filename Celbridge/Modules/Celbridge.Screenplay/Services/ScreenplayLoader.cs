@@ -600,11 +600,23 @@ public class ScreenplayLoader
             {
                 if (line.CharacterId == "SceneNote")
                 {
-                    var emptyComponent = new JsonObject();
-                    emptyComponent["_type"] = ".Empty#1";
-                    emptyComponent["comment"] = line.SourceText;
+                    var lineComponent = new JsonObject();
+                    lineComponent["_type"] = "Screenplay.Line#1";
+                    lineComponent["lineType"] = line.LineType;
+                    lineComponent["dialogueKey"] = line.DialogueKey;
+                    lineComponent["characterId"] = line.CharacterId;
+                    lineComponent["speakingTo"] = string.Empty;
+                    lineComponent["sourceText"] = line.SourceText;
+                    lineComponent["contextNotes"] = string.Empty;
+                    lineComponent["direction"] = string.Empty;
+                    lineComponent["gameArea"] = string.Empty;
+                    lineComponent["timeConstraint"] = string.Empty;
+                    lineComponent["soundProcessing"] = string.Empty;
+                    lineComponent["platform"] = string.Empty;
+                    lineComponent["linePriority"] = string.Empty;
+                    lineComponent["productionStatus"] = string.Empty;
 
-                    components.Add(emptyComponent);
+                    components.Add(lineComponent);
                 }
                 else
                 {

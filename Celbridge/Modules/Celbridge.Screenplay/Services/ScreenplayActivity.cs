@@ -636,20 +636,22 @@ public class ScreenplayActivity : IActivity
 
                 var directionText = WebUtility.HtmlEncode(component.GetString(LineEditor.Direction));
 
-                sb.AppendLine($"<div class=\"{lineClass}\">");
-                sb.AppendLine($"  <span class=\"character {colorClass}\">{displayCharacter}</span>");
-                if (!string.IsNullOrEmpty(directionText))
+                if (characterId == "SceneNote")
                 {
-                    sb.AppendLine($"  <span class=\"direction\">({directionText})</span>");
+                    // Add scene note to the screenplay
+                    sb.AppendLine($"<div class=\"scene-note\">{sourceText}</div>");
                 }
-                sb.AppendLine($"  <span class=\"dialogue\">{sourceText}</span>");
-                sb.AppendLine("</div>");
-            }
-            else if (component.Schema.ComponentType == EntityConstants.EmptyComponentType)
-            {
-                // Add scene note to the screenplay
-                var commentText = component.GetString("/comment");
-                sb.AppendLine($"<div class=\"scene-note\">{commentText}</div>");
+                else
+                {
+                    sb.AppendLine($"<div class=\"{lineClass}\">");
+                    sb.AppendLine($"  <span class=\"character {colorClass}\">{displayCharacter}</span>");
+                    if (!string.IsNullOrEmpty(directionText))
+                    {
+                        sb.AppendLine($"  <span class=\"direction\">({directionText})</span>");
+                    }
+                    sb.AppendLine($"  <span class=\"dialogue\">{sourceText}</span>");
+                    sb.AppendLine("</div>");
+                }
             }
         }
 
