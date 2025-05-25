@@ -318,13 +318,22 @@ public class ScreenplayLoader
             {
                 var characterId = TryGetValue<string>(row, columnMap, nameof(DialogueLine.CharacterId));
 
-                var lineType = GetLineType(characterId, characters);
+                // Determine the line type
+                var lineTypeResult = GetLineType(characterId, characters);
+                if (lineTypeResult.IsFailure)
+                {
+                    return Result<List<DialogueLine>>.Fail($"Failed to determine line type at row '{row}'")
+                        .WithErrors(lineTypeResult);
+                }
+                var lineType = lineTypeResult.Value;
+
+                var category = TryGetValue<string> (row, columnMap, nameof(DialogueLine.Category));
 
                 var line = new DialogueLine
                 (
                     LineType: lineType,
                     DialogueKey: TryGetValue<string>(row, columnMap, nameof(DialogueLine.DialogueKey)),
-                    Category: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Category)),
+                    Category: category,
                     Namespace: TryGetValue<string>(row, columnMap, nameof(DialogueLine.Namespace)),
                     CharacterId: TryGetValue<string>(row, columnMap, nameof(DialogueLine.CharacterId)),
                     SpeakingTo: TryGetValue<string>(row, columnMap, nameof(DialogueLine.SpeakingTo)),
@@ -351,15 +360,15 @@ public class ScreenplayLoader
         return Result<List<DialogueLine>>.Ok(lines);
     }
 
-    private static string GetLineType(string characterId, List<Character> characters)
+    private static Result<string> GetLineType(string characterId, List<Character> characters)
     {
         if (characterId == "SceneNote")
         {
-            return "SceneNote";
+            return Result<string>.Ok("SceneNote");
         }
         else if (characterId == "Player")
         {
-            return "Player";
+            return Result<string>.Ok("Player");
         }
         else
         {
@@ -369,18 +378,17 @@ public class ScreenplayLoader
                 {
                     if (character.Tag.StartsWith("Character.Player."))
                     {
-                        return "PlayerVariant";
+                        return Result<string>.Ok("PlayerVariant");
                     }
-                    else if (character.Tag.StartsWith("Character."))
+                    else
                     {
-                        return "NPC";
+                        return Result<string>.Ok("NPC");
                     }
-                    break;
                 }
             }
         }
         
-        return "None";
+        return Result<string>.Fail("Invalid line type");
     }
 
     private Result ValidateDialogue(List<Scene> scenes, List<Character> characters, List<DialogueLine> lines)

@@ -299,15 +299,6 @@ public class ScreenplayActivity : IActivity
                         // Flag this as a player variant line
                         isPlayerVariantLine = true;
                         correctLineId = playerLineId; // Variant lines must have the same line id as the player line
-
-                        // Speaking To property must match the player line
-                        if (speakingTo != playerSpeakingTo)
-                        {
-                            entityAnnotation.AddComponentError(i, new AnnotationError(
-                                AnnotationErrorSeverity.Error,
-                                "Invalid player variant line",
-                                "Player variant line 'Speaking To' value must exactly match the player line 'Speaking To' value"));
-                        }
                     }
                 }
                 else

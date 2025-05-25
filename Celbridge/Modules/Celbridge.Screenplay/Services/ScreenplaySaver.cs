@@ -10,6 +10,19 @@ namespace Celbridge.Screenplay.Services;
 
 public class ScreenplaySaver
 {
+    private record PlayerLine()
+    {
+        public string LineId { get; init; } = string.Empty;
+        public string SpeakingTo { get; init; } = string.Empty;
+        public string ContextNotes { get; init; } = string.Empty;
+        public string GameArea { get; init; } = string.Empty;
+        public string TimeConstraint { get; init; } = string.Empty;
+        public string SoundProcessing { get; init; } = string.Empty;
+        public string Platform { get; init; } = string.Empty;
+        public string LinePriority { get; init; } = string.Empty;
+        public string ProductionStatus { get; init; } = string.Empty;
+    };
+
     private const string CinematicColor = "f6d6ad";
     private const string ConversationColor = "f4b6c2";
     private const string BarkColor = "ccc0da";
@@ -182,8 +195,7 @@ public class ScreenplaySaver
             processedNamespaces.Add(ns);
 
             var dialogueComponents = components
-                .Where(c => c.Schema.ComponentType == LineEditor.ComponentType ||
-                            c.Schema.ComponentType == EntityConstants.EmptyComponentType)
+                .Where(c => c.Schema.ComponentType == LineEditor.ComponentType)
                 .ToList();
 
             var sceneData = new SceneData(sceneResource, category, ns, sceneComponent, dialogueComponents);
@@ -235,13 +247,14 @@ public class ScreenplaySaver
             var categoryColor = GetCategoryColor(sceneData.Category);
             var nsColor = namespaceIndex++ % 2 == 1 ? NamespaceColorA : NamespaceColorB;
 
-            var playerLineId = string.Empty;
+            PlayerLine? playerLine = null;
+
             int sceneNoteIndex = 1;
 
             foreach (var dialogue in sceneData.DialogueComponents)
             {
                 // playerLineId and sceneNoteIndex may be modified when we write a row
-                WriteDialogueRow(
+                var writeResult = WriteDialogueRow(
                     editedSheet, 
                     rowIndex, 
                     sceneData.
@@ -250,8 +263,13 @@ public class ScreenplaySaver
                     categoryColor, 
                     nsColor, 
                     dialogue, 
-                    ref playerLineId, 
+                    ref playerLine, // Use the returned player line (if any) on the next iteration
                     ref sceneNoteIndex);
+
+                if (writeResult.IsFailure)
+                {
+                    return Result.Fail($"Failed to write dialogue row {rowIndex}");
+                }
 
                 rowIndex++;
             }
@@ -265,7 +283,7 @@ public class ScreenplaySaver
         return Result.Ok();
     }
 
-    private void WriteDialogueRow(IXLWorksheet sheet, int row, string category, string ns, string categoryColor, string nsColor, IComponentProxy component, ref string playerLineId, ref int sceneNoteIndex)
+    private Result WriteDialogueRow(IXLWorksheet sheet, int row, string category, string ns, string categoryColor, string nsColor, IComponentProxy component, ref PlayerLine? playerLine, ref int sceneNoteIndex)
     {
         sheet.Cell(row, 1).Value = category;
         sheet.Cell(row, 1).Style.Fill.BackgroundColor = XLColor.FromHtml(categoryColor);
@@ -275,57 +293,122 @@ public class ScreenplaySaver
 
         if (component.Schema.ComponentType == LineEditor.ComponentType)
         {
-            var characterId = component.GetString(LineEditor.CharacterId);
+            //
+            // Acquire core line information
+            //
+
+            var lineType = component.GetString(LineEditor.LineType);
             var dialogueKey = component.GetString(LineEditor.DialogueKey);
-            var lineId = dialogueKey[(dialogueKey.LastIndexOf('-') + 1)..];
-
-            sheet.Cell(row, 3).Value = dialogueKey;
-            sheet.Cell(row, 4).Value = characterId;
-
-            if (characterId == "Player")
-            {
-                playerLineId = lineId;
-                FillCells(sheet, row, new[] { 3, 4 }, PlayerColor);
-            }
-            else if (lineId == playerLineId)
-            {
-                FillCells(sheet, row, new[] { 3, 4 }, PlayerVariantColor);
-            }
-            else
-            {
-                playerLineId = string.Empty;
-            }
-
+            var characterId = component.GetString(LineEditor.CharacterId);
             var sourceText = component.GetString(LineEditor.SourceText);
+            var speakingTo = component.GetString(LineEditor.SpeakingTo);
+            var contextNotes = component.GetString(LineEditor.ContextNotes);
+            var direction = component.GetString(LineEditor.Direction);
+            var gameArea = component.GetString(LineEditor.GameArea);
+            var timeConstraint = component.GetString(LineEditor.TimeConstraint);
+            var soundProcessing = component.GetString(LineEditor.SoundProcessing);
+            var platform = component.GetString(LineEditor.Platform);
+            var linePriority = component.GetString(LineEditor.LinePriority);
+            var productionStatus = component.GetString(LineEditor.ProductionStatus);
+
+            var lineId = dialogueKey[(dialogueKey.LastIndexOf('-') + 1)..];
+            var isSceneNote = false;
+
+            // Excel uses a single apostrophe to indicate raw text.
+            // This causes problems if the first word in a sentence is a contraction, e.g. 'Fraid so.
+            // Todo: Should we do this for all free text entry fields?
             if (sourceText.StartsWith("'") && !sourceText.StartsWith("''"))
             {
+                // Escape single leading apostrophes by replacing with double apostrophes.
                 sourceText = $"'{sourceText}";
             }
 
-            sheet.Cell(row, 5).Value = component.GetString(LineEditor.SpeakingTo);
+            //
+            // Handle different Line Types
+            //
+
+            if (lineType == "Player")
+            {
+                // Start a new player line
+                // Record the properties to be copied for player variant lines
+                playerLine = new PlayerLine()
+                {
+                    LineId = lineId,
+                    SpeakingTo = speakingTo,
+                    ContextNotes = contextNotes,
+                    GameArea = gameArea,
+                    TimeConstraint = timeConstraint,
+                    SoundProcessing = soundProcessing,
+                    Platform = platform,
+                    LinePriority = linePriority,
+                    ProductionStatus = productionStatus
+                };
+
+                FillCells(sheet, row, new[] { 3, 4 }, PlayerColor);
+            }
+            else if (lineType == "PlayerVariant")
+            {
+                Guard.IsNotNull(playerLine);
+                    
+                // For Player Variant lines these fields all duplication the parent Player Line
+                lineId = playerLine.LineId;
+                speakingTo = playerLine.SpeakingTo;
+                contextNotes = playerLine.ContextNotes;
+                gameArea = playerLine.GameArea;
+                timeConstraint = playerLine.TimeConstraint;
+                soundProcessing = playerLine.SoundProcessing;
+                platform = playerLine.Platform;
+                linePriority = playerLine.LinePriority;
+                productionStatus = playerLine.ProductionStatus;
+
+                dialogueKey = $"{characterId}-{ns}-{lineId}";
+
+                FillCells(sheet, row, new[] { 3, 4 }, PlayerVariantColor);
+            }
+            else if (lineType == "SceneNote")
+            {
+                playerLine = null;
+
+                isSceneNote = true;
+                characterId = "SceneNote";
+
+                // Override the dialogue key for scene notes
+                // Todo: Do we still need to do this? Could we just treat them as regular dialogue lines now?
+                dialogueKey = $"SceneNote-{ns}-Note{sceneNoteIndex++}";
+                FillCells(sheet, row, Enumerable.Range(3, 12), SceneNoteColor);
+            }
+            else if (lineType == "NPC")
+            {
+                playerLine = null;
+            }
+            else
+            {
+                return Result.Fail($"Invalid line type '{lineType}'");
+            }
+
+            //
+            // Populate the spreadsheet
+            //
+
+            sheet.Cell(row, 3).Value = dialogueKey;
+            sheet.Cell(row, 4).Value = characterId;
             sheet.Cell(row, 6).Value = sourceText;
-            sheet.Cell(row, 7).Value = component.GetString(LineEditor.ContextNotes);
-            sheet.Cell(row, 8).Value = component.GetString(LineEditor.Direction);
-            sheet.Cell(row, 9).Value = component.GetString(LineEditor.GameArea);
-            sheet.Cell(row, 10).Value = component.GetString(LineEditor.TimeConstraint);
-            sheet.Cell(row, 11).Value = component.GetString(LineEditor.SoundProcessing);
-            sheet.Cell(row, 12).Value = component.GetString(LineEditor.Platform);
-            sheet.Cell(row, 13).Value = component.GetString(LineEditor.LinePriority);
-            sheet.Cell(row, 14).Value = component.GetString(LineEditor.ProductionStatus);
+
+            if (!isSceneNote)
+            {
+                sheet.Cell(row, 5).Value = speakingTo;
+                sheet.Cell(row, 7).Value = contextNotes;
+                sheet.Cell(row, 8).Value = direction;
+                sheet.Cell(row, 9).Value = gameArea;
+                sheet.Cell(row, 10).Value = timeConstraint;
+                sheet.Cell(row, 11).Value = soundProcessing;
+                sheet.Cell(row, 12).Value = platform;
+                sheet.Cell(row, 13).Value = linePriority;
+                sheet.Cell(row, 14).Value = productionStatus;
+            }
         }
-        else if (component.Schema.ComponentType == EntityConstants.EmptyComponentType)
-        {
-            var commentText = component.GetString("/comment");
-            var noteKey = $"SceneNote-{ns}-Note{sceneNoteIndex++}";
 
-            sheet.Cell(row, 3).Value = noteKey;
-            sheet.Cell(row, 4).Value = "SceneNote";
-            sheet.Cell(row, 6).Value = commentText;
-
-            FillCells(sheet, row, Enumerable.Range(3, 12), SceneNoteColor);
-
-            playerLineId = string.Empty;
-        }
+        return Result.Ok();
     }
 
     private void AppendBarkDialogue(IXLWorksheet originalSheet, IXLWorksheet targetSheet, int startRow)
