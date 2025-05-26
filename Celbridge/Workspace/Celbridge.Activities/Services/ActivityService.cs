@@ -115,7 +115,7 @@ public class ActivityService : IActivityService, IDisposable
         {
             // Empty components are always valid in any position.
             var component = components[i];
-            if (component.Schema.ComponentType == EntityConstants.EmptyComponentType)
+            if (component.IsComponentType(EntityConstants.EmptyComponentType))
             {
                 entityAnnotation.SetIsRecognized(i);
             }
@@ -145,7 +145,7 @@ public class ActivityService : IActivityService, IDisposable
             for (int i = 0; i < components.Count; i++)
             {
                 var component = components[i];
-                if (component.Schema.ComponentType != EntityConstants.EmptyComponentType)
+                if (!component.IsComponentType(EntityConstants.EmptyComponentType))
                 {
                     entityAnnotation.AddComponentError(i, new AnnotationError(
                         AnnotationErrorSeverity.Critical,

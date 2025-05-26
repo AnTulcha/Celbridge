@@ -268,7 +268,7 @@ public class LineEditor : ComponentEditorBase
                 .WithErrors(getComponentResult);
         }
         var sceneComponent = getComponentResult.Value;
-        if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
+        if (!sceneComponent.IsComponentType(SceneEditor.ComponentType))
         {
             return Result<List<Character>>.Fail($"Root component is not a Scene component");
         }
@@ -359,7 +359,7 @@ public class LineEditor : ComponentEditorBase
         // Get the namespace from the Scene component on this entity
         //
 
-        if (components[0].Schema.ComponentType != SceneEditor.ComponentType)
+        if (!components[0].IsComponentType(SceneEditor.ComponentType))
         {
             _logger.LogError($"Failed to update dialogue key. First component is not a Scene component.");
             return;
@@ -385,7 +385,7 @@ public class LineEditor : ComponentEditorBase
         for (int i = 0; i < components.Count; i++)
         {
             var lineComponent = components[i];
-            if (lineComponent.Schema.ComponentType != ComponentType)
+            if (!lineComponent.IsComponentType(ComponentType))
             {
                 // Skip non-line components
                 continue;

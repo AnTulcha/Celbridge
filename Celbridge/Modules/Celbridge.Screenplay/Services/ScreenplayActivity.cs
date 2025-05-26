@@ -109,7 +109,7 @@ public class ScreenplayActivity : IActivity
         //
 
         var sceneComponent = components[0];
-        if (sceneComponent.Schema.ComponentType == SceneEditor.ComponentType)
+        if (sceneComponent.IsComponentType(SceneEditor.ComponentType))
         {
             entityAnnotation.SetIsRecognized(0);
         }
@@ -158,13 +158,13 @@ public class ScreenplayActivity : IActivity
         {
             var component = components[i];
 
-            if (component.Schema.ComponentType == EntityConstants.EmptyComponentType)
+            if (component.IsComponentType(EntityConstants.EmptyComponentType))
             {
                 // Skip empty components
                 continue;
             }
 
-            if (component.Schema.ComponentType != LineEditor.ComponentType)
+            if (!component.IsComponentType(LineEditor.ComponentType))
             {
                 entityAnnotation.AddComponentError(i, new AnnotationError(
                     AnnotationErrorSeverity.Error,
@@ -438,7 +438,7 @@ public class ScreenplayActivity : IActivity
         var sceneComponent = getComponentResult.Value;
 
         // Check the component is a scene component
-        if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
+        if (!sceneComponent.IsComponentType(SceneEditor.ComponentType))
         {
             return Result<List<Character>>.Fail($"Root component of resource '{sceneResource}' is not a scene component");
         }
@@ -533,7 +533,7 @@ public class ScreenplayActivity : IActivity
         var components = getComponentsResult.Value;
 
         if (components.Count == 0 ||
-            components[0].Schema.ComponentType != SceneEditor.ComponentType)
+            !components[0].IsComponentType(SceneEditor.ComponentType))
         {
             return Result<string>.Fail("Entity does not contain a Scene component");
         }
@@ -590,7 +590,7 @@ public class ScreenplayActivity : IActivity
 
         foreach (var component in components)
         {
-            if (component.Schema.ComponentType == LineEditor.ComponentType)
+            if (component.IsComponentType(LineEditor.ComponentType))
             {
                 // Add line to the screenplay
 

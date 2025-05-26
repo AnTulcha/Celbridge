@@ -175,7 +175,7 @@ public class ScreenplaySaver
             }
 
             var sceneComponent = components[0];
-            if (sceneComponent.Schema.ComponentType != SceneEditor.ComponentType)
+            if (!sceneComponent.IsComponentType(SceneEditor.ComponentType))
             {
                 return Result<List<SceneData>>.Fail($"Root component is not a Scene component for scene file '{sceneFile}'");
             }
@@ -195,7 +195,7 @@ public class ScreenplaySaver
             processedNamespaces.Add(ns);
 
             var dialogueComponents = components
-                .Where(c => c.Schema.ComponentType == LineEditor.ComponentType)
+                .Where(c => c.IsComponentType(LineEditor.ComponentType))
                 .ToList();
 
             var sceneData = new SceneData(sceneResource, category, ns, sceneComponent, dialogueComponents);
@@ -291,7 +291,7 @@ public class ScreenplaySaver
         sheet.Cell(row, 2).Value = ns;
         sheet.Cell(row, 2).Style.Fill.BackgroundColor = XLColor.FromHtml(nsColor);
 
-        if (component.Schema.ComponentType == LineEditor.ComponentType)
+        if (component.IsComponentType(LineEditor.ComponentType))
         {
             //
             // Acquire core line information

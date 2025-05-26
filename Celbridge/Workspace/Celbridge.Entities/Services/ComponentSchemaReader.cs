@@ -12,19 +12,19 @@ public class ComponentSchemaReaderFactory : IComponentSchemaReaderFactory
 
 public class ComponentSchemaReader : IComponentSchemaReader
 {
-    private readonly ComponentSchema _schema;
+    public ComponentSchema Schema { get; init; }
 
     public ComponentSchemaReader(ComponentSchema schema)
     {
-        _schema = schema;
+        Schema = schema;
     }
 
-    public bool HasTag(string tag) => _schema.Tags.Contains(tag);
+    public bool HasTag(string tag) => Schema.Tags.Contains(tag);
 
     public Result<ComponentPropertyInfo> GetPropertyInfo(string propertyName)
     {
         var name = propertyName.TrimStart('/');
-        foreach (var property in _schema.Properties)
+        foreach (var property in Schema.Properties)
         {
             if (property.PropertyName.Equals(name, StringComparison.Ordinal))
             {
@@ -39,7 +39,7 @@ public class ComponentSchemaReader : IComponentSchemaReader
     {
         if (string.IsNullOrEmpty(propertyName))
         {
-            return _schema.Attributes.TryGetValue(attributeName, out var attributeValue) && bool.TryParse(attributeValue, out var result) && result;
+            return Schema.Attributes.TryGetValue(attributeName, out var attributeValue) && bool.TryParse(attributeValue, out var result) && result;
         }
 
         var getInfoResult = GetPropertyInfo(propertyName);
@@ -124,7 +124,7 @@ public class ComponentSchemaReader : IComponentSchemaReader
     {
         if (string.IsNullOrEmpty(propertyPath))
         {
-            return _schema.Attributes;
+            return Schema.Attributes;
         }
         else
         {

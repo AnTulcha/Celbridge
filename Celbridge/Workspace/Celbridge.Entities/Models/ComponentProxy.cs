@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Celbridge.Entities.Services;
 using Celbridge.Logging;
 using Celbridge.Messaging;
 using Celbridge.Workspace;
@@ -46,6 +45,11 @@ public class ComponentProxy : IComponentProxy
         SchemaReader = serviceProvider.GetRequiredService<IComponentSchemaReaderFactory>().Create(schema);
 
         _messengerService.Register<ComponentChangedMessage>(this, OnComponentChangedMessage);
+    }
+
+    public bool IsComponentType(string componentType)
+    {
+        return (SchemaReader.Schema.ComponentType == componentType);
     }
 
     // Property accessors
