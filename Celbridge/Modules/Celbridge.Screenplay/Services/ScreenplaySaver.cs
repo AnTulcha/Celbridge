@@ -10,6 +10,8 @@ namespace Celbridge.Screenplay.Services;
 
 public class ScreenplaySaver
 {
+    // Stores the properties from a Player line so that they can be propogated to the 
+    // following PlayerVariant lines.
     private record PlayerLine()
     {
         public string LineId { get; init; } = string.Empty;
@@ -294,7 +296,7 @@ public class ScreenplaySaver
         if (component.IsComponentType(LineEditor.ComponentType))
         {
             //
-            // Acquire core line information
+            // Acquire line properties from the Line component
             //
 
             var lineType = component.GetString(LineEditor.LineType);
@@ -350,7 +352,7 @@ public class ScreenplaySaver
             {
                 Guard.IsNotNull(playerLine);
                     
-                // For Player Variant lines these fields all duplication the parent Player Line
+                // For Player Variant lines these fields should all match the parent Player Line
                 lineId = playerLine.LineId;
                 speakingTo = playerLine.SpeakingTo;
                 contextNotes = playerLine.ContextNotes;
