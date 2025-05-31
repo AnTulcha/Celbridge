@@ -440,6 +440,8 @@ public class ScreenplayLoader
                     return Result.Fail($"Character '{characterId}' not found in characters list at row {row_index}");
                 }
             }
+
+            // Todo: Check that the dialogue key is valid and that there are no duplicates
         }
 
         return Result.Ok();
@@ -606,12 +608,23 @@ public class ScreenplayLoader
             // The line list may be empty if this is a newly created scene.
             foreach (var line in lineList)
             {
+                var dialogueKey = line.DialogueKey;
+
+                // Extract the line id
+                var lineIdIndex = dialogueKey.LastIndexOf('-');
+
+                // Todo: Move these checks to the validation step
+                Guard.IsFalse(lineIdIndex == -1);
+                Guard.IsFalse(dialogueKey.Length == lineIdIndex + 1);
+                var lineId = dialogueKey.Substring(lineIdIndex + 1);
+
                 if (line.CharacterId == "SceneNote")
                 {
                     var lineComponent = new JsonObject();
                     lineComponent["_type"] = "Screenplay.Line#1";
                     lineComponent["lineType"] = line.LineType;
-                    lineComponent["dialogueKey"] = line.DialogueKey;
+                    lineComponent["lineId"] = lineId;
+                    lineComponent["dialogueKey"] = dialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = string.Empty;
                     lineComponent["sourceText"] = line.SourceText;
@@ -631,7 +644,8 @@ public class ScreenplayLoader
                     var lineComponent = new JsonObject();
                     lineComponent["_type"] = "Screenplay.Line#1";
                     lineComponent["lineType"] = line.LineType;
-                    lineComponent["dialogueKey"] = line.DialogueKey;
+                    lineComponent["lineId"] = lineId;
+                    lineComponent["dialogueKey"] = dialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = line.SpeakingTo;
                     lineComponent["sourceText"] = line.SourceText;

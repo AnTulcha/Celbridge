@@ -16,6 +16,9 @@
     "dialogueKey": {
       "type": "string"
     },
+    "lineId": {
+      "type": "string"
+    },
     "characterId": {
       "type": "string"
     },

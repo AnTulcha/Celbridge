@@ -16,6 +16,7 @@ public class LineEditor : ComponentEditorBase
 
     public const string ComponentType = "Screenplay.Line";
     public const string LineType = "/lineType";
+    public const string LineId = "/lineId";
     public const string DialogueKey = "/dialogueKey";
     public const string CharacterId = "/characterId";
     public const string SpeakingTo = "/speakingTo";
@@ -162,7 +163,26 @@ public class LineEditor : ComponentEditorBase
         {
             return GetDirectionPlaceholderText();
         }
+        else if (propertyPath == "/lineId")
+        {
+            if (Component.GetString(LineType) == "PlayerVariant")
+            {
+                // Get the parent Player Line
+                var getParentResult = GetPlayerVariantParent();
+                if (getParentResult.IsSuccess)
+                {
+                    // Return the parent's Line Id
+                    var parentLine = getParentResult.Value;
+                    var lineId = parentLine.GetString(LineId);
+                    if (!string.IsNullOrEmpty(lineId))
+                    {
+                        return Result<string>.Ok(JsonSerializer.Serialize(lineId));
+                    }
+                }
+            }
+        }
 
+        // The property was not overridden
         return Result<string>.Fail();
     }
 
@@ -171,6 +191,10 @@ public class LineEditor : ComponentEditorBase
         if (buttonId == "UpdateDialogueKey")
         {
             UpdateDialogueKey();
+        }
+        else if (buttonId == "GenerateLineId")
+        {
+            UpdateLineId();
         }
     }
 
@@ -453,6 +477,85 @@ public class LineEditor : ComponentEditorBase
         Component.SetProperty(DialogueKey, jsonValue);
     }
 
+    private void UpdateLineId()
+    {
+        var generateResult = GenerateUniqueLineId();
+        if (generateResult.IsFailure)
+        {
+            // Todo: Show an alert if generating line id fails
+            _logger.LogError($"Failed to generate line id. {generateResult.Error}");
+            return;
+        }
+        var newLineId = generateResult.Value;
+
+        Component.SetProperty(LineId, JsonSerializer.Serialize(newLineId));
+    }
+
+
+    private Result<string> GenerateUniqueLineId()
+    {
+        //
+        // Get all components on this entity
+        //
+
+        var sceneResource = Component.Key.Resource;
+        var getComponentsResult = _entityService.GetComponents(sceneResource);
+        if (getComponentsResult.IsFailure)
+        {
+            return Result<string>.Fail($"Failed to get components for resource '{sceneResource}'")
+                .WithErrors(getComponentsResult);
+        }
+        var components = getComponentsResult.Value;
+        if (components.Count == 0)
+        {
+            return Result<string>.Fail($"Failed to get components for resource '{sceneResource}'");
+        }
+
+        //
+        // Find all currently used line ids in this scene
+        //
+
+        var activeLineIds = new HashSet<string>();
+        for (int i = 0; i < components.Count; i++)
+        {
+            var lineComponent = components[i];
+            if (!lineComponent.IsComponentType(ComponentType))
+            {
+                // Skip non-line components
+                continue;
+            }
+
+            // Get the line id property
+            var lineId = lineComponent.GetString(LineId);
+            if (string.IsNullOrEmpty(lineId))
+            {
+                // Skip empty dialogue keys
+                continue;
+            }
+
+            if (!string.IsNullOrEmpty(lineId))
+            {
+                activeLineIds.Add(lineId);
+            }
+        }
+
+        //
+        // Generate a new unique line id
+        //
+
+        var newLineId = string.Empty;
+        var random = new Random();
+        do
+        {
+            // Try a random 4 digit hex code until a unique one is found.
+            int number = random.Next(0x1000, 0x10000);
+            newLineId = number.ToString("X4");
+        }
+        while (activeLineIds.Contains(newLineId));
+
+        return Result<string>.Ok(newLineId);
+    }
+
     /// <summary>
     /// Returns the placeholder text to display in the Direction text field.
     /// This applies when the Direction property of a Player Variant line is empty.
@@ -468,7 +571,29 @@ public class LineEditor : ComponentEditorBase
             return Result<string>.Ok(string.Empty);
         }
 
-        // Search through preceding lines for the Player Line
+        var getParentResult = GetPlayerVariantParent();
+        if (getParentResult.IsSuccess)
+        {
+            var parentLine = getParentResult.Value;
+
+            // Found the Player Line, return the direction property.
+            var otherDirection = parentLine.GetString("/direction");
+            return Result<string>.Ok(JsonSerializer.Serialize(otherDirection));
+        }
+
+        return Result<string>.Ok(JsonSerializer.Serialize(string.Empty));
+    }
+
+    private Result<IComponentProxy> GetPlayerVariantParent()
+    {
+        var lineType = Component.GetString(LineEditor.LineType);
+        if (lineType != "PlayerVariant")
+        {
+            // This Line is not a Player Variant
+            return Result<IComponentProxy>.Fail();
+        }
+
+        // Search through preceding lines for the parent Player Line
         int index = Component.Key.ComponentIndex - 1;
         while (index > 0)
         {
@@ -493,21 +618,18 @@ public class LineEditor : ComponentEditorBase
                     }
                     else if (otherLineType == "Player")
                     {
-                        // Preceding Player Line found.
-                        // Todo: Check that the line ids match (though it's already an error state if they don'ty)
-                        var otherDirection = otherLineComponent.GetString("/direction");
-                        return Result<string>.Ok(JsonSerializer.Serialize(otherDirection));
+                        return Result<IComponentProxy>.Ok(otherLineComponent);
                     }
                     else
                     {
-                        // Any other line type is an error state, give up.
+                        // Any other line type means we're in an error state, give up.
                         break;
                     }
                 }
             }
         }
 
-        return Result<string>.Ok(JsonSerializer.Serialize(string.Empty));
+        return Result<IComponentProxy>.Fail();
     }
 }
 

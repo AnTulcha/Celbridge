@@ -1,8 +1,33 @@
 [
   {
-    "element": "ComboBox",
-    "header": "Line Type",
-    "selectedValue": "/lineType"
+    "element": "StackPanel",
+    "orientation": "Horizontal",
+    "children": [
+      {
+        "element": "ComboBox",
+        "header": "Line Type",
+        "selectedValue": "/lineType"
+      },
+      {
+        "element": "StackPanel",
+        "orientation": "Horizontal",
+        "children": [
+          {
+            "element": "TextBox",
+            "header": "Line Id",
+            "text": "/lineId",
+            "isReadOnly": true
+          },
+          {
+            "element": "Button",
+            "verticalAlignment": "Bottom",
+            "tooltip": "Generate a new line id for this dialogue line",
+            "icon": "Refresh",
+            "buttonId": "GenerateLineId"
+          }
+        ]
+      }
+    ]
   },
   {
     "element": "StackPanel",
