@@ -301,7 +301,7 @@ public class ScreenplaySaver
             //
 
             var lineType = component.GetString(LineEditor.LineType);
-            var dialogueKey = component.GetString(LineEditor.DialogueKey);
+            var lineId = component.GetString(LineEditor.LineId);
             var characterId = component.GetString(LineEditor.CharacterId);
             var sourceText = component.GetString(LineEditor.SourceText);
             var speakingTo = component.GetString(LineEditor.SpeakingTo);
@@ -314,7 +314,8 @@ public class ScreenplaySaver
             var linePriority = component.GetString(LineEditor.LinePriority);
             var productionStatus = component.GetString(LineEditor.ProductionStatus);
 
-            var lineId = dialogueKey[(dialogueKey.LastIndexOf('-') + 1)..];
+            var dialogueKey = $"{characterId}-{ns}-{lineId}";
+
             var isSceneNote = false;
 
             // Excel uses a single apostrophe to indicate raw text.
@@ -371,6 +372,7 @@ public class ScreenplaySaver
                     direction = playerLine.Direction;
                 }
 
+                // Override the dialogue key for Player Variants
                 dialogueKey = $"{characterId}-{ns}-{lineId}";
 
                 FillCells(sheet, row, new[] { 3, 4 }, PlayerVariantColor);
@@ -385,6 +387,7 @@ public class ScreenplaySaver
                 // Override the dialogue key for scene notes
                 // Todo: Do we still need to do this? Could we just treat them as regular dialogue lines now?
                 dialogueKey = $"SceneNote-{ns}-Note{sceneNoteIndex++}";
+
                 FillCells(sheet, row, Enumerable.Range(3, 12), SceneNoteColor);
             }
             else if (lineType == "NPC")

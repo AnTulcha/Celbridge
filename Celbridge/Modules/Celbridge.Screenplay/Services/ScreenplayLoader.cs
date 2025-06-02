@@ -624,7 +624,6 @@ public class ScreenplayLoader
                     lineComponent["_type"] = "Screenplay.Line#1";
                     lineComponent["lineType"] = line.LineType;
                     lineComponent["lineId"] = lineId;
-                    lineComponent["dialogueKey"] = dialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = string.Empty;
                     lineComponent["sourceText"] = line.SourceText;
@@ -645,7 +644,6 @@ public class ScreenplayLoader
                     lineComponent["_type"] = "Screenplay.Line#1";
                     lineComponent["lineType"] = line.LineType;
                     lineComponent["lineId"] = lineId;
-                    lineComponent["dialogueKey"] = dialogueKey;
                     lineComponent["characterId"] = line.CharacterId;
                     lineComponent["speakingTo"] = line.SpeakingTo;
                     lineComponent["sourceText"] = line.SourceText;

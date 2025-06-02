@@ -17,7 +17,6 @@ public class LineEditor : ComponentEditorBase
     public const string ComponentType = "Screenplay.Line";
     public const string LineType = "/lineType";
     public const string LineId = "/lineId";
-    public const string DialogueKey = "/dialogueKey";
     public const string CharacterId = "/characterId";
     public const string SpeakingTo = "/speakingTo";
     public const string SourceText = "/sourceText";
@@ -55,7 +54,6 @@ public class LineEditor : ComponentEditorBase
 
     public override ComponentSummary GetComponentSummary()
     {
-        var dialogueKey = Component.GetString(DialogueKey);
         var characterId = Component.GetString(CharacterId);
         var speakingTo = Component.GetString(SpeakingTo);
         var sourceText = Component.GetString(SourceText);
@@ -85,8 +83,14 @@ public class LineEditor : ComponentEditorBase
             sb.AppendLine($"Direction: {direction}");
         }
 
-        sb.AppendLine();
-        sb.AppendLine($"{dialogueKey}"); // Dialogue key contains character id
+        var getKeyResult = GetDialogueKey();
+        if (getKeyResult.IsSuccess)
+        {
+            var dialogueKey = getKeyResult.Value;
+
+            sb.AppendLine();
+            sb.AppendLine($"{dialogueKey}"); 
+        }
 
         var tooltipText = sb.ToString();
 
@@ -208,11 +212,7 @@ public class LineEditor : ComponentEditorBase
 
     public override void OnButtonClicked(string buttonId)
     {
-        if (buttonId == "UpdateDialogueKey")
-        {
-            UpdateDialogueKey();
-        }
-        else if (buttonId == "GenerateLineId")
+        if (buttonId == "GenerateLineId")
         {
             UpdateLineId();
         }
@@ -229,6 +229,7 @@ public class LineEditor : ComponentEditorBase
             NotifyFormPropertyChanged("/variantVisibility");
             NotifyFormPropertyChanged("/directionVisibility");
             NotifyFormPropertyChanged("/dialogueKey");
+            NotifyFormPropertyChanged("/lineIdVisibility");
 
             // Get the filtered list of character ids            
             var getResult = GetProperty("/characterIds");
@@ -407,157 +408,6 @@ public class LineEditor : ComponentEditorBase
         var dialogueKey = $"{characterId}-{@namespace}-{lineId}";
 
         return Result<string>.Ok(dialogueKey);
-    }
-
-    private void UpdateDialogueKey()
-    {
-        //
-        // Get all components on this entity
-        //
-
-        var sceneResource = Component.Key.Resource;
-        var getComponentsResult = _entityService.GetComponents(sceneResource);
-        if (getComponentsResult.IsFailure)
-        {
-            _logger.LogError($"Failed to update dialogue key. {getComponentsResult.Error}");
-            return;
-        }
-        var components = getComponentsResult.Value;
-        if (components.Count == 0)
-        {
-            return;
-        }
-
-        //
-        // Get the list of characters from the screenplay
-        //
-
-        var getCharactersResult = GetAllCharacters();
-        if (getCharactersResult.IsFailure)
-        {
-            _logger.LogError($"Failed to update dialogue key. {getCharactersResult.Error}");
-            return;
-        }
-        var characters = getCharactersResult.Value;
-
-        //
-        // Get the character speaking this line
-        //
-
-        var characterId = Component.GetString(CharacterId);
-        if (string.IsNullOrEmpty(characterId))
-        {
-            _logger.LogError($"Failed to update dialogue key. Character id is empty.");
-            return;
-        }
-
-        bool isPlayerVariant = false;
-        if (characterId != "SceneNote")
-        {
-            var speakingCharacter = characters.FirstOrDefault(c => c.CharacterId == characterId);
-            if (speakingCharacter is null)
-            {
-                _logger.LogError($"Failed to update dialogue key. No character matching '{characterId}' was found.");
-                return;
-            }
-
-            // Note if the current line is a player variant line
-            isPlayerVariant = speakingCharacter.Tag.StartsWith("Character.Player.");
-        }
-
-
-        //
-        // Get the namespace from the Scene component on this entity
-        //
-
-        if (!components[0].IsComponentType(SceneEditor.ComponentType))
-        {
-            _logger.LogError($"Failed to update dialogue key. First component is not a Scene component.");
-            return;
-        }
-
-        var @namespace = components[0].GetString(SceneEditor.Namespace);
-        if (string.IsNullOrEmpty(@namespace))
-        {
-            _logger.LogError($"Failed to update dialogue key. Namespace is empty.");
-            return;
-        }
-
-        //
-        // Assign a new line id
-        //
-
-        // Build the set of line ids currently in use
-        var activeLineIds = new HashSet<string>();
-
-        var lineComponentIndex = Component.Key.ComponentIndex;
-        var playerLineId = string.Empty;
-
-        for (int i = 0; i < components.Count; i++)
-        {
-            var lineComponent = components[i];
-            if (!lineComponent.IsComponentType(ComponentType))
-            {
-                // Skip non-line components
-                continue;
-            }
-
-            // Get the dialogue key property
-            var dialogueKey = lineComponent.GetString(DialogueKey);
-            if (string.IsNullOrEmpty(dialogueKey))
-            {
-                // Skip empty dialogue keys
-                continue;
-            }
-
-            // Extract the line id from the dialogue key and add it to the active set
-            var lineId = string.Empty;
-            var segments = dialogueKey.Split('-');
-            if (segments.Length == 3)
-            {
-                lineId = segments[2];
-            }
-            if (!string.IsNullOrEmpty(lineId))
-            {
-                activeLineIds.Add(lineId);
-            }
-
-            // If this is a player variant line, attempt to find the line id of the preceding player line.
-            if (isPlayerVariant &&
-                i < lineComponentIndex)
-            {
-                if (lineComponent.GetString(CharacterId) == "Player")
-                {
-                    playerLineId = lineId;
-                }
-            }
-        }
-
-        // If this is a player variant line and a player line id was found, then use the player line id.
-        string newLineId = string.Empty;
-        if (isPlayerVariant)
-        {
-            newLineId = playerLineId;
-        }
-
-        // If no new line id has been assigned yet then assign a unique line id
-        if (string.IsNullOrEmpty(newLineId))
-        {
-            // Find a new line id that is not already in use
-            var random = new Random();
-            do
-            {
-                // Try a random 4 digit hex code until a unique one is found.
-                int number = random.Next(0x1000, 0x10000);
-                newLineId = number.ToString("X4");
-            }
-            while (activeLineIds.Contains(newLineId));
-        }
-
-        // Set the new dialogue key
-        var newDialogueKey = $"{characterId}-{@namespace}-{newLineId}";
-        var jsonValue = JsonSerializer.Serialize(newDialogueKey);
-        Component.SetProperty(DialogueKey, jsonValue);
     }
 
     private void UpdateLineId()
