@@ -257,7 +257,7 @@ public class LineEditor : ComponentEditorBase
                 }
             }
         }
-        else if (propertyPath == "/lineId")
+        else if (propertyPath == "/lineId" || propertyPath == "/characterId")
         {
             NotifyFormPropertyChanged("/dialogueKey");
         }
