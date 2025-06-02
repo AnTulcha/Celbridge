@@ -163,6 +163,17 @@ public class LineEditor : ComponentEditorBase
         {
             return GetDirectionPlaceholderText();
         }
+        else if (propertyPath == "/lineIdVisibility")
+        {
+            if (Component.GetString(LineType) == "PlayerVariant")
+            {
+                return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Collapsed));
+            }
+            else
+            {
+                return Result<string>.Ok(JsonSerializer.Serialize(Visibility.Visible));
+            }
+        }
         else if (propertyPath == "/lineId")
         {
             if (Component.GetString(LineType) == "PlayerVariant")
@@ -179,6 +190,15 @@ public class LineEditor : ComponentEditorBase
                         return Result<string>.Ok(JsonSerializer.Serialize(lineId));
                     }
                 }
+            }
+        }
+        else if (propertyPath == "/dialogueKey")
+        {
+            var getKeyResult = GetDialogueKey();
+            if (getKeyResult.IsSuccess)
+            {
+                var dialogueKey = getKeyResult.Value;
+                return Result<string>.Ok(JsonSerializer.Serialize(dialogueKey));
             }
         }
 
@@ -208,6 +228,7 @@ public class LineEditor : ComponentEditorBase
             NotifyFormPropertyChanged("/characterIdVisibility");
             NotifyFormPropertyChanged("/variantVisibility");
             NotifyFormPropertyChanged("/directionVisibility");
+            NotifyFormPropertyChanged("/dialogueKey");
 
             // Get the filtered list of character ids            
             var getResult = GetProperty("/characterIds");
@@ -234,6 +255,10 @@ public class LineEditor : ComponentEditorBase
                     Component.SetProperty(CharacterId, JsonSerializer.Serialize(string.Empty));
                 }
             }
+        }
+        else if (propertyPath == "/lineId")
+        {
+            NotifyFormPropertyChanged("/dialogueKey");
         }
     }
 
@@ -324,6 +349,64 @@ public class LineEditor : ComponentEditorBase
         var characters = charactersResult.Value;
 
         return Result<List<Character>>.Ok(characters);
+    }
+
+    /// <summary>
+    /// Construct a Dialogue Key based on the character id, namespace and line id.
+    /// </summary>
+    private Result<string> GetDialogueKey()
+    {
+        //
+        // Get all components 
+        //
+
+        var sceneResource = Component.Key.Resource;
+        var getComponentsResult = _entityService.GetComponents(sceneResource);
+        if (getComponentsResult.IsFailure)
+        {
+            return Result<string>.Fail();
+        }
+
+        var components = getComponentsResult.Value;
+        if (components.Count == 0)
+        {
+            return Result<string>.Fail();
+        }
+
+        //
+        // Get the namespace from the Scene component on this entity
+        //
+
+        if (!components[0].IsComponentType(SceneEditor.ComponentType))
+        {
+            _logger.LogError($"Failed to update dialogue key. First component is not a Scene component.");
+            return Result<string>.Fail();
+        }
+
+        var @namespace = components[0].GetString(SceneEditor.Namespace);
+        if (string.IsNullOrEmpty(@namespace))
+        {
+            _logger.LogError($"Failed to update dialogue key. Namespace is empty.");
+            return Result<string>.Fail();
+        }
+
+        //
+        // Get the Character Id
+        //
+
+        var characterId = Component.GetString(CharacterId);
+
+        var getLineIdResult = GetProperty(LineId); // Use the property override mechanism
+        if (getLineIdResult.IsFailure)
+        {
+            return Result<string>.Fail();
+        }
+        var lineId = JsonSerializer.Deserialize<string>(getLineIdResult.Value);
+
+        // Todo: Add a validation util for dialogue keys
+        var dialogueKey = $"{characterId}-{@namespace}-{lineId}";
+
+        return Result<string>.Ok(dialogueKey);
     }
 
     private void UpdateDialogueKey()
