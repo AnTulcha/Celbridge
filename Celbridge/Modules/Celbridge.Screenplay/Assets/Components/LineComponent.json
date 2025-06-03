@@ -54,6 +54,7 @@
   "required": [
     "_type",
     "lineType",
+    "lineId",
     "characterId",
     "sourceText",
     "contextNotes",
@@ -69,6 +70,7 @@
 
   "prototype": {
     "lineType": "Player",
+    "lineId": "",
     "characterId": "Player",
     "sourceText": "",
     "contextNotes": "",

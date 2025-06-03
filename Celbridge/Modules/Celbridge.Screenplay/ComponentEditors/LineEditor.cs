@@ -501,7 +501,7 @@ public class LineEditor : ComponentEditorBase
         if (lineType != "PlayerVariant")
         {
             // Line is not a Player Variant
-            return Result<string>.Ok(string.Empty);
+            return Result<string>.Ok(JsonSerializer.Serialize(string.Empty));
         }
 
         var getParentResult = GetPlayerVariantParent();

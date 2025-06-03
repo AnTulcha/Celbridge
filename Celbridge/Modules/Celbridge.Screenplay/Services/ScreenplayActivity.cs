@@ -138,7 +138,7 @@ public class ScreenplayActivity : IActivity
             entityAnnotation.AddEntityError(new AnnotationError(
                 AnnotationErrorSeverity.Error,
                 "Failed to get characters",
-                "Failed to get character list from screenplay component"));
+                "Failed to get character list from Screenplay component"));
         }
         var characters = getCharactersResult.Value;
 
@@ -148,6 +148,7 @@ public class ScreenplayActivity : IActivity
 
         var lineComponents = new Dictionary<int, IComponentProxy>();
         var activeLineIds = new HashSet<string>();
+        var activePlayerVariants = new HashSet<string>();
 
         //
         // First pass checks component types are valid and records all
@@ -246,21 +247,25 @@ public class ScreenplayActivity : IActivity
                     "Invalid character id",
                     "A valid character must be selected"));
 
-                // There's not much more we can do until the user selects a character id
+                // There's not much more we can do until the user selects a valid character id
                 continue;
             }
 
             //
-            // Get the existing dialogue key and line id
+            // Get the line id
             //
 
             var lineId = component.GetString("/lineId");
-            if (string.IsNullOrEmpty(lineId))
+
+            // PlayerVariants inherit their parent's Line Id, so their own LineId property may be empty.
+            // All other line types must have a non-empty LineId
+            if (lineType != "PlayerVariant" &&
+                string.IsNullOrEmpty(lineId))
             {
                 entityAnnotation.AddComponentError(i, new AnnotationError(
                     AnnotationErrorSeverity.Error,
-                    "Invalid line id",
-                    "Line id must not be empty."));
+                    "Invalid dialogue key",
+                    "Line id must not be empty. Generate a new dialogue key to fix this."));
 
                 // We can't perform any more checks until the user assigns a valid line id
                 continue;
@@ -269,7 +274,9 @@ public class ScreenplayActivity : IActivity
             var speakingTo = component.GetString("/speakingTo");
 
             bool isPlayerVariantLine = false;
-            var correctLineId = lineId;
+
+            // PlayerVariant lines inherit their Line Id from their parents.
+            var resolvedLineId = lineId;
 
             if (lineType != "SceneNote")
             {
@@ -277,48 +284,67 @@ public class ScreenplayActivity : IActivity
 
                 if (character.Tag == "Character.Player")
                 {
-                    // Start of a new player line group
+                    // Start of a new Player line group
                     playerLineId = lineId;
                     playerSpeakingTo = speakingTo;
                 }
                 else if (character.Tag.StartsWith("Character.Player."))
                 {
-                    // Player variants lines must be part of a player line group
+                    // Player Variant lines must be part of a player line group
                     if (string.IsNullOrEmpty(playerLineId))
                     {
                         entityAnnotation.AddComponentError(i, new AnnotationError(
                             AnnotationErrorSeverity.Error,
-                            "Invalid player variant line",
-                            "Player variant lines must be part of a player line group"));
+                            "Invalid variant line",
+                            "Player Variant lines must be part of a Player Line group"));
                     }
                     else
                     {
                         // Flag this as a player variant line
+                        // Inherit the lineId from the parent Player Line
                         isPlayerVariantLine = true;
-                        correctLineId = playerLineId; // Variant lines must have the same line id as the player line
+                        resolvedLineId = playerLineId;
                     }
                 }
                 else
                 {
-                    // This is an NPC line, so stop tracking the player line group
+                    // This is an NPC line, so stop tracking the Player Line group
                     playerLineId = string.Empty;
                     playerSpeakingTo = string.Empty;
                 }
             }
 
+            //
             // Check the Line Id is valid and unique. 
-            // Player Variant lines inherit the Line Id from the parent line, so ignore these lines.
-            if (lineType != "PlayerVariant")
+            //
+
+            if (lineType == "PlayerVariant")
             {
-                // Ensure that a valid line id is assigned.
-                if (lineId != correctLineId)
+                // Check for character ids that have been specified multiple time.
+                var dialogueKey = $"{characterId}-{@namespace}-{resolvedLineId}";
+                if (activePlayerVariants.Contains(dialogueKey))
                 {
+                    entityAnnotation.AddComponentError(i, new AnnotationError(
+                        AnnotationErrorSeverity.Error,
+                        "Invalid character",
+                        "This character is already selected in a Player Variant line."));
+                }
+
+                activePlayerVariants.Add(dialogueKey);
+            }
+            else
+            {
+                // Check that a valid line id is assigned.
+                if (lineId != resolvedLineId)
+                {
+                    // Todo: Is this error mode still possible?
                     entityAnnotation.AddComponentError(i, new AnnotationError(
                         AnnotationErrorSeverity.Error,
                         "Invalid line id",
                         "The line id is not correctly formed."));
                 }
 
+                // Check that each line id is unique.
                 if (activeLineIds.Contains(lineId))
                 {
                     entityAnnotation.AddComponentError(i, new AnnotationError(
