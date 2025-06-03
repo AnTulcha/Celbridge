@@ -300,9 +300,10 @@ public class ScreenplayActivity : IActivity
                     }
                     else
                     {
-                        // Flag this as a player variant line
-                        // Inherit the lineId from the parent Player Line
+                        // Flag this as a player variant line.
                         isPlayerVariantLine = true;
+
+                        // Inherit the parent Player line's Line Id.
                         resolvedLineId = playerLineId;
                     }
                 }
@@ -320,7 +321,7 @@ public class ScreenplayActivity : IActivity
 
             if (lineType == "PlayerVariant")
             {
-                // Check for character ids that have been specified multiple time.
+                // Each Player Variant within the group must specific a different character id.
                 var dialogueKey = $"{characterId}-{@namespace}-{resolvedLineId}";
                 if (activePlayerVariants.Contains(dialogueKey))
                 {
@@ -340,8 +341,8 @@ public class ScreenplayActivity : IActivity
                     // Todo: Is this error mode still possible?
                     entityAnnotation.AddComponentError(i, new AnnotationError(
                         AnnotationErrorSeverity.Error,
-                        "Invalid line id",
-                        "The line id is not correctly formed."));
+                        "Invalid dialogue key",
+                        "The line id is not valid. Generate a new dialogue key to fix this."));
                 }
 
                 // Check that each line id is unique.
@@ -349,8 +350,8 @@ public class ScreenplayActivity : IActivity
                 {
                     entityAnnotation.AddComponentError(i, new AnnotationError(
                         AnnotationErrorSeverity.Error,
-                        "Duplicate line id",
-                        "Line ids must be unique for each line. Update the line id to generate a new one."));
+                        "Invalid dialogue key",
+                        "Every line must have a unique line id. Generate a new dialogue key to fix this."));
                 }
                 else
                 {
