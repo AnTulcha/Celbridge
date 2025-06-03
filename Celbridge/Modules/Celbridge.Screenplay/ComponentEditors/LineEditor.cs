@@ -182,13 +182,13 @@ public class LineEditor : ComponentEditorBase
         {
             if (Component.GetString(LineType) == "PlayerVariant")
             {
-                // Get the parent Player Line
-                var getParentResult = GetPlayerVariantParent();
+                // Get the Player line that's the parent of this Player Variant line
+                var getParentResult = GetParentPlayerLine();
                 if (getParentResult.IsSuccess)
                 {
                     // Return the parent's Line Id
-                    var parentLine = getParentResult.Value;
-                    var lineId = parentLine.GetString(LineId);
+                    var playerLine = getParentResult.Value;
+                    var lineId = playerLine.GetString(LineId);
                     if (!string.IsNullOrEmpty(lineId))
                     {
                         return Result<string>.Ok(JsonSerializer.Serialize(lineId));
@@ -506,7 +506,7 @@ public class LineEditor : ComponentEditorBase
             return Result<string>.Ok(JsonSerializer.Serialize(string.Empty));
         }
 
-        var getParentResult = GetPlayerVariantParent();
+        var getParentResult = GetParentPlayerLine();
         if (getParentResult.IsSuccess)
         {
             var parentLine = getParentResult.Value;
@@ -519,7 +519,7 @@ public class LineEditor : ComponentEditorBase
         return Result<string>.Ok(JsonSerializer.Serialize(string.Empty));
     }
 
-    private Result<IComponentProxy> GetPlayerVariantParent()
+    private Result<IComponentProxy> GetParentPlayerLine()
     {
         var lineType = Component.GetString(LineEditor.LineType);
         if (lineType != "PlayerVariant")
