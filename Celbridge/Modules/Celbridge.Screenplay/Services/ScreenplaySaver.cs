@@ -358,7 +358,7 @@ public class ScreenplaySaver
                 // For Player Variant lines these fields should all match the parent Player Line
                 lineId = playerLine.LineId;
                 speakingTo = playerLine.SpeakingTo;
-                contextNotes = playerLine.ContextNotes;
+                // contextNotes = playerLine.ContextNotes;
                 gameArea = playerLine.GameArea;
                 timeConstraint = playerLine.TimeConstraint;
                 soundProcessing = playerLine.SoundProcessing;
@@ -366,11 +366,11 @@ public class ScreenplaySaver
                 linePriority = playerLine.LinePriority;
                 productionStatus = playerLine.ProductionStatus;
 
-                if (string.IsNullOrEmpty(direction))
-                {
-                    // Use the direction from the Player ine if no direction is specified for the PlayerVariant
-                    direction = playerLine.Direction;
-                }
+                //if (string.IsNullOrEmpty(direction))
+                //{
+                //    // Use the direction from the Player ine if no direction is specified for the PlayerVariant
+                //    direction = playerLine.Direction;
+                //}
 
                 // Override the dialogue key for Player Variants
                 dialogueKey = $"{characterId}-{ns}-{lineId}";
