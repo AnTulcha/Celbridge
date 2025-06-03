@@ -4,19 +4,14 @@
     "orientation": "Horizontal",
     "children": [
       {
-        "element": "ComboBox",
-        "header": "Line Type",
-        "selectedValue": "/lineType"
-      },
-      {
         "element": "StackPanel",
         "orientation": "Horizontal",
-        "visibility": "/lineIdVisibility",
         "children": [
           {
             "element": "TextBox",
-            "header": "Line Id",
-            "text": "/lineId",
+            "header": "Dialogue Key",
+            "text": "/dialogueKey",
+            "textWrapping":  "NoWrap",
             "isReadOnly": true
           },
           {
@@ -24,17 +19,17 @@
             "verticalAlignment": "Bottom",
             "tooltip": "Generate a new line id for this dialogue line",
             "icon": "Refresh",
-            "buttonId": "GenerateLineId"
+            "buttonId": "GenerateLineId",
+            "visibility": "/lineIdVisibility"
           }
         ]
       }
     ]
   },
   {
-    "element": "TextBox",
-    "header": "Dialogue Key",
-    "text": "/dialogueKey",
-    "isReadOnly": true
+    "element": "ComboBox",
+    "header": "Line Type",
+    "selectedValue": "/lineType"
   },
   {
     "element": "ComboBox",
