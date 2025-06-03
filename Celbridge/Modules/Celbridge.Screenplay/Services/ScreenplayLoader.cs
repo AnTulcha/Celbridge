@@ -452,22 +452,22 @@ public class ScreenplayLoader
             // Check that the dialogue key is valid.
             // Bark lines have already been excluded so all dialogue keys should have exactly 3 parts.
             var dialogueKey = line.DialogueKey;
-            var keyparts = dialogueKey.Split('-');
-            if (keyparts.Length != 3 && keyparts.Length != 4)
+            var keyParts = dialogueKey.Split('-');
+            if (keyParts.Length != 3 || keyParts.Any((p) => p.Length == 0))
             {
                 return Result.Fail($"DialogueKey '{dialogueKey}' does not contain 3 parts at row {row_index}");
             }
 
-            if (characterId != keyparts[0])
+            if (characterId != keyParts[0])
             {
                 return Result.Fail($"DialogueKey '{dialogueKey}' does not match character id '{characterId}' at row {row_index}");
             }
-            if (line.Namespace != keyparts[1])
+            if (line.Namespace != keyParts[1])
             {
                 return Result.Fail($"DialogueKey '{dialogueKey}' does not match namespace '{line.Namespace}' at row {row_index}");
             }
 
-            var lineId = keyparts[2];
+            var lineId = keyParts[2];
             if (string.IsNullOrEmpty(lineId))
             {
                 return Result.Fail($"Line id is empty at row {row_index}");
