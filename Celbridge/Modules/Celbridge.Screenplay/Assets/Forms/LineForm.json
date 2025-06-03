@@ -17,10 +17,10 @@
           {
             "element": "Button",
             "verticalAlignment": "Bottom",
-            "tooltip": "Generate a new line id for this dialogue line",
+            "tooltip": "Generate a new dialogue key for this dialogue line",
             "icon": "Refresh",
-            "buttonId": "GenerateLineId",
-            "visibility": "/lineIdVisibility"
+            "buttonId": "GenerateDialogueKey",
+            "visibility": "/generateDialogueKeyVisibility"
           }
         ]
       }

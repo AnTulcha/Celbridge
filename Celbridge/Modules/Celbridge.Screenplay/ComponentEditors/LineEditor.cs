@@ -167,7 +167,7 @@ public class LineEditor : ComponentEditorBase
         {
             return GetDirectionPlaceholderText();
         }
-        else if (propertyPath == "/lineIdVisibility")
+        else if (propertyPath == "/generateDialogueKeyVisibility")
         {
             if (Component.GetString(LineType) == "PlayerVariant")
             {
@@ -212,9 +212,9 @@ public class LineEditor : ComponentEditorBase
 
     public override void OnButtonClicked(string buttonId)
     {
-        if (buttonId == "GenerateLineId")
+        if (buttonId == "GenerateDialogueKey")
         {
-            UpdateLineId();
+            GenerateDialogueKey();
         }
     }
 
@@ -229,7 +229,7 @@ public class LineEditor : ComponentEditorBase
             NotifyFormPropertyChanged("/variantVisibility");
             NotifyFormPropertyChanged("/directionVisibility");
             NotifyFormPropertyChanged("/dialogueKey");
-            NotifyFormPropertyChanged("/lineIdVisibility");
+            NotifyFormPropertyChanged("/generateDialogueKeyVisibility");
 
             // Get the filtered list of character ids            
             var getResult = GetProperty("/characterIds");
@@ -410,22 +410,23 @@ public class LineEditor : ComponentEditorBase
         return Result<string>.Ok(dialogueKey);
     }
 
-    private void UpdateLineId()
+    private void GenerateDialogueKey()
     {
-        var generateResult = GenerateUniqueLineId();
-        if (generateResult.IsFailure)
+        // Generate a new dialogue key by assigning a new unique line id.
+
+        var getLineIdResult = GetUniqueLineId();
+        if (getLineIdResult.IsFailure)
         {
             // Todo: Show an alert if generating line id fails
-            _logger.LogError($"Failed to generate line id. {generateResult.Error}");
+            _logger.LogError($"Failed to get a unique line id. {getLineIdResult.Error}");
             return;
         }
-        var newLineId = generateResult.Value;
+        var lineId = getLineIdResult.Value;
 
-        Component.SetProperty(LineId, JsonSerializer.Serialize(newLineId));
+        Component.SetProperty(LineId, JsonSerializer.Serialize(lineId));
     }
 
-
-    private Result<string> GenerateUniqueLineId()
+    private Result<string> GetUniqueLineId()
     {
         //
         // Get all components on this entity
