@@ -73,18 +73,18 @@ public partial class TextBlockElement : FormElement
                 .WithErrors(boldResult);
         }
 
-        var textWrappingResult = ApplyTextWrappingConfig(config, textBlock);
-        if (textWrappingResult.IsFailure)
-        {
-            return Result<FrameworkElement>.Fail($"Failed to apply 'textWrapping' config property")
-                .WithErrors(textWrappingResult);
-        }
-
         var textResult = ApplyTextConfig(config, textBlock);
         if (textResult.IsFailure)
         {
             return Result<FrameworkElement>.Fail($"Failed to apply 'text' config property")
                 .WithErrors(textResult);
+        }
+
+        var textWrappingResult = ApplyTextWrappingConfig(config, textBlock);
+        if (textWrappingResult.IsFailure)
+        {
+            return Result<FrameworkElement>.Fail($"Failed to apply 'textWrapping' config property")
+                .WithErrors(textWrappingResult);
         }
 
         return Result<FrameworkElement>.Ok(textBlock);
@@ -134,33 +134,6 @@ public partial class TextBlockElement : FormElement
         return Result.Ok();
     }
 
-    private Result ApplyTextWrappingConfig(JsonElement config, TextBlock textBlock)
-    {
-        if (config.TryGetProperty("textWrapping", out var textWrappingValue))
-        {
-            // Check the type
-            if (textWrappingValue.ValueKind != JsonValueKind.String)
-            {
-                return Result.Fail("'textWrapping' property must be a string.");
-            }
-
-            // Apply the property
-            if (!Enum.TryParse(textWrappingValue.GetString(), out TextWrapping textWrapping))
-            {
-                return Result.Fail("Failed to parse 'textWrapping' property.");
-            }
-
-            textBlock.TextWrapping = textWrapping;
-        }
-        else
-        {
-            // Enable text wrapping by default
-            textBlock.TextWrapping = TextWrapping.Wrap;
-        }
-
-        return Result.Ok();
-    }
-
     private Result ApplyTextConfig(JsonElement config, TextBlock textBlock)
     {
         if (config.TryGetProperty("text", out var configValue))
@@ -184,6 +157,33 @@ public partial class TextBlockElement : FormElement
             {
                 return Result.Fail($"'text' config is not valid");
             }
+        }
+
+        return Result.Ok();
+    }
+
+    private Result ApplyTextWrappingConfig(JsonElement config, TextBlock textBlock)
+    {
+        if (config.TryGetProperty("textWrapping", out var textWrappingValue))
+        {
+            // Check the type
+            if (textWrappingValue.ValueKind != JsonValueKind.String)
+            {
+                return Result.Fail("'textWrapping' property must be a string.");
+            }
+
+            // Apply the property
+            if (!Enum.TryParse(textWrappingValue.GetString(), out TextWrapping textWrapping))
+            {
+                return Result.Fail("Failed to parse 'textWrapping' property.");
+            }
+
+            textBlock.TextWrapping = textWrapping;
+        }
+        else
+        {
+            // Enable text wrapping by default
+            textBlock.TextWrapping = TextWrapping.Wrap;
         }
 
         return Result.Ok();
