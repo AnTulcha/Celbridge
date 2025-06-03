@@ -225,6 +225,7 @@ public class LineEditor : ComponentEditorBase
             // Update virtual properties when the line type changes
             // The character ids list will be filtered depending on the line type.
             NotifyFormPropertyChanged("/characterIds");
+            NotifyFormPropertyChanged("/characterId");
             NotifyFormPropertyChanged("/characterIdVisibility");
             NotifyFormPropertyChanged("/variantVisibility");
             NotifyFormPropertyChanged("/directionVisibility");
