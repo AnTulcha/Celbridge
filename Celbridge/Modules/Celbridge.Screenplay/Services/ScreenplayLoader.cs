@@ -329,6 +329,12 @@ public class ScreenplayLoader
 
                 var category = TryGetValue<string> (row, columnMap, nameof(DialogueLine.Category));
 
+                if (category == "Bark")
+                {
+                    // The Screenplay system only supports editing dialogue lines currently
+                    continue;
+                }
+
                 var line = new DialogueLine
                 (
                     LineType: lineType,
@@ -393,6 +399,8 @@ public class ScreenplayLoader
 
     private Result ValidateDialogue(List<Scene> scenes, List<Character> characters, List<DialogueLine> lines)
     {
+        var existingDialogueKeys = new HashSet<string>();
+
         for (int i = 0; i < lines.Count; i++)
         {
             var row_index = i + 1;
@@ -441,7 +449,37 @@ public class ScreenplayLoader
                 }
             }
 
-            // Todo: Check that the dialogue key is valid and that there are no duplicates
+            // Check that the dialogue key is valid.
+            // Bark lines have already been excluded so all dialogue keys should have exactly 3 parts.
+            var dialogueKey = line.DialogueKey;
+            var keyparts = dialogueKey.Split('-');
+            if (keyparts.Length != 3 && keyparts.Length != 4)
+            {
+                return Result.Fail($"DialogueKey '{dialogueKey}' does not contain 3 parts at row {row_index}");
+            }
+
+            if (characterId != keyparts[0])
+            {
+                return Result.Fail($"DialogueKey '{dialogueKey}' does not match character id '{characterId}' at row {row_index}");
+            }
+            if (line.Namespace != keyparts[1])
+            {
+                return Result.Fail($"DialogueKey '{dialogueKey}' does not match namespace '{line.Namespace}' at row {row_index}");
+            }
+
+            var lineId = keyparts[2];
+            if (string.IsNullOrEmpty(lineId))
+            {
+                return Result.Fail($"Line id is empty at row {row_index}");
+            }
+
+            if (existingDialogueKeys.Contains(dialogueKey))
+            {
+                return Result.Fail($"Duplicate dialogue key '{dialogueKey}' at row {row_index}");
+            }
+
+            // Check that there are no duplicate dialogue keys
+            existingDialogueKeys.Add(dialogueKey);
         }
 
         return Result.Ok();
