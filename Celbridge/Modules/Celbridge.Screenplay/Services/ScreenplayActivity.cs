@@ -321,7 +321,7 @@ public class ScreenplayActivity : IActivity
 
             if (lineType == "PlayerVariant")
             {
-                // Each Player Variant within the group must specific a different character id.
+                // Each Player Variant within the group must specify a different character id.
                 var dialogueKey = $"{characterId}-{@namespace}-{resolvedLineId}";
                 if (activePlayerVariants.Contains(dialogueKey))
                 {
