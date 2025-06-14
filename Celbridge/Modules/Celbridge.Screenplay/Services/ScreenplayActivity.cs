@@ -407,8 +407,7 @@ public class ScreenplayActivity : IActivity
 
     public async Task<Result> LoadScreenplayAsync(ResourceKey screenplayResource)
     {
-        // Check if load will overwrite any modified scenes.
-        // Confirm with user if it's ok to proceed.
+        // If the load will overwrite modified scenes, ask the user if it's ok to proceed.
         var confirmed = await ConfirmLoadScreenplay();
         if (!confirmed)
         {
