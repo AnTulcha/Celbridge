@@ -415,8 +415,8 @@ public class ScreenplayActivity : IActivity
         }
 
         // Display a progress dialog
-        var dialogueTitleText = _localizerService.GetString("Screenplay_LoadingScreenplayTitle");
-        var progressToken = _dialogService.AcquireProgressDialog(dialogueTitleText);
+        var dialogTitleText = _localizerService.GetString("Screenplay_LoadingScreenplayTitle");
+        var progressToken = _dialogService.AcquireProgressDialog(dialogTitleText);
 
         // Give the progress dialog a chance to display
         await Task.Delay(100);
@@ -616,12 +616,13 @@ public class ScreenplayActivity : IActivity
             }
             sb.AppendLine(scene.ToString());
         }
-        var sceneList = sb.ToString();
+        var sceneListText = sb.ToString();
 
         // Ask the user to confirm that they want to overwrite the modified scenes
-        // Todo: Localize this string
-        var message = $"Loading will overwrite modified scene files:\n{sceneList}\n\n Do you wish to continue?";
-        var confirmResult = await _dialogService.ShowConfirmationDialogAsync("Confirm Load", message);
+        var dialogTitleText = _localizerService.GetString("Screenplay_ConfirmLoadTitle");
+        var dialogMessageText = _localizerService.GetString("Screenplay_ConfirmLoadMessage", sceneListText);
+
+        var confirmResult = await _dialogService.ShowConfirmationDialogAsync(dialogTitleText, dialogMessageText);
         if (confirmResult.IsFailure)
         {
             return false;
