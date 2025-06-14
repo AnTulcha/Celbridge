@@ -1,3 +1,4 @@
+using Celbridge.Activities;
 using Celbridge.Commands;
 using Celbridge.Dialog;
 using Celbridge.Explorer;
@@ -13,6 +14,7 @@ public class LoadScreenplayCommand : CommandBase
     private readonly IDialogService _dialogService;
     private readonly IWorkspaceSettings _workspaceSettings;
     private readonly IResourceRegistry _resourceRegistry;
+    private readonly IActivityService _activityService;
 
     public override CommandFlags CommandFlags => CommandFlags.UpdateResources;
 
@@ -27,13 +29,11 @@ public class LoadScreenplayCommand : CommandBase
         _dialogService = dialogService;
         _workspaceSettings = workspaceWrapper.WorkspaceService.WorkspaceSettings;
         _resourceRegistry = workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
+        _activityService = workspaceWrapper.WorkspaceService.ActivityService;
     }
 
     public override async Task<Result> ExecuteAsync()
     {
-        var workspaceWrapper = _serviceProvider.AcquireService<IWorkspaceWrapper>();
-        var activityService = workspaceWrapper.WorkspaceService.ActivityService;
-
         // Check if load will overwrite any modified scenes
         var confirmed = await ConfirmLoad();
         if (!confirmed)
@@ -41,7 +41,7 @@ public class LoadScreenplayCommand : CommandBase
             return Result.Ok();            
         }
 
-        var getActivityResult = activityService.GetActivity(nameof(ScreenplayActivity));
+        var getActivityResult = _activityService.GetActivity(nameof(ScreenplayActivity));
         if (getActivityResult.IsFailure)
         {
             return Result.Fail($"Failed to get Screenplay activity")
@@ -63,7 +63,6 @@ public class LoadScreenplayCommand : CommandBase
         }
 
         // Reset list of modified scenes
-        // Todo: Do this in save command as well
         await _workspaceSettings.DeletePropertyAsync(ScreenplayConstants.ModifiedScenesKey);
 
         return Result.Ok();

@@ -7,12 +7,16 @@ namespace Celbridge.Screenplay.Commands;
 public class SaveScreenplayCommand : CommandBase
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IWorkspaceSettings _workspaceSettings;
 
     public ResourceKey WorkbookResource { get; set; } = ResourceKey.Empty;
 
-    public SaveScreenplayCommand(IServiceProvider serviceProvider)
+    public SaveScreenplayCommand(
+        IServiceProvider serviceProvider,
+        IWorkspaceWrapper workspaceWrapper)
     {
         _serviceProvider = serviceProvider;
+        _workspaceSettings = workspaceWrapper.WorkspaceService.WorkspaceSettings;
     }
 
     public override async Task<Result> ExecuteAsync()
@@ -41,7 +45,8 @@ public class SaveScreenplayCommand : CommandBase
                 .WithErrors(saveResult);
         }
 
-        await Task.CompletedTask;
+        // All modified scenes have now been saved, so reset the modified scenes list
+        await _workspaceSettings.DeletePropertyAsync(ScreenplayConstants.ModifiedScenesKey);
 
         return Result.Ok();
     }
