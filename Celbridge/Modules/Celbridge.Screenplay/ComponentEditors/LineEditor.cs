@@ -280,8 +280,13 @@ public class LineEditor : ComponentEditorBase
         }
 
         var resource = Component.Key.Resource;
-        modifiedScenes.Add(resource);
+        if (modifiedScenes.Contains(resource))
+        {
+            // Scene is already marked as modified, early out.
+            return;
+        }
 
+        modifiedScenes.Add(resource);
         await _workspaceSettings.SetPropertyAsync(ScreenplayConstants.ModifiedScenesKey, modifiedScenes);
     }
 
