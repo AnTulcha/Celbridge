@@ -195,7 +195,7 @@ public class ScreenplayLoader
                 }
                 else
                 {
-                    // Ignore non player character
+                    // All other character tags are invalid - ignore them.
                     continue;
                 }
 
@@ -203,7 +203,7 @@ public class ScreenplayLoader
                     CharacterId: TryGetValue<string>(row, columnMap, nameof(Character.CharacterId)),
                     Name: TryGetValue<string>(row, columnMap, nameof(Character.Name)),
                     Tag: tag,
-                    characterType);
+                    CharacterType: characterType);
 
                 characters.Add(character);
             }
@@ -410,7 +410,7 @@ public class ScreenplayLoader
             }
         }
         
-        return Result<string>.Fail("Invalid line type");
+        return Result<string>.Fail($"Failed to determine line type for character id '{characterId}'");
     }
 
     private Result ValidateDialogue(List<Scene> scenes, List<Character> characters, List<DialogueLine> lines)
