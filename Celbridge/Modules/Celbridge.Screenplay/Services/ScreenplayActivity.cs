@@ -331,17 +331,15 @@ public class ScreenplayActivity : IActivity
             {
                 // Check that the character id is a valid Player Variant character.
                 var isPlayerVariant = false;
-                foreach (var c in characters)
+                foreach (var c in characters.Where(c => characterId == c.CharacterId))
                 {
-                    if (characterId == c.CharacterId)
+                    if (c.CharacterType == CharacterType.PlayerVariant)
                     {
-                        if (c.CharacterType == CharacterType.PlayerVariant)
-                        {
-                            isPlayerVariant = true;
-                        }
-                        break;
+                        isPlayerVariant = true;
                     }
+                    break;
                 }
+
                 if (!isPlayerVariant)
                 {
                     entityAnnotation.AddComponentError(i, new AnnotationError(
@@ -597,7 +595,7 @@ public class ScreenplayActivity : IActivity
                 }
                 else
                 {
-                    // Ignore any other character types
+                    // All other character tags are invalid - ignore them.
                     continue;
                 }
             }
