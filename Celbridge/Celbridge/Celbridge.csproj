@@ -63,6 +63,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- To include content from a library project, you have to both copy it in the library project and link to it here in the executable project -->
+    <Content Include="..\Workspace\Celbridge.Documents\univer\**" Link="univer\%(RecursiveDir)%(FileName)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <UnoImage Include="Assets\Images\title_icon.svg" />
   </ItemGroup>
 
