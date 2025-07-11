@@ -393,6 +393,10 @@ public class DocumentsService : IDocumentsService, IDisposable
             case DocumentViewType.FileViewer:
                 documentView = _serviceProvider.GetRequiredService<FileViewerDocumentView>();
                 break;
+
+            case DocumentViewType.Spreadsheet:
+                documentView = _serviceProvider.GetRequiredService<SpreadsheetDocumentView>();
+                break;
 #else
             case DocumentViewType.WebPageDocument:
                 documentView = _serviceProvider.GetRequiredService<WebPageDocumentView>();
