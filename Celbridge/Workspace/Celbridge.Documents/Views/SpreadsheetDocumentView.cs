@@ -1,8 +1,9 @@
+using System.Diagnostics;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
-using Celbridge.UserInterface;
 using Celbridge.Workspace;
 using Microsoft.Web.WebView2.Core;
+using Windows.Foundation;
 
 namespace Celbridge.Documents.Views;
 
@@ -26,13 +27,14 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         {
             _webView = await CreateUniverWebView();
 
-            //_webView = new WebView2()
-            //    .Source(x => x.Binding(() => ViewModel.Source));
-
             // Fixes a visual bug where the WebView2 control would show a white background briefly when
             // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
 
             _webView.DefaultBackgroundColor = Colors.Transparent;
+
+            var filePath = ViewModel.FilePath;
+
+            await LoadExcelFile(filePath);
 
             this.Content = _webView;
         };
@@ -80,24 +82,83 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         webView.DefaultBackgroundColor = Colors.Transparent;
 
         await webView.EnsureCoreWebView2Async();
-        webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-            "Univer",
-            "univer",
-            CoreWebView2HostResourceAccessKind.Allow);
 
-        webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
+        await InitSpreadJS(webView);
+
+        return webView;
+    }
+
+    static async Task InitSpreadJS(WebView2 webView)
+    {
+        webView.CoreWebView2.SetVirtualHostNameToFolderMapping("spreadjs", "spreadJS", CoreWebView2HostResourceAccessKind.Allow);
+
+        //webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
         webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
 
         await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
 
-        // Set Monaco color theme to match the user interface theme        
-        var userInterfaceService = ServiceLocator.AcquireService<IUserInterfaceService>();
-        var theme = userInterfaceService.UserInterfaceTheme;
-        var vsTheme = theme == UserInterfaceTheme.Light ? "vs-light" : "vs-dark";
-        await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync($"window.theme = '{vsTheme}';");
+        webView.CoreWebView2.Navigate("http://spreadjs/index.html");
 
-        webView.CoreWebView2.Navigate("http://Univer/index.html");
+        bool isEditorReady = false;
+        TypedEventHandler<WebView2, CoreWebView2WebMessageReceivedEventArgs> onWebMessageReceived = (sender, e) =>
+        {
+            var message = e.TryGetWebMessageAsString();
 
-        return webView;
+            if (message == "editor_ready")
+            {
+                isEditorReady = true;
+                return;
+            }
+
+            throw new InvalidOperationException($"Expected 'editor_ready' message, but received: {message}");
+        };
+
+        webView.WebMessageReceived += onWebMessageReceived;
+
+        while (!isEditorReady)
+        {
+            await Task.Delay(50);
+        }
+
+        webView.WebMessageReceived -= onWebMessageReceived;
+    }
+
+    private async Task LoadExcelFile(string filePath)
+    {
+        if (File.Exists(filePath))
+        {
+            byte[] bytes = await File.ReadAllBytesAsync(filePath);
+            string base64 = Convert.ToBase64String(bytes);
+
+            _webView.CoreWebView2.PostWebMessageAsString(base64);
+        }
+
+        _webView.WebMessageReceived -= WebView_WebMessageReceived;
+        _webView.WebMessageReceived += WebView_WebMessageReceived;
+    }
+
+    private void WebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        try
+        {
+            var base64 = args.TryGetWebMessageAsString();
+
+            if (string.IsNullOrEmpty(base64))
+            {
+                // Todo: Log error
+                return;
+            }
+
+            byte[] fileBytes = Convert.FromBase64String(base64);
+            var filePath = ViewModel.FilePath;
+
+            File.WriteAllBytes(filePath, fileBytes);
+
+            Debug.WriteLine("Excel file saved to: " + filePath);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("Error saving Excel file: " + ex.Message);
+        }
     }
 }
