@@ -10,6 +10,7 @@ namespace Celbridge.Documents.Views;
 
 public sealed partial class SpreadsheetDocumentView : DocumentView
 {
+    private ILogger _logger;
     private IResourceRegistry _resourceRegistry;
 
     public SpreadsheetDocumentViewModel ViewModel { get; }
@@ -23,29 +24,10 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
     {
         ViewModel = serviceProvider.GetRequiredService<SpreadsheetDocumentViewModel>();
 
+        _logger = logger;
         _resourceRegistry = workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
 
-        Loaded += async (s, e) =>
-        {
-            var createResult = await CreateSpreadsheetWebView();
-
-            if (createResult.IsFailure)
-            {
-                logger.LogError(createResult.Error);
-                return;
-            }
-            _webView = createResult.Value;
-
-            // Fixes a visual bug where the WebView2 control would show a white background briefly when
-            // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
-            _webView.DefaultBackgroundColor = Colors.Transparent;
-
-            var filePath = ViewModel.FilePath;
-
-            await LoadSpreadsheet(filePath);
-
-            this.Content = _webView;
-        };
+        Loaded += SpreadsheetDocumentView_Loaded;
 
         //
         // Set the data context
@@ -54,34 +36,16 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         this.DataContext(ViewModel);
     }
 
-    public override async Task<Result> SetFileResource(ResourceKey fileResource)
+    private async void SpreadsheetDocumentView_Loaded(object sender, RoutedEventArgs e)
     {
-        var filePath = _resourceRegistry.GetResourcePath(fileResource);
+        // Unregister for UI load events.
+        // Switching tabs while spreadsheet view is loading triggers a load event.
+        Loaded -= SpreadsheetDocumentView_Loaded;
 
-        if (_resourceRegistry.GetResource(fileResource).IsFailure)
-        {
-            return Result.Fail($"File resource does not exist in resource registry: {fileResource}");
-        }
-
-        if (!File.Exists(filePath))
-        {
-            return Result.Fail($"File resource does not exist on disk: {fileResource}");
-        }
-
-        ViewModel.FileResource = fileResource;
-        ViewModel.FilePath = filePath;
-
-        await Task.CompletedTask;
-
-        return Result.Ok();
+        await InitSpreadsheetViewAsync();
     }
 
-    public override async Task<Result> LoadContent()
-    {
-        return await ViewModel.LoadContent();
-    }
-
-    private static async Task<Result<WebView2>> CreateSpreadsheetWebView()
+    private async Task InitSpreadsheetViewAsync()
     {
         try
         {
@@ -124,13 +88,48 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
             webView.WebMessageReceived -= onWebMessageReceived;
 
-            return Result<WebView2>.Ok(webView);
+            // Fixes a visual bug where the WebView2 control would show a white background briefly when
+            // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
+            webView.DefaultBackgroundColor = Colors.Transparent;
+
+            _webView = webView;
+
+            var filePath = ViewModel.FilePath;
+            await LoadSpreadsheet(filePath);
+
+            this.Content = _webView;
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-            return Result<WebView2>.Fail("Failed to create Spreadsheet Web View")
-                .WithException(ex);
+            _logger.LogError(ex, "Failed to initialize Spreadsheet Web View.");
         }
+    }
+
+    public override async Task<Result> SetFileResource(ResourceKey fileResource)
+    {
+        var filePath = _resourceRegistry.GetResourcePath(fileResource);
+
+        if (_resourceRegistry.GetResource(fileResource).IsFailure)
+        {
+            return Result.Fail($"File resource does not exist in resource registry: {fileResource}");
+        }
+
+        if (!File.Exists(filePath))
+        {
+            return Result.Fail($"File resource does not exist on disk: {fileResource}");
+        }
+
+        ViewModel.FileResource = fileResource;
+        ViewModel.FilePath = filePath;
+
+        await Task.CompletedTask;
+
+        return Result.Ok();
+    }
+
+    public override async Task<Result> LoadContent()
+    {
+        return await ViewModel.LoadContent();
     }
 
     private async Task LoadSpreadsheet(string filePath)
