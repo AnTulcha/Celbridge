@@ -1,8 +1,9 @@
-using System.Diagnostics;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
+using Celbridge.Logging;
 using Celbridge.Workspace;
 using Microsoft.Web.WebView2.Core;
+using System.Diagnostics;
 using Windows.Foundation;
 
 namespace Celbridge.Documents.Views;
@@ -13,10 +14,11 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
     public SpreadsheetDocumentViewModel ViewModel { get; }
 
-    private WebView2 _webView;
+    private WebView2? _webView;
 
     public SpreadsheetDocumentView(
         IServiceProvider serviceProvider,
+        ILogger<SpreadsheetDocumentView> logger,
         IWorkspaceWrapper workspaceWrapper)
     {
         ViewModel = serviceProvider.GetRequiredService<SpreadsheetDocumentViewModel>();
@@ -25,16 +27,22 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
         Loaded += async (s, e) =>
         {
-            _webView = await CreateUniverWebView();
+            var createResult = await CreateSpreadsheetWebView();
+
+            if (createResult.IsFailure)
+            {
+                logger.LogError(createResult.Error);
+                return;
+            }
+            _webView = createResult.Value;
 
             // Fixes a visual bug where the WebView2 control would show a white background briefly when
             // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
-
             _webView.DefaultBackgroundColor = Colors.Transparent;
 
             var filePath = ViewModel.FilePath;
 
-            await LoadExcelFile(filePath);
+            await LoadSpreadsheet(filePath);
 
             this.Content = _webView;
         };
@@ -73,58 +81,62 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         return await ViewModel.LoadContent();
     }
 
-    private static async Task<WebView2> CreateUniverWebView()
+    private static async Task<Result<WebView2>> CreateSpreadsheetWebView()
     {
-        var webView = new WebView2();
-
-        // This fixes a visual bug where the WebView2 control would show a white background briefly when
-        // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
-        webView.DefaultBackgroundColor = Colors.Transparent;
-
-        await webView.EnsureCoreWebView2Async();
-
-        await InitSpreadJS(webView);
-
-        return webView;
-    }
-
-    static async Task InitSpreadJS(WebView2 webView)
-    {
-        webView.CoreWebView2.SetVirtualHostNameToFolderMapping("spreadjs", "spreadJS", CoreWebView2HostResourceAccessKind.Allow);
-
-        //webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
-        webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
-
-        await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
-
-        webView.CoreWebView2.Navigate("http://spreadjs/index.html");
-
-        bool isEditorReady = false;
-        TypedEventHandler<WebView2, CoreWebView2WebMessageReceivedEventArgs> onWebMessageReceived = (sender, e) =>
+        try
         {
-            var message = e.TryGetWebMessageAsString();
+            var webView = new WebView2();
 
-            if (message == "editor_ready")
+            // This fixes a visual bug where the WebView2 control would show a white background briefly when
+            // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
+            webView.DefaultBackgroundColor = Colors.Transparent;
+
+            await webView.EnsureCoreWebView2Async();
+
+            webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
+
+            await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
+
+            // Todo: Download and embed spreadJS libs when making an installer build to allow full offline usage.
+            // webView.CoreWebView2.SetVirtualHostNameToFolderMapping("spreadjs", "spreadJS", CoreWebView2HostResourceAccessKind.Allow);
+            webView.CoreWebView2.Navigate("https://celbridge-app-static-files.celbridge.org/libs/spreadjs/spreadjs-18.1.4/");
+
+            bool isEditorReady = false;
+            TypedEventHandler<WebView2, CoreWebView2WebMessageReceivedEventArgs> onWebMessageReceived = (sender, e) =>
             {
-                isEditorReady = true;
-                return;
+                var message = e.TryGetWebMessageAsString();
+
+                if (message == "editor_ready")
+                {
+                    isEditorReady = true;
+                    return;
+                }
+
+                throw new InvalidOperationException($"Expected 'editor_ready' message, but received: {message}");
+            };
+
+            webView.WebMessageReceived += onWebMessageReceived;
+
+            while (!isEditorReady)
+            {
+                await Task.Delay(50);
             }
 
-            throw new InvalidOperationException($"Expected 'editor_ready' message, but received: {message}");
-        };
+            webView.WebMessageReceived -= onWebMessageReceived;
 
-        webView.WebMessageReceived += onWebMessageReceived;
-
-        while (!isEditorReady)
-        {
-            await Task.Delay(50);
+            return Result<WebView2>.Ok(webView);
         }
-
-        webView.WebMessageReceived -= onWebMessageReceived;
+        catch (Exception ex) 
+        {
+            return Result<WebView2>.Fail("Failed to create Spreadsheet Web View")
+                .WithException(ex);
+        }
     }
 
-    private async Task LoadExcelFile(string filePath)
+    private async Task LoadSpreadsheet(string filePath)
     {
+        Guard.IsNotNull(_webView);
+
         if (File.Exists(filePath))
         {
             byte[] bytes = await File.ReadAllBytesAsync(filePath);
