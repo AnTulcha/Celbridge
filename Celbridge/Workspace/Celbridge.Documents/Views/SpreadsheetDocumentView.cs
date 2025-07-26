@@ -1,9 +1,11 @@
+using Celbridge.Dialog;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
 using Celbridge.Logging;
+using Celbridge.UserInterface;
 using Celbridge.Workspace;
+using Microsoft.Extensions.Localization;
 using Microsoft.Web.WebView2.Core;
-using System.Diagnostics;
 using Windows.Foundation;
 
 namespace Celbridge.Documents.Views;
@@ -11,6 +13,8 @@ namespace Celbridge.Documents.Views;
 public sealed partial class SpreadsheetDocumentView : DocumentView
 {
     private ILogger _logger;
+    private IStringLocalizer _stringLocalizer;
+    private IDialogService _dialogService;
     private IResourceRegistry _resourceRegistry;
 
     public SpreadsheetDocumentViewModel ViewModel { get; }
@@ -20,11 +24,15 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
     public SpreadsheetDocumentView(
         IServiceProvider serviceProvider,
         ILogger<SpreadsheetDocumentView> logger,
+        IStringLocalizer stringLocalizer,
+        IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
         ViewModel = serviceProvider.GetRequiredService<SpreadsheetDocumentViewModel>();
 
         _logger = logger;
+        _stringLocalizer = stringLocalizer;
+        _dialogService = dialogService;
         _resourceRegistry = workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
 
         Loaded += SpreadsheetDocumentView_Loaded;
@@ -148,28 +156,42 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         _webView.WebMessageReceived += WebView_WebMessageReceived;
     }
 
-    private void WebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
+    private async void WebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
+        // Read the base 64 encoded spreadsheet data
+        var spreadsheetData = args.TryGetWebMessageAsString();
+        if (string.IsNullOrEmpty(spreadsheetData))
+        {
+            _logger.LogError("Failed to acquire spreadsheet data");
+            return;
+        }
+
+        await SaveSpreadsheet(spreadsheetData);
+    }
+
+    private async Task SaveSpreadsheet(string spreadsheetData)
+    {
+        bool succeeded = false;
         try
         {
-            var base64 = args.TryGetWebMessageAsString();
-
-            if (string.IsNullOrEmpty(base64))
-            {
-                // Todo: Log error
-                return;
-            }
-
-            byte[] fileBytes = Convert.FromBase64String(base64);
+            byte[] fileBytes = Convert.FromBase64String(spreadsheetData);
             var filePath = ViewModel.FilePath;
 
             File.WriteAllBytes(filePath, fileBytes);
-
-            Debug.WriteLine("Excel file saved to: " + filePath);
+            succeeded = true;
         }
         catch (Exception ex)
         {
-            Debug.WriteLine("Error saving Excel file: " + ex.Message);
+            _logger.LogError("Error saving Excel file: " + ex.Message);
+        }
+
+        if (!succeeded)
+        {
+            // Alert the user that the document failed to save
+            var file = ViewModel.FilePath;
+            var title = _stringLocalizer.GetString("Documents_SaveDocumentFailedTitle");
+            var message = _stringLocalizer.GetString("Documents_SaveDocumentFailedGeneric", file);
+            await _dialogService.ShowAlertDialogAsync(title, message);
         }
     }
 }
