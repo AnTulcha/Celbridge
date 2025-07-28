@@ -40,11 +40,11 @@
             if (!window.isWebView) return;
 
             if (window.chrome?.webview) {
-                chrome.webview.addEventListener('message', event => importExcelData(event.data));
+                chrome.webview.addEventListener('message', event => onWebViewMessage(event.data));
             } else if (window.unoWebView) {
-                window.unoWebViewReceiveMessage = data => importExcelData(data);
+                window.unoWebViewReceiveMessage = data => onWebViewMessage(data);
             } else if (window.webkit?.messageHandlers) {
-                window.webkit.messageHandlers.unoWebViewReceiveMessage = data => importExcelData(data);
+                window.webkit.messageHandlers.unoWebViewReceiveMessage = data => onWebViewMessage(data);
             }
         }
 
@@ -64,7 +64,20 @@
             }
         }
 
-        async function importExcelData(base64Data) {
+        function onWebViewMessage(webViewMessage) {
+
+            // The C# side handles the automatic save timer logic, sending a "request_save" message when a
+            // save should be performed. On the JS side, we serialize the spreadsheet to base 64 and send it back in response.
+            if (webViewMessage == "request_save") {
+                serializeExcelData();
+                return;
+            }
+
+            // Assume that any other message contains base 64 encoded Excel data to be edited in SpreadJS.
+            deserializeExcelData(webViewMessage)
+        }
+
+        async function deserializeExcelData(base64Data) {
             if (!window.isWebView) return;
 
             try {
@@ -88,20 +101,7 @@
             }
         }
 
-        function blobToBase64(blob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        }
-
-        async function loadExcelData() {
-            postWebViewMessage("load_excel_data");
-        }
-
-        async function saveExcelData() {
+        async function serializeExcelData() {
             const spread = window.designer.getWorkbook();
             try {
                 spread.export(async (blob) => {
@@ -116,6 +116,28 @@
             }
         }
 
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        function listenForChanges() {
+            const workbook = window.designer.getWorkbook();
+            commandManager = workbook.commandManager();
+
+            // SpreadJS doesn't have a unified way to detect when the spreadsheet is modified, but as all
+            // modifications are performed via command system we can just listen for any executing commands and
+            // assume that the data has changed.
+            // https://developer.mescius.com/forums/spreadjs/how-to-detect-if-there-is-any-modification-in-spreadjs
+            commandManager.addListener('appListener', (args) => {
+                postWebViewMessage("data_changed")
+            });
+        }
+
         window.onload = function () {
 
             //Apply License
@@ -125,31 +147,33 @@
             const config = GC.Spread.Sheets.Designer.DefaultConfig;
             delete config.fileMenu;
 
-            config.ribbon[0].buttonGroups.unshift({
-                label: "File",
-                commandGroup: {
-                    children: [
-                        { direction: "vertical", commands: ["cmdLoadData", "cmdSaveData"] },
-                    ]
-                }
-            });
+            // Custom save / load buttons
+            // These are no longer required since I implemented auto save, but keeping the code here for future reference.
+            //config.ribbon[0].buttonGroups.unshift({
+            //    label: "File",
+            //    commandGroup: {
+            //        children: [
+            //            { direction: "vertical", commands: ["cmdLoadData", "cmdSaveData"] },
+            //        ]
+            //    }
+            //});
 
-            config.commandMap = {
-                cmdLoadData: {
-                    title: "Load Excel File",
-                    text: "Load",
-                    bigButton: false,
-                    iconClass: "ribbon-button-loadschema",
-                    execute: loadExcelData
-                },
-                cmdSaveData: {
-                    title: "Save Excel File",
-                    text: "Save",
-                    bigButton: false,
-                    iconClass: "ribbon-button-saveschema",
-                    execute: saveExcelData
-                }
-            };
+            //config.commandMap = {
+            //    cmdLoadData: {
+            //        title: "Load Excel File",
+            //        text: "Load",
+            //        bigButton: false,
+            //        iconClass: "ribbon-button-loadschema",
+            //        execute: loadExcelData
+            //    },
+            //    cmdSaveData: {
+            //        title: "Save Excel File",
+            //        text: "Save",
+            //        bigButton: false,
+            //        iconClass: "ribbon-button-saveschema",
+            //        execute: saveExcelData
+            //    }
+            //};
 
             const designer = new GC.Spread.Sheets.Designer.Designer(
                 document.getElementById("gc-designer-container"), config
@@ -158,6 +182,7 @@
             window.designer = designer;
 
             listenForWebViewMessages();
+            listenForChanges();
             postWebViewMessage("editor_ready");
         };
     </script>

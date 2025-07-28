@@ -44,6 +44,21 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         this.DataContext(ViewModel);
     }
 
+    public override bool HasUnsavedChanges => ViewModel.HasUnsavedChanges;
+
+    public override Result<bool> UpdateSaveTimer(double deltaTime)
+    {
+        return ViewModel.UpdateSaveTimer(deltaTime);
+    }
+
+    public override async Task<Result> SaveDocument()
+    {
+        // Send a message to request the data to be serialized and sent back as another message.
+        _webView.CoreWebView2.PostWebMessageAsString("request_save");
+
+        return await ViewModel.SaveDocument();
+    }
+
     private async void SpreadsheetDocumentView_Loaded(object sender, RoutedEventArgs e)
     {
         // Unregister for UI load events.
@@ -184,10 +199,16 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
             }
             return;
         }
+        else if (webMessage == "data_changed")
+        {
+            // Flag the document as modified so it will attempt to save after a short delay.
+            ViewModel.OnDataChanged();
+            return;
+        }
 
         // Any other message is assumed to be base 64 encoded data to avoid string processing.
+        // This data was sent from the JS side in response to a "request_save" message.
         var spreadsheetData = webMessage;
-
         await SaveSpreadsheet(spreadsheetData);
     }
 
@@ -199,7 +220,7 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
             byte[] fileBytes = Convert.FromBase64String(spreadsheetData);
             var filePath = ViewModel.FilePath;
 
-            File.WriteAllBytes(filePath, fileBytes);
+            await File.WriteAllBytesAsync(filePath, fileBytes);
             succeeded = true;
         }
         catch (Exception ex)
