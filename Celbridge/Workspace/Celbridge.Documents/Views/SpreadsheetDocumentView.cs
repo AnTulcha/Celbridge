@@ -173,11 +173,10 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
     private async void WebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
-        // Read the base 64 encoded spreadsheet data
         var webMessage = args.TryGetWebMessageAsString();
         if (string.IsNullOrEmpty(webMessage))
         {
-            _logger.LogError("Failed to acquire spreadsheet data");
+            _logger.LogError("Invalid web message received");
             return;
         }
 
