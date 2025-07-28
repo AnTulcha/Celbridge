@@ -6,6 +6,7 @@ using Celbridge.Workspace;
 using Microsoft.Extensions.Localization;
 using Microsoft.Web.WebView2.Core;
 using Windows.Foundation;
+using Path = System.IO.Path;
 
 namespace Celbridge.Documents.Views;
 
@@ -158,12 +159,34 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
     private async void WebView_WebMessageReceived(WebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
     {
         // Read the base 64 encoded spreadsheet data
-        var spreadsheetData = args.TryGetWebMessageAsString();
-        if (string.IsNullOrEmpty(spreadsheetData))
+        var webMessage = args.TryGetWebMessageAsString();
+        if (string.IsNullOrEmpty(webMessage))
         {
             _logger.LogError("Failed to acquire spreadsheet data");
             return;
         }
+
+        if (webMessage == "load_excel_data")
+        {
+            // This will discard any pending changes so ask user to confirm
+
+            var title = _stringLocalizer.GetString("Documents_LoadDocumentConfirmTitle");
+            var filename = Path.GetFileName(ViewModel.FilePath);
+            var message = _stringLocalizer.GetString("Documents_LoadDocumentConfirm", filename);
+            var confirmResult = await _dialogService.ShowConfirmationDialogAsync(title, message);
+
+            var confirmed = confirmResult.Value;
+
+            if (confirmed)
+            {
+                var filePath = ViewModel.FilePath;
+                await LoadSpreadsheet(filePath);
+            }
+            return;
+        }
+
+        // Any other message is assumed to be base 64 encoded data to avoid string processing.
+        var spreadsheetData = webMessage;
 
         await SaveSpreadsheet(spreadsheetData);
     }

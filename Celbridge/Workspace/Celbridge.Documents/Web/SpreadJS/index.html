@@ -97,7 +97,11 @@
             });
         }
 
-        async function exportExcelData() {
+        async function loadExcelData() {
+            postWebViewMessage("load_excel_data");
+        }
+
+        async function saveExcelData() {
             const spread = window.designer.getWorkbook();
             try {
                 spread.export(async (blob) => {
@@ -122,19 +126,28 @@
             delete config.fileMenu;
 
             config.ribbon[0].buttonGroups.unshift({
-                label: "Save Data",
+                label: "File",
                 commandGroup: {
-                    children: [{ direction: "vertical", commands: ["cmdSaveData"] }]
+                    children: [
+                        { direction: "vertical", commands: ["cmdLoadData", "cmdSaveData"] },
+                    ]
                 }
             });
 
             config.commandMap = {
+                cmdLoadData: {
+                    title: "Load Excel File",
+                    text: "Load",
+                    bigButton: false,
+                    iconClass: "ribbon-button-loadschema",
+                    execute: loadExcelData
+                },
                 cmdSaveData: {
-                    title: "Save Data",
+                    title: "Save Excel File",
                     text: "Save",
-                    bigButton: true,
+                    bigButton: false,
                     iconClass: "ribbon-button-saveschema",
-                    execute: exportExcelData
+                    execute: saveExcelData
                 }
             };
 

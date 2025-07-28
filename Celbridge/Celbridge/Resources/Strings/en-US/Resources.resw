@@ -405,6 +405,12 @@
   <data name="Documents_OpenDocumentFailedTitle" xml:space="preserve">
     <value>Open Document Failed</value>
   </data>
+  <data name="Documents_LoadDocumentConfirmTitle" xml:space="preserve">
+    <value>Load Document</value>
+  </data>
+  <data name="Documents_LoadDocumentConfirm" xml:space="preserve">
+    <value>This will reload '{0}' and discard any changes you've made. Continue?</value>
+  </data>
   <data name="Documents_SaveDocumentFailedTitle" xml:space="preserve">
     <value>Save Document Failed</value>
   </data>
