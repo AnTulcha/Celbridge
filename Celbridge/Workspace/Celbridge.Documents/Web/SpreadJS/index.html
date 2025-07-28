@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Celbridge Spreadsheet</title>
+
+    <!-- Mescius CDN styles -->
+    <link rel="stylesheet" href="https://cdn.mescius.com/spreadjs/hosted/css/gc.spread.sheets.excel2013white.18.1.4.css" />
+    <link rel="stylesheet" href="https://cdn.mescius.com/spreadjs/hosted/css/gc.spread.sheets.designer.18.1.4.min.css" />
+    <link rel="stylesheet" href="custom.css" />
+</head>
+
+<body unselectable="on">
+    <div id="gc-designer-container" role="application" style="width:100%; height:100vh;"></div>
+
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/gc.spread.sheets.all.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.shapes.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.charts.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.datacharts.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.slicers.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.print.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.barcode.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.pdf.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.pivot.pivottables.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.tablesheet.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.ganttsheet.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.formulapanel.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.report.reportsheet.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/plugins/gc.spread.sheets.io.18.1.4.min.js"></script>
+
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/gc.spread.sheets.designer.resource.en.18.1.4.min.js"></script>
+    <script src="https://cdn.mescius.com/spreadjs/hosted/scripts/gc.spread.sheets.designer.all.18.1.4.min.js"></script>
+
+    <script src="https://celbridge-app-static-files.celbridge.org/libs/spreadjs/license.js"></script>
+
+    <script>
+        function listenForWebViewMessages() {
+            if (!window.isWebView) return;
+
+            if (window.chrome?.webview) {
+                chrome.webview.addEventListener('message', event => importExcelData(event.data));
+            } else if (window.unoWebView) {
+                window.unoWebViewReceiveMessage = data => importExcelData(data);
+            } else if (window.webkit?.messageHandlers) {
+                window.webkit.messageHandlers.unoWebViewReceiveMessage = data => importExcelData(data);
+            }
+        }
+
+        function postWebViewMessage(message) {
+            if (!window.isWebView) return;
+
+            try {
+                if (window.chrome?.webview) {
+                    chrome.webview.postMessage(message);
+                } else if (window.unoWebView) {
+                    unoWebView.postMessage(JSON.stringify(message));
+                } else if (window.webkit?.messageHandlers?.unoWebView) {
+                    window.webkit.messageHandlers.unoWebView.postMessage(JSON.stringify(message));
+                }
+            } catch (ex) {
+                console.error('WebView postMessage failed:', ex);
+            }
+        }
+
+        async function importExcelData(base64Data) {
+            if (!window.isWebView) return;
+
+            try {
+                const binary = atob(base64Data);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+                const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const file = new File([blob], 'imported.xlsx', { type: blob.type });
+
+                const spread = window.designer.getWorkbook();
+
+                await spread.import(file, () => {
+                    GC.Spread.Sheets.Designer.setWorkbook(spread);
+                    console.log("Excel imported from base64.");
+                }, console.error, {
+                    fileType: GC.Spread.Sheets.FileType.excel
+                });
+            } catch (err) {
+                console.error("Import failed:", err);
+            }
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function exportExcelData() {
+            const spread = window.designer.getWorkbook();
+            try {
+                spread.export(async (blob) => {
+                    const base64 = await blobToBase64(blob);
+                    postWebViewMessage(base64);
+                    console.log("Exported workbook");
+                }, console.error, {
+                    fileType: GC.Spread.Sheets.FileType.excel
+                });
+            } catch (err) {
+                console.error("Export failed:", err);
+            }
+        }
+
+        window.onload = function () {
+
+            //Apply License
+            GC.Spread.Sheets.LicenseKey = SPREAD_JS_LICENSE_KEY;
+            GC.Spread.Sheets.Designer.LicenseKey = SPREAD_JS_DESIGNER_LICENSE_KEY;
+
+            const config = GC.Spread.Sheets.Designer.DefaultConfig;
+            delete config.fileMenu;
+
+            config.ribbon[0].buttonGroups.unshift({
+                label: "Save Data",
+                commandGroup: {
+                    children: [{ direction: "vertical", commands: ["cmdSaveData"] }]
+                }
+            });
+
+            config.commandMap = {
+                cmdSaveData: {
+                    title: "Save Data",
+                    text: "Save",
+                    bigButton: true,
+                    iconClass: "ribbon-button-saveschema",
+                    execute: exportExcelData
+                }
+            };
+
+            const designer = new GC.Spread.Sheets.Designer.Designer(
+                document.getElementById("gc-designer-container"), config
+            );
+
+            window.designer = designer;
+
+            listenForWebViewMessages();
+            postWebViewMessage("editor_ready");
+        };
+    </script>
+</body>
+
+</html>

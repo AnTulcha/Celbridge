@@ -2,7 +2,6 @@ using Celbridge.Dialog;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
 using Celbridge.Logging;
-using Celbridge.UserInterface;
 using Celbridge.Workspace;
 using Microsoft.Extensions.Localization;
 using Microsoft.Web.WebView2.Core;
@@ -69,9 +68,9 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
             await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
 
-            // Todo: Download and embed spreadJS libs when making an installer build to allow full offline usage.
-            // webView.CoreWebView2.SetVirtualHostNameToFolderMapping("spreadjs", "spreadJS", CoreWebView2HostResourceAccessKind.Allow);
-            webView.CoreWebView2.Navigate("https://celbridge-app-static-files.celbridge.org/libs/spreadjs/spreadjs-18.1.4/");
+            // Todo: Download and embed spreadJS libs when making an installer build to support full offline usage.
+            webView.CoreWebView2.SetVirtualHostNameToFolderMapping("SpreadJS", "Web/SpreadJS", CoreWebView2HostResourceAccessKind.Allow);
+            webView.CoreWebView2.Navigate("https://SpreadJS/index.html");
 
             bool isEditorReady = false;
             TypedEventHandler<WebView2, CoreWebView2WebMessageReceivedEventArgs> onWebMessageReceived = (sender, e) =>
