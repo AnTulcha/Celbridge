@@ -53,6 +53,8 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
     public override async Task<Result> SaveDocument()
     {
+        Guard.IsNotNull(_webView);
+
         // Send a message to request the data to be serialized and sent back as another message.
         _webView.CoreWebView2.PostWebMessageAsString("request_save");
 

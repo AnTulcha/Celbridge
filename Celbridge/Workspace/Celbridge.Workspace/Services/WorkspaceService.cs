@@ -8,6 +8,7 @@ using Celbridge.GenerativeAI;
 using Celbridge.Inspector;
 using Celbridge.Logging;
 using Celbridge.Projects;
+using Celbridge.Python;
 using Celbridge.Scripting;
 using Celbridge.Settings;
 using Celbridge.Status;
@@ -24,6 +25,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
     public IWorkspaceSettingsService WorkspaceSettingsService { get; }
     public IWorkspaceSettings WorkspaceSettings => WorkspaceSettingsService.WorkspaceSettings!;
     public IScriptingService ScriptingService { get; }
+    public IPythonService PythonService { get; }
     public IConsoleService ConsoleService { get; }
     public IDocumentsService DocumentsService { get; }
     public IInspectorService InspectorService { get; }
@@ -53,6 +55,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
 
         WorkspaceSettingsService = serviceProvider.GetRequiredService<IWorkspaceSettingsService>();
         ScriptingService = serviceProvider.GetRequiredService<IScriptingService>();
+        PythonService = serviceProvider.GetRequiredService<IPythonService>();
         ConsoleService = serviceProvider.GetRequiredService<IConsoleService>();
         DocumentsService = serviceProvider.GetRequiredService<IDocumentsService>();
         InspectorService = serviceProvider.GetRequiredService<IInspectorService>();
@@ -198,6 +201,7 @@ public class WorkspaceService : IWorkspaceService, IDisposable
 
                 (WorkspaceSettingsService as IDisposable)!.Dispose();
                 (ScriptingService as IDisposable)!.Dispose();
+                (PythonService as IDisposable)!.Dispose();
                 (ConsoleService as IDisposable)!.Dispose();
                 (DocumentsService as IDisposable)!.Dispose();
                 (InspectorService as IDisposable)!.Dispose();

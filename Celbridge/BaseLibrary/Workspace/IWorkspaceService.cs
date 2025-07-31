@@ -6,6 +6,7 @@ using Celbridge.Entities;
 using Celbridge.Explorer;
 using Celbridge.GenerativeAI;
 using Celbridge.Inspector;
+using Celbridge.Python;
 using Celbridge.Scripting;
 using Celbridge.Status;
 
@@ -30,6 +31,11 @@ public interface IWorkspaceService
     /// Returns the Scripting Service associated with the workspace.
     /// </summary>
     IScriptingService ScriptingService { get; }
+
+    /// <summary>
+    /// Returns the Python Service associated with the workspace.
+    /// </summary>
+    IPythonService PythonService { get; }
 
     /// <summary>
     /// Returns the Console Service associated with the workspace.
