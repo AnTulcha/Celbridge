@@ -25,44 +25,9 @@ public class PythonService : IPythonService, IDisposable
 
     private async Task<string> RunPythonAsync(string script)
     {
-        var psi = new ProcessStartInfo
-        {
-            FileName = "py",
-            Arguments = $"-c \"{script}\"",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
+        var result = await PythonRuntime.RunScriptAsync(script);
 
-        var process = new Process
-        {
-            StartInfo = psi
-        };
-
-        var outputBuilder = new System.Text.StringBuilder();
-        var errorBuilder = new System.Text.StringBuilder();
-
-        process.OutputDataReceived += (sender, e) => {
-            if (e.Data != null)
-                outputBuilder.AppendLine(e.Data);
-        };
-
-        process.ErrorDataReceived += (sender, e) => {
-            if (e.Data != null)
-                errorBuilder.AppendLine(e.Data);
-        };
-
-        process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
-
-        await process.WaitForExitAsync();
-
-        var output = outputBuilder.ToString();
-        var errors = errorBuilder.ToString();
-
-        return !string.IsNullOrWhiteSpace(errors) ? $"ERROR:\n{errors}" : output;
+        return result;
     }
 
     private bool _disposed;
