@@ -9,7 +9,7 @@ public static class PythonRuntime
 {
     private const string PythonFolderName = "Python";
     private const string PythonZipAssetPath = "ms-appx:///Assets/EmbeddedPython/python-3.14.0rc1-embed-amd64.zip";
-    private const string PthFileName = "python311._pth";
+    private const string PthFileName = "python314._pth";
     private const string PythonExeName = "python.exe";
 
     /// <summary>
@@ -40,17 +40,19 @@ public static class PythonRuntime
     private static async Task EnsurePthFileAsync(string pythonPath)
     {
         var pthPath = Path.Combine(pythonPath, PthFileName);
-        if (!File.Exists(pthPath))
+        if (File.Exists(pthPath))
         {
-            var contents = string.Join(Environment.NewLine, new[]
-            {
-                "lib",
-                ".",
-                "import site"
-            });
-
-            await File.WriteAllTextAsync(pthPath, contents);
+            File.Delete(pthPath);
         }
+
+        var contents = string.Join(Environment.NewLine, new[]
+        {
+            "python314.zip",
+            ".",
+            "import site"
+        });
+
+        await File.WriteAllTextAsync(pthPath, contents);
     }
 
     /// <summary>
