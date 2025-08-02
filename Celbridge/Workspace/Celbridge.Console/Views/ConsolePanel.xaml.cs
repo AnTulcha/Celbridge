@@ -1,9 +1,9 @@
 using Celbridge.Console.ViewModels;
 using Celbridge.Logging;
-using Microsoft.Web.WebView2.Core;
-using System.Text.Json;
 using Celbridge.Terminal;
 using Microsoft.UI.Dispatching;
+using Microsoft.Web.WebView2.Core;
+using System.Text.Json;
 
 namespace Celbridge.Console.Views;
 
@@ -14,6 +14,8 @@ public sealed partial class ConsolePanel : UserControl, IConsolePanel
     private ILogger<ConsolePanel> _logger;
 
     public ConsolePanelViewModel ViewModel { get; }
+
+    private ConPtyTerminal _terminal = new ();
 
     public ConsolePanel()
     {
@@ -51,9 +53,7 @@ public sealed partial class ConsolePanel : UserControl, IConsolePanel
 
         DispatcherQueue dispatcher = DispatcherQueue.GetForCurrentThread();
 
-        var terminal = new ConPtyTerminal();
-
-        terminal.OutputReceived += (_, output) =>
+        _terminal.OutputReceived += (_, output) =>
         {
             dispatcher.TryEnqueue(async () =>
             {
@@ -61,7 +61,7 @@ public sealed partial class ConsolePanel : UserControl, IConsolePanel
             });
         };
 
-        terminal.Start("py");
+        _terminal.Start("py");
 
         return Result.Ok();
     }
@@ -85,14 +85,10 @@ public sealed partial class ConsolePanel : UserControl, IConsolePanel
         if (method == "terminalInput")
         {
             var input = root.GetProperty("params").GetProperty("data").GetString();
-            if (input == "\r")
+            if (!string.IsNullOrEmpty(input))
             {
-                input = Environment.NewLine;
+                _terminal.Write(input);
             }
-
-            _logger.LogInformation($"Terminal input: {input}");
-
-            await SendToTerminalAsync(input);
         }
     }
 
