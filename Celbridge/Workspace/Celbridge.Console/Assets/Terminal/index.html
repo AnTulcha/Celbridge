@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Xterm + JSON-RPC</title>
+    <title>Xterm</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
     <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
@@ -27,7 +27,36 @@
     <div id="terminal"></div>
 
     <script>
-        const term = new Terminal();
+
+        const campbellTheme = {
+            foreground: '#CCCCCC',
+            background: '#0C0C0C',
+            cursor: '#FFFFFF',
+            selection: '#FFFFFF40',
+
+            black: '#0C0C0C',
+            red: '#C50F1F',
+            green: '#13A10E',
+            yellow: '#C19C00',
+            blue: '#0037DA',
+            magenta: '#881798',
+            cyan: '#3A96DD',
+            white: '#CCCCCC',
+
+            brightBlack: '#767676',
+            brightRed: '#E74856',
+            brightGreen: '#16C60C',
+            brightYellow: '#F9F1A5',
+            brightBlue: '#3B78FF',
+            brightMagenta: '#B4009E',
+            brightCyan: '#61D6D6',
+            brightWhite: '#F2F2F2'
+        };
+
+        const term = new Terminal({
+            theme: campbellTheme
+        });
+
         const fitAddon = new FitAddon.FitAddon();
         term.loadAddon(fitAddon);
 
@@ -38,120 +67,17 @@
             fitAddon.fit();
         });
 
-        // JSON-RPC layer
-        const rpcHandlers = {};
-        const pendingRequests = {};
-        let nextId = 1;
-
-        function sendNotification(method, params = {}) {
-            const message = {
-                jsonrpc: "2.0",
-                method,
-                params
-            };
-            window.chrome.webview.postMessage(JSON.stringify(message));
-        }
-
-        function sendRequest(method, params = {}) {
-            const id = nextId++;
-            const message = {
-                jsonrpc: "2.0",
-                method,
-                params,
-                id
-            };
-
-            return new Promise((resolve, reject) => {
-                pendingRequests[id] = { resolve, reject };
-                window.chrome.webview.postMessage(JSON.stringify(message));
-            });
-        }
-
-        function sendResponse(id, result) {
-            const message = {
-                jsonrpc: "2.0",
-                result,
-                id
-            };
-            window.chrome.webview.postMessage(JSON.stringify(message));
-        }
-
-        function sendError(id, code, message, data) {
-            const error = { code, message };
-            if (data !== undefined) error.data = data;
-            const response = {
-                jsonrpc: "2.0",
-                error,
-                id
-            };
-            window.chrome.webview.postMessage(JSON.stringify(response));
-        }
-
-        function registerRpcHandler(method, handler) {
-            rpcHandlers[method] = handler;
-        }
-
-        window.chrome.webview.addEventListener('message', event => {
-            try {
-                const msg = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
-
-                if (msg.jsonrpc !== "2.0") return;
-
-                if (msg.method) {
-                    // Handle request or notification
-                    const handler = rpcHandlers[msg.method];
-                    if (!handler) {
-                        if (msg.id !== undefined) {
-                            sendError(msg.id, -32601, `Method not found: ${msg.method}`);
-                        }
-                        return;
-                    }
-
-                    try {
-                        const result = handler(msg.params);
-                        if (msg.id !== undefined) {
-                            if (result instanceof Promise) {
-                                result.then(r => sendResponse(msg.id, r))
-                                    .catch(e => sendError(msg.id, -32000, e.toString()));
-                            } else {
-                                sendResponse(msg.id, result);
-                            }
-                        }
-                    } catch (e) {
-                        if (msg.id !== undefined) {
-                            sendError(msg.id, -32000, e.toString());
-                        }
-                    }
-                } else if (msg.id !== undefined) {
-                    // Handle response
-                    const pending = pendingRequests[msg.id];
-                    if (!pending) return;
-
-                    delete pendingRequests[msg.id];
-                    if (msg.error) {
-                        pending.reject(msg.error);
-                    } else {
-                        pending.resolve(msg.result);
-                    }
-                }
-            } catch (err) {
-                console.error("Failed to process JSON-RPC message:", err);
-            }
-        });
-
-        // Terminal input handler (notification to host)
+        // Send terminal input to host
         term.onData(data => {
-            sendNotification("terminalInput", { data });
+            window.chrome.webview.postMessage(data);
         });
 
-        // Register handler for writing to terminal
-        registerRpcHandler("writeToTerminal", ({ data }) => {
-            term.write(data);
-        });
-
-        // Example: Register a synchronous command
-        registerRpcHandler("getTerminalSize", () => {
-            return { cols: term.cols, rows: term.rows };
+        // Receive data from host and write to terminal
+        window.chrome.webview.addEventListener('message', event => {
+            const data = event.data;
+            if (typeof data === "string") {
+                term.write(data);
+            }
         });
     </script>
 </body>
