@@ -6,7 +6,7 @@ using Windows.System;
 
 namespace Celbridge.Console.Views;
 
-public partial class ConsolePanel : UserControl, IConsolePanel
+public partial class ConsolePanelOld : UserControl, IConsolePanel
 {
     private readonly IStringLocalizer _stringLocalizer;
 
@@ -18,7 +18,7 @@ public partial class ConsolePanel : UserControl, IConsolePanel
 
     public ConsolePanelViewModel ViewModel { get; }
 
-    public ConsolePanel(
+    public ConsolePanelOld(
         IServiceProvider serviceProvider,
         IStringLocalizer stringLocalizer)
     {
