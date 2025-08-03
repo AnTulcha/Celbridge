@@ -1,10 +1,8 @@
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Win32.SafeHandles;
 
 namespace Celbridge.Terminal;
 
@@ -19,8 +17,11 @@ public sealed class ConPtyTerminal : IDisposable
 
     public event EventHandler<string>? OutputReceived;
 
-    public void Start(string commandLine, int width = 80, int height = 25)
+    public void Start(string commandLine)
     {
+        const int Columns = 80;
+        const int Rows = 25;
+
         var sa = new SECURITY_ATTRIBUTES
         {
             nLength = Marshal.SizeOf<SECURITY_ATTRIBUTES>(),
@@ -30,10 +31,12 @@ public sealed class ConPtyTerminal : IDisposable
         CreatePipe(out var hInputRead, out _hInputWrite, ref sa, 0);
         CreatePipe(out _hOutputRead, out var hOutputWrite, ref sa, 0);
 
-        var size = new COORD((short)width, (short)height);
+        var size = new COORD((short)Columns, (short)Rows);
         var result = CreatePseudoConsole(size, hInputRead, hOutputWrite, 0, out _pseudoConsoleHandle);
         if (result != 0)
+        {
             throw new Win32Exception(result, "CreatePseudoConsole failed");
+        }
 
         CloseHandle(hInputRead);
         CloseHandle(hOutputWrite);
@@ -63,12 +66,14 @@ public sealed class ConPtyTerminal : IDisposable
             true,
             EXTENDED_STARTUPINFO_PRESENT,
             IntPtr.Zero,
-            null,
+            null, // Todo: pass current directory
             ref siEx,
             out pi);
 
         if (!success)
+        {
             throw new Win32Exception(Marshal.GetLastWin32Error(), "CreateProcess failed");
+        }
 
         _childProcess = Process.GetProcessById(pi.dwProcessId);
 
@@ -78,7 +83,8 @@ public sealed class ConPtyTerminal : IDisposable
     private async Task ReadOutputLoop()
     {
         var buffer = new byte[4096];
-        using var reader = new FileStream(_hOutputRead, FileAccess.Read);
+        using var reader = new FileStream(new SafeFileHandle(_hOutputRead, ownsHandle: false), FileAccess.Read);
+
         while (true)
         {
             int bytesRead = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length));
@@ -100,12 +106,19 @@ public sealed class ConPtyTerminal : IDisposable
         _childProcess?.Dispose();
 
         if (_pseudoConsoleHandle != IntPtr.Zero)
+        { 
             ClosePseudoConsole(_pseudoConsoleHandle);
+        }
 
         if (_hInputWrite != IntPtr.Zero)
+        {
             CloseHandle(_hInputWrite);
+        }
+
         if (_hOutputRead != IntPtr.Zero)
+        {
             CloseHandle(_hOutputRead);
+        }
     }
 
     #region Win32 Interop
