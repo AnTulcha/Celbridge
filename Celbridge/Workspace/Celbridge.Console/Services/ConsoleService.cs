@@ -11,6 +11,8 @@ public class ConsoleService : IConsoleService, IDisposable
     private IConsolePanel? _consolePanel;
     public IConsolePanel ConsolePanel => _consolePanel!;
 
+    public ITerminal Terminal { get; private set; }
+
     public ConsoleService(
         IServiceProvider serviceProvider,
         IMessengerService messengerService,
@@ -23,11 +25,20 @@ public class ConsoleService : IConsoleService, IDisposable
         _messengerService = messengerService;
 
         _messengerService.Register<WorkspaceWillPopulatePanelsMessage>(this, OnWorkspaceWillPopulatePanelsMessage);
+
+        Terminal = serviceProvider.AcquireService<ITerminal>();
     }
 
     private void OnWorkspaceWillPopulatePanelsMessage(object recipient, WorkspaceWillPopulatePanelsMessage message)
     {
         _consolePanel = _serviceProvider.GetRequiredService<IConsolePanel>();
+    }
+
+    public async Task<Result> InitializeTerminalWindow()
+    {
+        Guard.IsNotNull(_consolePanel);
+
+        return await _consolePanel.InitializeTerminalWindow(Terminal);
     }
 
     public event Action<MessageType, string>? OnPrint;

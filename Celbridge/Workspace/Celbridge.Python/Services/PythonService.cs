@@ -1,5 +1,8 @@
 using Celbridge.Logging;
 using Celbridge.Projects;
+using Celbridge.Workspace;
+
+using Path = System.IO.Path;
 
 namespace Celbridge.Python.Services;
 
@@ -7,13 +10,34 @@ public class PythonService : IPythonService, IDisposable
 {
     private readonly ILogger<PythonService> _logger;
     private readonly IProjectService _projectService;
+    private readonly IWorkspaceWrapper _workspaceWrapper;
 
     public PythonService(
         ILogger<PythonService> logger,
-        IProjectService projectService)
+        IProjectService projectService,
+        IWorkspaceWrapper workspaceWrapper)
     {
         _logger = logger;
         _projectService = projectService;
+        _workspaceWrapper = workspaceWrapper;
+    }
+
+    public async Task<Result> InitializePython()
+    {
+        var ensureResult = await PythonRuntime.EnsurePythonInstalledAsync();
+        if (ensureResult.IsFailure)
+        {
+            return Result.Fail("Failed to ensure Python is installed")
+                .WithErrors(ensureResult);
+        }
+        var pythonFolder = ensureResult.Value;
+
+        var pythonPath = Path.Combine(pythonFolder, "python.exe");
+
+        var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
+        terminal.Start(pythonPath);
+
+        return Result.Ok();
     }
 
     public async Task<Result<string>> ExecuteAsync(string script)

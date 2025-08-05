@@ -1,10 +1,12 @@
+#if WINDOWS
+
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
-namespace Celbridge.Terminal;
+namespace Celbridge.Console.Services;
 
 public sealed class ConPtyTerminal : IDisposable
 {
@@ -234,3 +236,5 @@ public sealed class ConPtyTerminal : IDisposable
 
     #endregion
 }
+
+#endif

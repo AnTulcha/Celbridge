@@ -12,6 +12,33 @@ public static class PythonRuntime
     private const string PthFileName = "python314._pth";
     private const string PythonExeName = "python.exe";
 
+    public static async Task<Result<string>> EnsurePythonInstalledAsync()
+    {
+        try
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var pythonFolder = await localFolder.CreateFolderAsync(PythonFolderName, CreationCollisionOption.OpenIfExists);
+            var pythonExePath = Path.Combine(pythonFolder.Path, PythonExeName);
+
+            if (!File.Exists(pythonExePath))
+            {
+                var zipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PythonZipAssetPath));
+                var tempFile = await zipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "python-embed.zip", NameCollisionOption.ReplaceExisting);
+
+                ZipFile.ExtractToDirectory(tempFile.Path, pythonFolder.Path, overwriteFiles: true);
+
+                await EnsurePthFileAsync(pythonFolder.Path);
+            }
+
+            return Result<string>.Ok(pythonFolder.Path);
+        }
+        catch (Exception ex)
+        {
+            return Result<string>.Fail("Failed to install Python")
+                .WithException(ex);
+        }
+    }
+
     /// <summary>
     /// Runs a Python script using the embedded runtime.
     /// </summary>
@@ -20,15 +47,22 @@ public static class PythonRuntime
         try
         {
             var ensureResult = await EnsurePythonInstalledAsync();
+            if (ensureResult.IsFailure)
+            {
+                return Result<string>.Fail($"Failed to ensure Python installation")
+                    .WithErrors(ensureResult);
+            }
+
             var pythonFolder = ensureResult.Value;
 
             var pythonPath = Path.Combine(pythonFolder, PythonExeName);
+            var arguments = string.IsNullOrEmpty(scriptFile) ? string.Empty : $"\"{scriptFile}\"";
 
             var psi = new ProcessStartInfo
             {
                 FileName = pythonPath,
-                Arguments = $"\"{scriptFile}\"",
-                WorkingDirectory = workingDir ?? pythonFolder,
+                Arguments = arguments,
+                WorkingDirectory = workingDir,
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -67,33 +101,6 @@ public static class PythonRuntime
         catch (Exception ex)
         {
             return Result<string>.Fail($"Failed to run Python script: '{scriptFile}'")
-                .WithException(ex);
-        }
-    }
-
-    private static async Task<Result<string>> EnsurePythonInstalledAsync()
-    {
-        try
-        {
-            var localFolder = ApplicationData.Current.LocalFolder;
-            var pythonFolder = await localFolder.CreateFolderAsync(PythonFolderName, CreationCollisionOption.OpenIfExists);
-            var pythonExePath = Path.Combine(pythonFolder.Path, PythonExeName);
-
-            if (!File.Exists(pythonExePath))
-            {
-                var zipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PythonZipAssetPath));
-                var tempFile = await zipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "python-embed.zip", NameCollisionOption.ReplaceExisting);
-
-                ZipFile.ExtractToDirectory(tempFile.Path, pythonFolder.Path, overwriteFiles: true);
-
-                await EnsurePthFileAsync(pythonFolder.Path);
-            }
-
-            return Result<string>.Ok(pythonFolder.Path);
-        }
-        catch (Exception ex)
-        {
-            return Result<string>.Fail("Failed to install Python")
                 .WithException(ex);
         }
     }
