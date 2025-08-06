@@ -24,61 +24,52 @@ public class PythonService : IPythonService, IDisposable
 
     public async Task<Result> InitializePython()
     {
-        var ensureResult = await PythonRuntime.EnsurePythonInstalledAsync();
-        if (ensureResult.IsFailure)
-        {
-            return Result.Fail("Failed to ensure Python is installed")
-                .WithErrors(ensureResult);
-        }
-        var pythonFolder = ensureResult.Value;
-
-        var pythonPath = Path.Combine(pythonFolder, "python.exe");
-
-        var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
-        terminal.Start(pythonPath);
-
-        return Result.Ok();
-    }
-
-    public async Task<Result<string>> ExecuteAsync(string script)
-    {
-        var runResult = await RunPythonAsync(script);
-
-        if (runResult.IsFailure)
-        {
-            return Result<string>.Fail("Failed to run Python script")
-                .WithErrors(runResult);
-        }
-
-        var output = runResult.Value;
-
-        _logger.LogInformation(output);
-
-        await Task.CompletedTask;
-            
-        return Result<string>.Ok(string.Empty);
-    }
-
-    private async Task<Result<string>> RunPythonAsync(ResourceKey scriptResource)
-    {
         if (_projectService.CurrentProject is null)
         {
             return Result<string>.Fail("Failed to run python script as no project is loaded");
         }
+        var workingDir = _projectService.CurrentProject.ProjectFolderPath;
 
-        // Todo: Check scriptResource exists in project
-
-        var projectFolderPath = _projectService.CurrentProject.ProjectFolderPath;
-        var runResult = await PythonRuntime.RunScriptAsync(scriptResource, projectFolderPath);
-
-        if (runResult.IsFailure)
+        var installResult = await PythonInstaller.InstallPythonAsync();
+        if (installResult.IsFailure)
         {
-            return runResult;
+            return Result.Fail("Failed to ensure Python is installed")
+                .WithErrors(installResult);
         }
-        var output = runResult.Value;
+        var pythonFolder = installResult.Value;
 
-        // Todo: Use a record to return detailed result data
-        return Result<string>.Ok(output);
+        var pythonPath = Path.Combine(pythonFolder, "python.exe");
+        pythonPath = GetSafeQuotedPath(pythonPath);
+
+        var scriptPath = Path.Combine(pythonFolder, "startup.py");
+        scriptPath = GetSafeQuotedPath(scriptPath);
+
+        // Run startup script then switch to interactive mode
+        var commandLine = $"{pythonPath} -i {scriptPath}";
+
+        // Example of passing in an environment variable
+        // Environment.SetEnvironmentVariable("NO_COLOR", "1", EnvironmentVariableTarget.Process);
+
+        var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
+        terminal.Start(commandLine, workingDir);
+
+        return Result.Ok();
+    }
+
+    public Task<Result<string>> ExecuteAsync(string script)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static string GetSafeQuotedPath(string path)
+    {
+        if (path.Any(char.IsWhiteSpace) &&
+           !(path.StartsWith("\"") && path.EndsWith("\"")))
+        {
+            path = $"\"{path}\"";
+        }
+
+        return path;
     }
 
     private bool _disposed;

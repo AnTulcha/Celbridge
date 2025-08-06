@@ -19,7 +19,7 @@ public sealed class ConPtyTerminal : IDisposable
 
     public event EventHandler<string>? OutputReceived;
 
-    public void Start(string commandLine)
+    public void Start(string commandLine, string workingDir)
     {
         const int Columns = 80;
         const int Rows = 25;
@@ -68,7 +68,7 @@ public sealed class ConPtyTerminal : IDisposable
             true,
             EXTENDED_STARTUPINFO_PRESENT,
             IntPtr.Zero,
-            null, // Todo: pass current directory
+            workingDir,
             ref siEx,
             out pi);
 

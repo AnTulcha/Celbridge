@@ -8,7 +8,7 @@ public interface ITerminal
     /// <summary>
     /// Starts the terminal session by executing a command line program.
     /// </summary>
-    void Start(string commandLine);
+    void Start(string commandLine, string workingDir);
 
     /// <summary>
     /// Writes input data to the terminal.

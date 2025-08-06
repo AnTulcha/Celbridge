@@ -21,10 +21,10 @@ public class Terminal : ITerminal
 #endif
     }
 
-    public void Start(string commandLine)
+    public void Start(string commandLine, string workingDir)
     {
 #if WINDOWS
-        _terminal.Start(commandLine);
+        _terminal.Start(commandLine, workingDir);
 #else
         throw new NotImplementedException();
 #endif
