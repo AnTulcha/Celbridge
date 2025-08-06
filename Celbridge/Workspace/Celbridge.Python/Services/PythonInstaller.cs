@@ -8,6 +8,7 @@ public static class PythonInstaller
 {
     private const string PythonFolderName = "Python";
     private const string PythonZipAssetPath = "ms-appx:///Assets/EmbeddedPython/python-3.14.0rc1-embed-amd64.zip";
+    private const string PipZipAssetPath = "ms-appx:///Assets/EmbeddedPython/pip.zip";
 
     public static async Task<Result<string>> InstallPythonAsync()
     {
@@ -17,20 +18,27 @@ public static class PythonInstaller
             var pythonFolderPath = Path.Combine(localFolder.Path, PythonFolderName);
 
             // Uncomment to force install embedded Python
-            // Directory.Delete(pythonFolderPath, true);
+            if (Directory.Exists(pythonFolderPath))
+            {
+                Directory.Delete(pythonFolderPath, true);
+            }
 
             if (!Directory.Exists(pythonFolderPath))
             {
                 var pythonFolder = await localFolder.CreateFolderAsync(PythonFolderName, CreationCollisionOption.OpenIfExists);
 
-                var zipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PythonZipAssetPath));
-                var tempFile = await zipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "python-embed.zip", NameCollisionOption.ReplaceExisting);
+                // Unzip embedded Python
+                var pythonZipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PythonZipAssetPath));
+                var pythonTempFile = await pythonZipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "python.zip", NameCollisionOption.ReplaceExisting);
+                ZipFile.ExtractToDirectory(pythonTempFile.Path, pythonFolder.Path, overwriteFiles: true);
 
-                ZipFile.ExtractToDirectory(tempFile.Path, pythonFolder.Path, overwriteFiles: true);
+                // Unzip pip library
+                var pipZipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PipZipAssetPath));
+                var zipTempFile = await pipZipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "pip.zip", NameCollisionOption.ReplaceExisting);
+                ZipFile.ExtractToDirectory(zipTempFile.Path, pythonFolder.Path, overwriteFiles: true);
 
                 StorageFolder installedLocation = Package.Current.InstalledLocation;
                 StorageFolder extrasFolder = await installedLocation.GetFolderAsync("Assets\\PythonExtras");
-
                 await CopyStorageFolderAsync(extrasFolder, pythonFolder.Path);
             }
 
