@@ -17,12 +17,17 @@ public sealed class ConPtyTerminal : IDisposable
     private Process? _childProcess;
     private Task? _outputReaderTask;
 
+    private int _cols = -1;
+    private int _rows = -1;
+
     public event EventHandler<string>? OutputReceived;
 
     public void Start(string commandLine, string workingDir)
     {
-        const int Columns = 80;
-        const int Rows = 25;
+        // Use the stored values that were reported earlier when xterm.js initialized, via SetSize().
+        // Use reasonable defaults if these haven't been set for some reason.
+        int columns = _cols > -1 ? _cols : 80;
+        int rows = _rows > -1 ? _rows : 25;
 
         var sa = new SECURITY_ATTRIBUTES
         {
@@ -33,12 +38,10 @@ public sealed class ConPtyTerminal : IDisposable
         CreatePipe(out var hInputRead, out _hInputWrite, ref sa, 0);
         CreatePipe(out _hOutputRead, out var hOutputWrite, ref sa, 0);
 
-        var size = new COORD((short)Columns, (short)Rows);
+        var size = new COORD((short)columns, (short)rows);
         var result = CreatePseudoConsole(size, hInputRead, hOutputWrite, 0, out _pseudoConsoleHandle);
         if (result != 0)
-        {
             throw new Win32Exception(result, "CreatePseudoConsole failed");
-        }
 
         CloseHandle(hInputRead);
         CloseHandle(hOutputWrite);
@@ -78,7 +81,6 @@ public sealed class ConPtyTerminal : IDisposable
         }
 
         _childProcess = Process.GetProcessById(pi.dwProcessId);
-
         _outputReaderTask = Task.Run(ReadOutputLoop);
     }
 
@@ -90,8 +92,12 @@ public sealed class ConPtyTerminal : IDisposable
         while (true)
         {
             int bytesRead = await reader.ReadAsync(buffer.AsMemory(0, buffer.Length));
-            if (bytesRead == 0) break;
-            string text = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            if (bytesRead == 0)
+            {
+                break;
+            }
+
+            var text = Encoding.UTF8.GetString(buffer, 0, bytesRead);
             OutputReceived?.Invoke(this, text);
         }
     }
@@ -102,13 +108,36 @@ public sealed class ConPtyTerminal : IDisposable
         WriteFile(_hInputWrite, bytes, bytes.Length, out _, IntPtr.Zero);
     }
 
+    public void SetSize(int cols, int rows)
+    {
+        if (cols == _cols && rows == _rows)
+        {
+            return;
+        }
+
+        _cols = cols;
+        _rows = rows;
+
+        if (_pseudoConsoleHandle == IntPtr.Zero)
+        {
+            // The psuedo console has not initialized yet.
+            // Record the cols & rows so we can apply them when Start() is called.
+            return;
+        }
+
+        var size = new COORD((short)_cols, (short)_rows);
+        int hr = ResizePseudoConsole(_pseudoConsoleHandle, size);
+        if (hr != 0)
+            throw new Win32Exception(hr, "ResizePseudoConsole failed");
+    }
+
     public void Dispose()
     {
         _childProcess?.Kill();
         _childProcess?.Dispose();
 
         if (_pseudoConsoleHandle != IntPtr.Zero)
-        { 
+        {
             ClosePseudoConsole(_pseudoConsoleHandle);
         }
 
@@ -130,6 +159,9 @@ public sealed class ConPtyTerminal : IDisposable
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern int CreatePseudoConsole(COORD size, IntPtr hInput, IntPtr hOutput, uint dwFlags, out IntPtr hPC);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern int ResizePseudoConsole(IntPtr hPC, COORD size);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern void ClosePseudoConsole(IntPtr hPC);

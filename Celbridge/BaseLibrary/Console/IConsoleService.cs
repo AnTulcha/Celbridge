@@ -40,4 +40,9 @@ public interface IConsoleService
     /// Print a message to the console.
     /// </summary>
     void Print(MessageType messageType, string message);
+
+    /// <summary>
+    /// Runs a command by injecting terminal input.
+    /// </summary>
+    void RunCommand(string command);
 }

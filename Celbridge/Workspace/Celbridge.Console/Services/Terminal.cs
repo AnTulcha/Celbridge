@@ -9,6 +9,8 @@ public class Terminal : ITerminal
 
     public event EventHandler<string>? OutputReceived;
 
+    public string CommandBuffer { get; set; } = string.Empty;
+
     public Terminal()
     {
 #if WINDOWS
@@ -34,6 +36,15 @@ public class Terminal : ITerminal
     {
 #if WINDOWS
         _terminal.Write(input);
+#else
+        throw new NotImplementedException();
+#endif
+    }
+
+    public void SetSize(int cols, int rows)
+    {
+#if WINDOWS
+        _terminal.SetSize(cols, rows);
 #else
         throw new NotImplementedException();
 #endif

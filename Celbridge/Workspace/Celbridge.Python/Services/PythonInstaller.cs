@@ -7,7 +7,7 @@ namespace Celbridge.Python.Services;
 public static class PythonInstaller
 {
     private const string PythonFolderName = "Python";
-    private const string PythonZipAssetPath = "ms-appx:///Assets/EmbeddedPython/python-3.14.0rc1-embed-amd64.zip";
+    private const string PythonZipAssetPath = "ms-appx:///Assets/EmbeddedPython/python-3.13.6-embed-amd64.zip";
     private const string PipZipAssetPath = "ms-appx:///Assets/EmbeddedPython/pip.zip";
 
     public static async Task<Result<string>> InstallPythonAsync()
@@ -32,14 +32,14 @@ public static class PythonInstaller
                 var pythonTempFile = await pythonZipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "python.zip", NameCollisionOption.ReplaceExisting);
                 ZipFile.ExtractToDirectory(pythonTempFile.Path, pythonFolder.Path, overwriteFiles: true);
 
-                // Unzip pip library
-                var pipZipFile = await StorageFile.GetFileFromApplicationUriAsync(new Uri(PipZipAssetPath));
-                var zipTempFile = await pipZipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "pip.zip", NameCollisionOption.ReplaceExisting);
-                ZipFile.ExtractToDirectory(zipTempFile.Path, pythonFolder.Path, overwriteFiles: true);
-
                 StorageFolder installedLocation = Package.Current.InstalledLocation;
                 StorageFolder extrasFolder = await installedLocation.GetFolderAsync("Assets\\PythonExtras");
                 await CopyStorageFolderAsync(extrasFolder, pythonFolder.Path);
+
+                // Unzip lib.zip and delete the zip file
+                var libZipPath = Path.Combine(pythonFolderPath, "lib.zip");
+                ZipFile.ExtractToDirectory(libZipPath, pythonFolder.Path, overwriteFiles: true);
+                File.Delete(libZipPath);
             }
 
             return Result<string>.Ok(pythonFolderPath);

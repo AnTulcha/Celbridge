@@ -48,6 +48,17 @@ public class ConsoleService : IConsoleService, IDisposable
         OnPrint?.Invoke(printType, message);
     }
 
+    public void RunCommand(string command)
+    {
+        // Populate the CommandBuffer with the command to be executed.
+        Terminal.CommandBuffer = command;
+
+        // Send a fake keyboard interrupt to clear the current input buffer.
+        // The terminal will inject the buffered command once the input buffer has been cleared.
+        var interruptCode = $"{(char)3}";
+        Terminal.Write(interruptCode);
+    }
+
     private bool _disposed;
 
     public void Dispose()

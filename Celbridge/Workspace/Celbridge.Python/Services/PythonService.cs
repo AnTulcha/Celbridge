@@ -44,23 +44,14 @@ public class PythonService : IPythonService, IDisposable
         var scriptPath = Path.Combine(pythonFolder, "startup.py");
         scriptPath = GetSafeQuotedPath(scriptPath);
 
-        // Run startup script then switch to interactive mode
-        var commandLine = $"{pythonPath} -i {scriptPath}";
-
-        // Example of passing in an environment variable
-        // Environment.SetEnvironmentVariable("NO_COLOR", "1", EnvironmentVariableTarget.Process);
+        // Run startup script then switch to IPython interactive mode
+        var commandLine = $"{pythonPath} -m IPython --no-banner -i {scriptPath}";
 
         var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
         terminal.Start(commandLine, workingDir);
 
         return Result.Ok();
     }
-
-    public Task<Result<string>> ExecuteAsync(string script)
-    {
-        throw new NotImplementedException();
-    }
-
     private static string GetSafeQuotedPath(string path)
     {
         if (path.Any(char.IsWhiteSpace) &&

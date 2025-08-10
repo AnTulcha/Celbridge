@@ -9,9 +9,4 @@ public interface IPythonService
     /// Initializes the Python environment.
     /// </summary>
     Task<Result> InitializePython();
-
-    /// <summary>
-    /// Runs a Python script via the terminal.
-    /// </summary>
-    Task<Result<string>> ExecuteAsync(string script);
 }

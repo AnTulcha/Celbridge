@@ -6,6 +6,16 @@ namespace Celbridge.Console;
 public interface ITerminal
 {
     /// <summary>
+    /// Event fired when the terminal has received output data.
+    /// </summary>
+    event EventHandler<string>? OutputReceived;
+
+    /// <summary>
+    /// Stores a command temporarily until the system is ready to inject it into the terminal input.
+    /// </summary>
+    string CommandBuffer { get; set; }
+
+    /// <summary>
     /// Starts the terminal session by executing a command line program.
     /// </summary>
     void Start(string commandLine, string workingDir);
@@ -16,8 +26,7 @@ public interface ITerminal
     void Write(string input);
 
     /// <summary>
-    /// Event fired when the terminal has received output data.
+    /// Sets the column and row size of the terminal.
     /// </summary>
-    event EventHandler<string>? OutputReceived;
-
+    void SetSize(int cols, int rows);
 }

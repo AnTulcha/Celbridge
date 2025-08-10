@@ -453,4 +453,7 @@
 
 Do you wish to continue?</value>
   </data>
+  <data name="ResourceTree_Run" xml:space="preserve">
+    <value>Run</value>
+  </data>
 </root>
