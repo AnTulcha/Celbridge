@@ -32,7 +32,7 @@ def _customize_ipython():
         ip = None
 
     if ip is not None:
-        # Disable Out[] caching and matching bracket hightlighting for this session
+        # Disable Out[] caching and matching bracket highlighting for this session
         try:
             ip.run_line_magic('config', 'InteractiveShell.cache_size = 0')
             ip.run_line_magic('config', 'InteractiveShell.highlight_matching_brackets  = False')
@@ -73,4 +73,7 @@ _add_sys_paths()
 _customize_ipython()
 
 # Todo: Display Celbridge version number
-print("Celbridge Python Console")
+
+version = os.environ.get('CELBRIDGE_VERSION', '')
+
+print(f"Celbridge {version} - Python Console")
