@@ -16,7 +16,7 @@
             margin: 0;
             height: 100%;
             width: 100%;
-            background: black;
+            background: transparent;
             overflow: hidden;
         }
 
@@ -29,35 +29,18 @@
 <body>
     <div id="terminal"></div>
 
+    <script src="terminal-themes.js"></script>
+
     <script>
 
-        const campbellTheme = {
-            foreground: '#CCCCCC',
-            background: '#0C0C0C',
-            cursor: '#FFFFFF',
-            selection: '#FFFFFF40',
+        const darkTheme = window.VSCodeTerminalThemes.dark;
+        const lightTheme = window.VSCodeTerminalThemes.light;
 
-            black: '#0C0C0C',
-            red: '#C50F1F',
-            green: '#13A10E',
-            yellow: '#C19C00',
-            blue: '#0037DA',
-            magenta: '#881798',
-            cyan: '#3A96DD',
-            white: '#CCCCCC',
-
-            brightBlack: '#767676',
-            brightRed: '#E74856',
-            brightGreen: '#16C60C',
-            brightYellow: '#F9F1A5',
-            brightBlue: '#3B78FF',
-            brightMagenta: '#B4009E',
-            brightCyan: '#61D6D6',
-            brightWhite: '#F2F2F2'
-        };
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initialTheme = prefersDark ? darkTheme : lightTheme;
 
         const term = new Terminal({
-            theme: campbellTheme,
+            theme: initialTheme,
             windowsPty: {
                 backend: 'conpty'
             }
@@ -74,8 +57,33 @@
 
         term.open(document.getElementById('terminal'));
 
+        // Update xterm.js color scheme when systemt theme changes
+        const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        if (mq) {
+            function applyThemeForMatch() {
+                try {
+                    term.options.theme = mq.matches ? darkTheme : lightTheme;
+                } catch (e) {
+                    // ignore if term.option isn't available yet
+                }
+            }
+            applyThemeForMatch();
+            if (mq.addEventListener) {
+                mq.addEventListener('change', applyThemeForMatch);
+            } else if (mq.addListener) {
+                mq.addListener(applyThemeForMatch);
+            }
+        }
+
         window.addEventListener('resize', () => {
             fitAddon.fit();
+        });
+
+        // Supress context menu if user clicks in shim area at the bottom of the console window
+        document.addEventListener('contextmenu', (e) => {
+            if (!e.composedPath().some(el => el.classList && el.classList.contains('xterm'))) {
+                e.preventDefault();
+            }
         });
 
         term.onResize(({ cols, rows }) => {

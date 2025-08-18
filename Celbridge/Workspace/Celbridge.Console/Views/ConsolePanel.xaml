@@ -9,6 +9,7 @@
   <Grid>
     <WebView2 x:Name="TerminalWebView"
               HorizontalAlignment="Stretch"
-              VerticalAlignment="Stretch" />
+              VerticalAlignment="Stretch"
+              DefaultBackgroundColor="Transparent"/>
   </Grid>
 </UserControl>
