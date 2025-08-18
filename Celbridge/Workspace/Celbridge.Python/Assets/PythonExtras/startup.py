@@ -72,8 +72,6 @@ exit_lock.apply_exit_lock()
 _add_sys_paths()
 _customize_ipython()
 
-# Todo: Display Celbridge version number
-
+# Display Celbridge version number
 version = os.environ.get('CELBRIDGE_VERSION', '')
-
 print(f"Celbridge version {version} - Python Console")

@@ -57,7 +57,7 @@
 
         term.open(document.getElementById('terminal'));
 
-        // Update xterm.js color scheme when systemt theme changes
+        // Update xterm.js color scheme when the system theme changes
         const mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
         if (mq) {
             function applyThemeForMatch() {
@@ -94,6 +94,7 @@
             window.chrome.webview.postMessage(data);
         });
 
+        // Fit the terminal size to the available space in the host WebView2 control.
         fitAddon.fit();
 
         term.attachCustomKeyEventHandler((ev) => {
