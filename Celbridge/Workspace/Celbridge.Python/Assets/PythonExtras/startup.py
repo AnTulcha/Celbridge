@@ -76,4 +76,4 @@ _customize_ipython()
 
 version = os.environ.get('CELBRIDGE_VERSION', '')
 
-print(f"Celbridge {version} - Python Console")
+print(f"Celbridge version {version} - Python Console")
