@@ -13,7 +13,6 @@ public static class ServiceConfiguration
         //
 
         services.AddTransient<IConsoleService, ConsoleService>();
-        services.AddTransient<ICommandHistory, CommandHistory>();
         services.AddTransient<ITerminal, Terminal>();
 
         //
