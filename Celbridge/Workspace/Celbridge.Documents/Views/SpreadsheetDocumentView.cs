@@ -82,7 +82,7 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
             var webView = new WebView2();
             await webView.EnsureCoreWebView2Async();
 
-            webView.CoreWebView2.SetVirtualHostNameToFolderMapping("SpreadJS", 
+            webView.CoreWebView2.SetVirtualHostNameToFolderMapping("spreadjs.celbridge", 
                 "Celbridge.Documents/Web/SpreadJS", 
                 CoreWebView2HostResourceAccessKind.Allow);
 
@@ -100,7 +100,7 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
             catch (Exception)
             {
                 // The SpreadJS license file is not present, display an error message an exit.
-                webView.CoreWebView2.Navigate("https://SpreadJS/error.html");
+                webView.CoreWebView2.Navigate("https://spreadjs.celbridge/error.html");
                 _webView = webView;
                 this.Content = _webView;
                 return;
@@ -110,7 +110,7 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
             await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
 
-            webView.CoreWebView2.Navigate("https://SpreadJS/index.html");
+            webView.CoreWebView2.Navigate("https://spreadjs.celbridge/index.html");
 
             bool isEditorReady = false;
             TypedEventHandler<WebView2, CoreWebView2WebMessageReceivedEventArgs> onWebMessageReceived = (sender, e) =>
