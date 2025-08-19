@@ -1,4 +1,5 @@
 using System;
+using Celbridge.Commands;
 using Celbridge.Dialog;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
@@ -15,6 +16,7 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 {
     private ILogger _logger;
     private IStringLocalizer _stringLocalizer;
+    private ICommandService _commandService;
     private IDialogService _dialogService;
     private IResourceRegistry _resourceRegistry;
 
@@ -26,12 +28,14 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         IServiceProvider serviceProvider,
         ILogger<SpreadsheetDocumentView> logger,
         IStringLocalizer stringLocalizer,
+        ICommandService commandService,
         IDialogService dialogService,
         IWorkspaceWrapper workspaceWrapper)
     {
         ViewModel = serviceProvider.GetRequiredService<SpreadsheetDocumentViewModel>();
 
         _logger = logger;
+        _commandService = commandService;
         _stringLocalizer = stringLocalizer;
         _dialogService = dialogService;
         _resourceRegistry = workspaceWrapper.WorkspaceService.ExplorerService.ResourceRegistry;
@@ -131,6 +135,22 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
 
             webView.WebMessageReceived -= onWebMessageReceived;
 
+            // Use the system browser if the user clicks on links in the spreadsheet UI.
+
+            webView.NavigationStarting += (s, args) =>
+            {
+                args.Cancel = true;
+                var uri = args.Uri;
+                OpenSystemBrowser(uri);
+            };
+
+            webView.CoreWebView2.NewWindowRequested += (s, args) =>
+            {
+                args.Handled = true;
+                var uri = args.Uri;
+                OpenSystemBrowser(uri);
+            };
+
             // Fixes a visual bug where the WebView2 control would show a white background briefly when
             // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
             webView.DefaultBackgroundColor = Colors.Transparent;
@@ -146,6 +166,19 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         {
             _logger.LogError(ex, "Failed to initialize Spreadsheet Web View.");
         }
+    }
+
+    private void OpenSystemBrowser(string? uri)
+    {
+        if (string.IsNullOrEmpty(uri))
+        {
+            return;
+        }
+
+        _commandService.Execute<IOpenBrowserCommand>(command =>
+        {
+            command.URL = uri;
+        });
     }
 
     public override async Task<Result> SetFileResource(ResourceKey fileResource)
