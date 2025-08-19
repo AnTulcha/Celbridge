@@ -1,3 +1,4 @@
+using System;
 using Celbridge.Dialog;
 using Celbridge.Documents.ViewModels;
 using Celbridge.Explorer;
@@ -75,21 +76,36 @@ public sealed partial class SpreadsheetDocumentView : DocumentView
         try
         {
             var webView = new WebView2();
+            await webView.EnsureCoreWebView2Async();
+
+            webView.CoreWebView2.SetVirtualHostNameToFolderMapping("SpreadJS", 
+                "Celbridge.Documents/Web/SpreadJS", 
+                CoreWebView2HostResourceAccessKind.Allow);
 
             // This fixes a visual bug where the WebView2 control would show a white background briefly when
             // switching between tabs. Similar issue described here: https://github.com/MicrosoftEdge/WebView2Feedback/issues/1412
             webView.DefaultBackgroundColor = Colors.Transparent;
 
-            await webView.EnsureCoreWebView2Async();
+            try
+            {
+                // The SpreadJS Excel editor is only available in Celbridge installer builds.
+                // Check if the SpreadJS license file exists in the app package.
+                var uri = new Uri("ms-appx:///Celbridge.Documents/Web/SpreadJS/lib/license.js");
+                _ = await StorageFile.GetFileFromApplicationUriAsync(uri);
+            }
+            catch (Exception)
+            {
+                // The SpreadJS license file is not present, display an error message an exit.
+                webView.CoreWebView2.Navigate("https://SpreadJS/error.html");
+                _webView = webView;
+                this.Content = _webView;
+                return;
+            }
 
             webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
 
             await webView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync("window.isWebView = true;");
 
-            // Todo: Download and embed spreadJS libs when making an installer build to support full offline usage.
-            webView.CoreWebView2.SetVirtualHostNameToFolderMapping("SpreadJS", 
-                "Celbridge.Documents/Web/SpreadJS", 
-                CoreWebView2HostResourceAccessKind.Allow);
             webView.CoreWebView2.Navigate("https://SpreadJS/index.html");
 
             bool isEditorReady = false;
