@@ -407,4 +407,4 @@ solution-config.props
 /Celbridge/Build
 
 # SpreadJS library
-SpreadJS/lib
+/Celbridge/Workspace/Celbridge.Documents/Web/SpreadJS/lib
