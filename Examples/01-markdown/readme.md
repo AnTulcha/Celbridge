@@ -1,8 +1,8 @@
 # Markdown Cheat Sheet
 
-This example shows how to edit and preview documentation written in the [markdown](https://www.markdownguide.org/) format.
+Celbridge supports writing documentation using the popular [markdown](https://www.markdownguide.org/) format.
 
-You can switch between the edit & preview modes using the buttons in the inspector window.
+You can switch between the edit & preview modes using the buttons in the inspector window on the right hand side. The preview panel updates as you type.
 
 Here's a quick cheat-sheet for some common Mardown elements.
 
@@ -33,8 +33,7 @@ Here's a quick cheat-sheet for some common Mardown elements.
 
 ## Images
 
-The file for this image is located in the `images` folder. 
-
+The file for this image is located in the `images` folder.
 ![Alt text](images/bridge.jpg)
 
 ## Code
