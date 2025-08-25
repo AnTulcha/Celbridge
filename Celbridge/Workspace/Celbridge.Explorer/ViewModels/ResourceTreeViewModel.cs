@@ -288,11 +288,14 @@ public partial class ResourceTreeViewModel : ObservableObject
         var resourceRegistry = _explorerService.ResourceRegistry;
         var resourceKey = resource is null ? ResourceKey.Empty : resourceRegistry.GetResourceKey(resource);
 
-        if (Path.GetExtension(resourceKey) == ".web")
+        var fileExtension = Path.GetExtension(resourceKey);
+
+        if (fileExtension == ".webapp" ||
+            fileExtension == ".web") // Todo: Remove this - legacy support
         {
             var webFilePath = resourceRegistry.GetResourcePath(resourceKey);
 
-            var extractResult = ResourceUtils.ExtractUrlFromWebFile(webFilePath);
+            var extractResult = ResourceUtils.ExtractUrlFromWebAppFile(webFilePath);
             if (extractResult.IsFailure)
             {
                 _logger.LogError(extractResult.Error);
