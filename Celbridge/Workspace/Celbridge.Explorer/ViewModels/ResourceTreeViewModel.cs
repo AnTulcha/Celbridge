@@ -225,7 +225,7 @@ public partial class ResourceTreeViewModel : ObservableObject
         });
     }
 
-    public void ShowAddResourceDialog(ResourceType resourceType, IFolderResource? destFolder)
+    public void ShowAddResourceDialog(ResourceType resourceType, ResourceFormat resourceFormat, IFolderResource? destFolder)
     {
         var resourceRegistry = _explorerService.ResourceRegistry;
 
@@ -240,7 +240,8 @@ public partial class ResourceTreeViewModel : ObservableObject
         // Execute a command to show the add resource dialog
         _commandService.Execute<IAddResourceDialogCommand>(command =>
         {
-            command.ResourceType = resourceType;
+            command.ResourceType = resourceType; // File or folder
+            command.ResourceFormat = resourceFormat; // Folder, .txt, .md, .py, etc.
             command.DestFolderResource = destFolderResource;
         });
     }
