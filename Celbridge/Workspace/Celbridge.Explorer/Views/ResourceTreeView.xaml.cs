@@ -8,7 +8,6 @@ using Windows.UI.Core;
 
 namespace Celbridge.Explorer.Views;
 
-
 public sealed partial class ResourceTreeView : UserControl, IResourceTreeView
 {
     private readonly IStringLocalizer _stringLocalizer;
