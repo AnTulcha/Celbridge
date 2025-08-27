@@ -8,7 +8,7 @@ public static class ProjectConstants
     /// <summary>
     /// File extension for Celbridge projects.
     /// </summary>
-    public const string ProjectFileExtension = ".celproject";
+    public const string ProjectFileExtension = ".celbridge";
 
     /// <summary>
     /// Folder containing the project meta data.

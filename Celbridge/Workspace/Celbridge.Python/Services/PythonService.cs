@@ -48,9 +48,10 @@ public class PythonService : IPythonService, IDisposable
             scriptPath = GetSafeQuotedPath(scriptPath);
 
             var iPythonPath = Path.Combine(workingDir, ".celbridge", "ipython");
-            iPythonPath = GetSafeQuotedPath(iPythonPath);
-
             Directory.CreateDirectory(iPythonPath);
+
+            // Ensure path is quoted if it contains spaces
+            iPythonPath = GetSafeQuotedPath(iPythonPath);
 
             SetCelbridgeVersion();
 

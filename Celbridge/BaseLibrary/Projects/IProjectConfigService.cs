@@ -1,8 +1,15 @@
+using Celbridge.Projects;
+
 /// <summary>
-/// Interface for project configuration management.
+/// Service for managing project configuration.
 /// </summary>
-public interface IProjectConfig
+public interface IProjectConfigService
 {
+    /// <summary>
+    /// Gets the current project configuration.
+    /// </summary>
+    ProjectConfig Config { get; }
+
     /// <summary>
     /// Gets the value of a property by its name. If the property does not exist, returns the specified default value.
     /// </summary>
