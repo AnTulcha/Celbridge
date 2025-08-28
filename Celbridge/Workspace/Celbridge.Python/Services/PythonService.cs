@@ -1,4 +1,3 @@
-using Celbridge.Logging;
 using Celbridge.Projects;
 using Celbridge.Utilities;
 using Celbridge.Workspace;
@@ -27,36 +26,71 @@ public class PythonService : IPythonService, IDisposable
     {
         try
         {
-            if (_projectService.CurrentProject is null)
-            {
-                return Result<string>.Fail("Failed to run python script as no project is loaded");
-            }
-            var workingDir = _projectService.CurrentProject.ProjectFolderPath;
+            var project = _projectService.CurrentProject;
+            if (project is null)
+                return Result.Fail("Failed to run python script as no project is loaded");
+
+            var workingDir = project.ProjectFolderPath;
 
             var installResult = await PythonInstaller.InstallPythonAsync();
             if (installResult.IsFailure)
-            {
-                return Result.Fail("Failed to ensure Python is installed")
-                    .WithErrors(installResult);
-            }
-            var pythonFolder = installResult.Value;
+                return Result.Fail("Failed to ensure Python is installed").WithErrors(installResult);
 
-            var pythonPath = Path.Combine(pythonFolder, "python.exe");
-            pythonPath = GetSafeQuotedPath(pythonPath);
+            var toolsFolder = installResult.Value;
 
-            var scriptPath = Path.Combine(pythonFolder, "startup.py");
-            scriptPath = GetSafeQuotedPath(scriptPath);
+            // uv path (handles Windows/macOS/Linux)
+            var uvFileName = OperatingSystem.IsWindows() ? "uv.exe" : "uv";
+            var uvExePath = Path.Combine(toolsFolder, uvFileName);
+            if (!File.Exists(uvExePath))
+                return Result.Fail($"uv not found at '{uvExePath}'");
 
-            var iPythonPath = Path.Combine(workingDir, ".celbridge", "ipython");
-            Directory.CreateDirectory(iPythonPath);
+            // startup script
+            var scriptPath = Path.Combine(toolsFolder, "startup.py");
+            if (!File.Exists(scriptPath))
+                return Result.Fail($"startup.py not found at '{scriptPath}'");
 
-            // Ensure path is quoted if it contains spaces
-            iPythonPath = GetSafeQuotedPath(iPythonPath);
+            // IPython working dir
+            var ipyDir = Path.Combine(workingDir, ".celbridge", "ipython");
+            Directory.CreateDirectory(ipyDir);
 
             SetCelbridgeVersion();
 
-            // Run startup script then switch to IPython interactive mode
-            var commandLine = $"{pythonPath} -m IPython --no-banner --ipython-dir={iPythonPath} -i {scriptPath}";
+            var pythonConfig = project.ProjectConfig?.Config?.Python!;
+            if (pythonConfig is null)
+            {
+                return Result.Fail("Python section not specified in project config");
+            }
+
+            var pythonVersion = pythonConfig.Version;
+            if (string.IsNullOrWhiteSpace(pythonVersion))
+            {
+                return Result.Fail("Python version not specified");
+            }
+
+            var packageArgs = new List<string>()
+            {
+                "--with", "ipython"
+            };
+
+            var pythonPackages = pythonConfig.Packages;
+            if (pythonPackages is not null)
+            {
+                foreach (var pythonPackage in pythonPackages)
+                {
+                    packageArgs.Add("--with");
+                    packageArgs.Add(pythonPackage);    
+                }
+            }
+
+            var commandLine = new CommandLineBuilder(uvExePath)
+                .Add("run")
+                .Add("--python", pythonVersion!)
+                .Add(packageArgs.ToArray())
+                .Add("python", "-m", "IPython")
+                .Add("--no-banner")
+                .Add("--ipython-dir", ipyDir)
+                .Add("-i", scriptPath)
+                .ToString();
 
             var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
             terminal.Start(commandLine, workingDir);
@@ -65,8 +99,63 @@ public class PythonService : IPythonService, IDisposable
         }
         catch (Exception ex)
         {
-            return Result<string>.Fail("An error occurred when initializing Python")
-                .WithException(ex);
+            return Result.Fail("An error occurred when initializing Python")
+                         .WithException(ex);
+        }
+    }
+
+    private static string BuildCommandLine(string exePath, IEnumerable<string> args)
+    {
+        var parts = new List<string> { QuoteArg(exePath) };
+        parts.AddRange(args.Select(QuoteArg));
+        return string.Join(" ", parts);
+    }
+
+    private static string QuoteArg(string arg)
+    {
+        if (string.IsNullOrEmpty(arg)) return OperatingSystem.IsWindows() ? "\"\"" : "''";
+
+        if (OperatingSystem.IsWindows())
+        {
+            // Needs quoting if it contains whitespace or quotes
+            bool needQuotes = arg.Any(ch => ch == ' ' || ch == '\t' || ch == '\n' || ch == '\v' || ch == '"');
+            if (!needQuotes) return arg;
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append('"');
+            int backslashes = 0;
+            foreach (char c in arg)
+            {
+                if (c == '\\')
+                {
+                    backslashes++;
+                }
+                else if (c == '"')
+                {
+                    // Escape all backslashes + the quote
+                    sb.Append('\\', backslashes * 2 + 1);
+                    sb.Append('"');
+                    backslashes = 0;
+                }
+                else
+                {
+                    if (backslashes > 0)
+                    {
+                        sb.Append('\\', backslashes);
+                        backslashes = 0;
+                    }
+                    sb.Append(c);
+                }
+            }
+            // Escape trailing backslashes
+            if (backslashes > 0) sb.Append('\\', backslashes * 2);
+            sb.Append('"');
+            return sb.ToString();
+        }
+        else
+        {
+            // POSIX: single-quote, escape embedded single quotes as: ' foo'\'bar '
+            return "'" + arg.Replace("'", "'\"'\"'") + "'";
         }
     }
 
@@ -78,17 +167,6 @@ public class PythonService : IPythonService, IDisposable
         var configuration = environmentInfo.Configuration;
         var celbridgeVersion = configuration == "Debug" ? $"{version} (Debug)" : $"{version}";
         Environment.SetEnvironmentVariable("CELBRIDGE_VERSION", $"{celbridgeVersion}");
-    }
-
-    private static string GetSafeQuotedPath(string path)
-    {
-        if (path.Any(char.IsWhiteSpace) &&
-           !(path.StartsWith("\"") && path.EndsWith("\"")))
-        {
-            path = $"\"{path}\"";
-        }
-
-        return path;
     }
 
     private bool _disposed;

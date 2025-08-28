@@ -6,6 +6,8 @@ import os
 import runpy
 import shlex
 import sys
+import platform
+
 
 def _add_sys_paths():
 
@@ -72,6 +74,8 @@ exit_lock.apply_exit_lock()
 _add_sys_paths()
 _customize_ipython()
 
-# Display Celbridge version number
-version = os.environ.get('CELBRIDGE_VERSION', '')
-print(f"Celbridge version {version} - Python Console")
+# Display Celbridge & Python version numbers
+celbridge_version = os.environ.get('CELBRIDGE_VERSION', '')
+python_version = platform.python_version()
+
+print(f"Celbridge v{celbridge_version} - Python v{python_version}")
