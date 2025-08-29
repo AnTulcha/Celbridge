@@ -13,20 +13,20 @@ public static class ProjectConstants
     /// <summary>
     /// Folder containing the project meta data.
     /// </summary>
-    public const string ProjectDataFolder = "CelData";
+    public const string MetaDataFolder = "celbridge";
 
     /// <summary>
     /// Folder containing entity data files.
     /// </summary>
-    public const string EntitiesFolder = "Entities";
+    public const string EntitiesFolder = "entities";
 
     /// <summary>
-    /// Folder containing the workspace settings data file.
+    /// Folder containing ephemeral cached state, such as workspace settings.
     /// </summary>
-    public const string WorkspaceSettingsFolder = ".celbridge";
+    public const string CacheFolder = ".cache";
 
     /// <summary>
     /// File containing the workspace settings data.
     /// </summary>
-    public const string WorkspaceSettingsFile = "WorkspaceSettings.db";
+    public const string WorkspaceSettingsFile = "workspace_settings.db";
 }

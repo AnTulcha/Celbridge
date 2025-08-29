@@ -76,7 +76,7 @@ public class PythonService : IPythonService, IDisposable
             }
 
             // Ensure the ipython storage dir exists
-            var ipythonDir = Path.Combine(workingDir, ".celbridge", "ipython");
+            var ipythonDir = Path.Combine(workingDir, ProjectConstants.MetaDataFolder, ProjectConstants.CacheFolder, "ipython");
             Directory.CreateDirectory(ipythonDir);
 
             // Set the Celbridge version number as an environment variable so we can print it at startup.

@@ -108,7 +108,7 @@ public class Project : IDisposable, IProject
             var projectPath = Path.GetDirectoryName(projectFilePath);
             Guard.IsNotNull(projectPath);
 
-            var projectDataFolderPath = Path.Combine(projectPath, ProjectConstants.ProjectDataFolder);
+            var projectDataFolderPath = Path.Combine(projectPath, ProjectConstants.MetaDataFolder);
 
             if (!Directory.Exists(projectDataFolderPath))
             {
@@ -155,7 +155,7 @@ public class Project : IDisposable, IProject
         _projectFolderPath = Path.GetDirectoryName(projectFilePath)!;
         Guard.IsNotNullOrWhiteSpace(ProjectFolderPath);
 
-        _projectDataFolderPath = Path.Combine(ProjectFolderPath, ProjectConstants.ProjectDataFolder);
+        _projectDataFolderPath = Path.Combine(ProjectFolderPath, ProjectConstants.MetaDataFolder);
     }
 
     private bool _disposed = false;
