@@ -1,7 +1,6 @@
 using Celbridge.Projects;
 using Celbridge.Utilities;
 using Celbridge.Workspace;
-
 using Path = System.IO.Path;
 
 namespace Celbridge.Python.Services;
@@ -28,33 +27,11 @@ public class PythonService : IPythonService, IDisposable
         {
             var project = _projectService.CurrentProject;
             if (project is null)
-                return Result.Fail("Failed to run python script as no project is loaded");
+            {
+                return Result.Fail("Failed to run python as no project is loaded");
+            }
 
-            var workingDir = project.ProjectFolderPath;
-
-            var installResult = await PythonInstaller.InstallPythonAsync();
-            if (installResult.IsFailure)
-                return Result.Fail("Failed to ensure Python is installed").WithErrors(installResult);
-
-            var toolsFolder = installResult.Value;
-
-            // uv path (handles Windows/macOS/Linux)
-            var uvFileName = OperatingSystem.IsWindows() ? "uv.exe" : "uv";
-            var uvExePath = Path.Combine(toolsFolder, uvFileName);
-            if (!File.Exists(uvExePath))
-                return Result.Fail($"uv not found at '{uvExePath}'");
-
-            // startup script
-            var scriptPath = Path.Combine(toolsFolder, "startup.py");
-            if (!File.Exists(scriptPath))
-                return Result.Fail($"startup.py not found at '{scriptPath}'");
-
-            // IPython working dir
-            var ipyDir = Path.Combine(workingDir, ".celbridge", "ipython");
-            Directory.CreateDirectory(ipyDir);
-
-            SetCelbridgeVersion();
-
+            // Read python version from project config
             var pythonConfig = project.ProjectConfig?.Config?.Python!;
             if (pythonConfig is null)
             {
@@ -64,14 +41,56 @@ public class PythonService : IPythonService, IDisposable
             var pythonVersion = pythonConfig.Version;
             if (string.IsNullOrWhiteSpace(pythonVersion))
             {
-                return Result.Fail("Python version not specified");
+                return Result.Fail("Python version not specified in project config");
             }
 
+            // Ensure that python support files are installed
+
+            var workingDir = project.ProjectFolderPath;
+
+            var installResult = await PythonInstaller.InstallPythonAsync();
+            if (installResult.IsFailure)
+            {
+                return Result.Fail("Failed to ensure Python support files are installed")
+                    .WithErrors(installResult);
+            }
+
+            var pythonFolder = installResult.Value;
+
+            // Get uv exe path (Windows/macOS/Linux)
+            var uvFileName = OperatingSystem.IsWindows() ? "uv.exe" : "uv";
+            var uvExePath = Path.Combine(pythonFolder, uvFileName);
+            if (!File.Exists(uvExePath))
+            {
+                return Result.Fail($"uv not found at '{uvExePath}'");
+            }
+
+            // Get the celbridge module path
+            var celbridgeModulePath = Path.Combine(pythonFolder, "celbridge");
+            if (!Directory.Exists(celbridgeModulePath))
+            {
+                return Result.Fail($"Celbridge module not found at '{celbridgeModulePath}'");
+            }
+
+            // Ensure the ipython storage dir exists
+            var ipythonDir = Path.Combine(workingDir, ".celbridge", "ipython");
+            Directory.CreateDirectory(ipythonDir);
+
+            // Set the Celbridge version number as an environment variable so we can print it at startup.
+            var environmentInfo = _utilityService.GetEnvironmentInfo();
+            var version = environmentInfo.AppVersion;
+            var configuration = environmentInfo.Configuration;
+            var celbridgeVersion = configuration == "Debug" ? $"{version} (Debug)" : $"{version}";
+            Environment.SetEnvironmentVariable("CELBRIDGE_VERSION", $"{celbridgeVersion}");
+
+            // The celbridge and ipython packages are always included
             var packageArgs = new List<string>()
             {
+                "--with", celbridgeModulePath,
                 "--with", "ipython"
             };
 
+            // Add any additional packages specified in the project config
             var pythonPackages = pythonConfig.Packages;
             if (pythonPackages is not null)
             {
@@ -82,14 +101,18 @@ public class PythonService : IPythonService, IDisposable
                 }
             }
 
+            // Run the celbridge module then drop to the IPython REPL
+
             var commandLine = new CommandLineBuilder(uvExePath)
                 .Add("run")
                 .Add("--python", pythonVersion!)
+                // .Add("--refresh-package", "celbridge") // Uncomment to always refresh the celbridge package
                 .Add(packageArgs.ToArray())
                 .Add("python", "-m", "IPython")
                 .Add("--no-banner")
-                .Add("--ipython-dir", ipyDir)
-                .Add("-i", scriptPath)
+                .Add("--ipython-dir", ipythonDir)
+                .Add("-m", "celbridge")
+                .Add("-i")
                 .ToString();
 
             var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
@@ -157,16 +180,6 @@ public class PythonService : IPythonService, IDisposable
             // POSIX: single-quote, escape embedded single quotes as: ' foo'\'bar '
             return "'" + arg.Replace("'", "'\"'\"'") + "'";
         }
-    }
-
-    private void SetCelbridgeVersion()
-    {
-        // Set the Celbridge version number as an environment variable so we can print it from Python at startup.
-        var environmentInfo = _utilityService.GetEnvironmentInfo();
-        var version = environmentInfo.AppVersion;
-        var configuration = environmentInfo.Configuration;
-        var celbridgeVersion = configuration == "Debug" ? $"{version} (Debug)" : $"{version}";
-        Environment.SetEnvironmentVariable("CELBRIDGE_VERSION", $"{celbridgeVersion}");
     }
 
     private bool _disposed;
