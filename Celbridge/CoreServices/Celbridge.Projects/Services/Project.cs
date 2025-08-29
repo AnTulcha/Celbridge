@@ -6,6 +6,9 @@ namespace Celbridge.Projects.Services;
 
 public class Project : IDisposable, IProject
 {
+    private const string DefaultProjectVersion = "0.1.0";
+    private const string DefaultPythonVersion = "3.13.6";
+
     private readonly ILogger<Project> _logger;
 
     private ProjectConfigService? _projectConfig;
@@ -22,6 +25,7 @@ public class Project : IDisposable, IProject
 
     private string? _projectDataFolderPath;
     public string ProjectDataFolderPath => _projectDataFolderPath!;
+
 
     public Project(
         ILogger<Project> logger)
@@ -117,12 +121,12 @@ public class Project : IDisposable, IProject
 
             var projectTOML = $"""
                 [project]
-                project_version = "0.1.0"
+                version = "{DefaultProjectVersion}"
                 celbridge_version = "{info.AppVersion}"
 
-                python.version = "3.13.6"
-
-                [python.packages]
+                [python]
+                version = "{DefaultPythonVersion}"
+                packages = []
 
                 [python.scripts]
                 startup = ""
