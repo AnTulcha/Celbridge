@@ -105,18 +105,20 @@ public class PythonService : IPythonService, IDisposable
             }
 
             // Run the celbridge module then drop to the IPython REPL
+            // The order of the command line arguments is important!
 
             var commandLine = new CommandLineBuilder(uvExePath)
-                .Add("run")
-                .Add("--cache-dir", uvCacheDir)
-                .Add("--python", pythonVersion!)
-                // .Add("--refresh-package", "celbridge") // Uncomment to always refresh the celbridge package
-                .Add(packageArgs.ToArray())
-                .Add("python", "-m", "IPython")
-                .Add("--no-banner")
-                .Add("--ipython-dir", ipythonDir)
-                .Add("-m", "celbridge")
-                .Add("-i")
+                .Add("run")                                 // uv run
+                .Add("--cache-dir", uvCacheDir)             // cache uv files in app data folder (not globally per-user)
+                .Add("--python", pythonVersion!)            // python interpreter version
+                //.Add("--refresh-package", "celbridge")    // uncomment to always refresh the celbridge package
+                .Add(packageArgs.ToArray())                 // specify the packages to install     
+                .Add("python")                              // run the python interpreter
+                .Add("-m", "IPython")                       // use IPython
+                .Add("--no-banner")                         // don't show the IPython banner
+                .Add("--ipython-dir", ipythonDir)           // use a ipython storage dir in the celbridge cache folder
+                .Add("-m", "celbridge")                     // run the celbridge module
+                .Add("-i")                                  // drop to interactive mode after running celbridge module
                 .ToString();
 
             var terminal = _workspaceWrapper.WorkspaceService.ConsoleService.Terminal;
