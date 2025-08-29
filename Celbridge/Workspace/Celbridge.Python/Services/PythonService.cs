@@ -65,11 +65,14 @@ public class PythonService : IPythonService, IDisposable
                 return Result.Fail($"uv not found at '{uvExePath}'");
             }
 
+            // Get the dir that uv uses to cached python versions & packages
+            var uvCacheDir = Path.Combine(pythonFolder, "uv_cache");
+
             // Get the celbridge module path
-            var celbridgeModulePath = Path.Combine(pythonFolder, "celbridge");
-            if (!Directory.Exists(celbridgeModulePath))
+            var celbridgeModuleDir = Path.Combine(pythonFolder, "celbridge");
+            if (!Directory.Exists(celbridgeModuleDir))
             {
-                return Result.Fail($"Celbridge module not found at '{celbridgeModulePath}'");
+                return Result.Fail($"Celbridge module not found at '{celbridgeModuleDir}'");
             }
 
             // Ensure the ipython storage dir exists
@@ -86,7 +89,7 @@ public class PythonService : IPythonService, IDisposable
             // The celbridge and ipython packages are always included
             var packageArgs = new List<string>()
             {
-                "--with", celbridgeModulePath,
+                "--with", celbridgeModuleDir,
                 "--with", "ipython"
             };
 
@@ -105,6 +108,7 @@ public class PythonService : IPythonService, IDisposable
 
             var commandLine = new CommandLineBuilder(uvExePath)
                 .Add("run")
+                .Add("--cache-dir", uvCacheDir)
                 .Add("--python", pythonVersion!)
                 // .Add("--refresh-package", "celbridge") // Uncomment to always refresh the celbridge package
                 .Add(packageArgs.ToArray())
