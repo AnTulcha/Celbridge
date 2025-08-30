@@ -1,32 +1,26 @@
-using Celbridge.Projects;
-
 /// <summary>
 /// Service for managing project configuration.
 /// </summary>
+
+namespace Celbridge.Projects;
+
 public interface IProjectConfigService
 {
     /// <summary>
-    /// Gets the current project configuration.
+    /// Load project config from a file.
     /// </summary>
+    Result InitializeFromFile(string filePath);
+
+    /// <summary>Typed snapshot built from the current TOML root.</summary>
     ProjectConfig Config { get; }
 
     /// <summary>
-    /// Gets the value of a property by its name. If the property does not exist, returns the specified default value.
+    /// Check if a property exists, using a JSON-Pointer syntax.
     /// </summary>
-    string GetProperty(string propertyName, string defaultValue);
+    bool Contains(string pointer);
 
     /// <summary>
-    /// Gets the value of a property by its name. If the property does not exist, returns an empty string.
+    /// Try to read a value, using a JSON-Pointer syntax.
     /// </summary>
-    string GetProperty(string propertyName);
-
-    /// <summary>
-    /// Sets the value of a property by its name.
-    /// </summary>
-    void SetProperty(string propertyName, string jsonEncodedValue);
-
-    /// <summary>
-    /// Checks if a property exists by its name.
-    /// </summary>
-    bool HasProperty(string propertyName);
+    bool TryGet<T>(string pointer, out T? value);
 }

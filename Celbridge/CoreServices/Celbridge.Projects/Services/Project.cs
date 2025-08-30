@@ -11,7 +11,7 @@ public class Project : IDisposable, IProject
 
     private readonly ILogger<Project> _logger;
 
-    private ProjectConfigService? _projectConfig;
+    private IProjectConfigService? _projectConfig;
     public IProjectConfigService ProjectConfig => _projectConfig!;
 
     private string? _projectFilePath;
@@ -56,12 +56,10 @@ public class Project : IDisposable, IProject
             // Load project properties from the project file
             //
 
-            var configData = File.ReadAllText(projectFilePath);
-
             var projectConfig = ServiceLocator.AcquireService<IProjectConfigService>() as ProjectConfigService;
             Guard.IsNotNull(projectConfig);
 
-            var initResult = projectConfig.Initialize(configData);
+            var initResult = projectConfig.InitializeFromFile(projectFilePath);
             if (initResult.IsFailure)
             {
                 return Result<IProject>.Fail($"Failed to initialize project configuration")

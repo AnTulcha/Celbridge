@@ -2,100 +2,104 @@ using System.Globalization;
 using Tomlyn;
 using Tomlyn.Model;
 
-using Path = System.IO.Path;
-
 namespace Celbridge.Projects.Services;
 
-public class ProjectConfigService : IProjectConfigService
+public partial class ProjectConfigService : IProjectConfigService
 {
-    private readonly Dictionary<string, string> _properties = new();
+    private TomlTable _root = new();
     private ProjectConfig _config = new();
 
-    public Result Initialize(string tomlContent)
+    public Result InitializeFromFile(string configFilePath)
     {
         try
         {
-            var parse = Toml.Parse(tomlContent);
+            var text = File.ReadAllText(configFilePath);
+            var parse = Toml.Parse(text);
             if (parse.HasErrors)
             {
                 var errors = string.Join("; ", parse.Diagnostics.Select(d => d.ToString()));
                 return Result.Fail($"TOML parse error(s): {errors}");
             }
 
-            var root = (TomlTable)parse.ToModel();
-            _config = MapRootToModel(root);
+            _root = (TomlTable)parse.ToModel();
+            _config = MapRootToModel(_root);
 
-            _properties.Clear();
-            foreach (var kv in _config.Project.Properties)
+            return Result.Ok();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to read TOML file: {configFilePath}")
+                         .WithException(ex);
+        }
+    }
+
+    public ProjectConfig Config
+    {
+        get
+        {
+            _config = MapRootToModel(_root);
+            return _config;
+        }
+    }
+
+    public bool Contains(string pointer) =>
+        JsonPointerToml.TryResolve(_root, pointer, out _, out _);
+
+    public bool TryGet<T>(string pointer, out T? value)
+    {
+        value = default;
+        if (!JsonPointerToml.TryResolve(_root, pointer, out var node, out _))
+        {
+            return false;
+        }
+
+        try
+        {
+            if (node is null)
             {
-                _properties[kv.Key] = kv.Value ?? string.Empty;
+                return false;
             }
 
-            return Result.Ok();
+            if (node is T t)
+            {
+                value = t;
+                return true;
+            }
+
+            object? coerced = node switch
+            {
+                string s when typeof(T) == typeof(string) => s,
+                bool b when typeof(T) == typeof(bool) => b,
+                long l when typeof(T) == typeof(long) => l,
+                int i when typeof(T) == typeof(int) => i,
+                double d when typeof(T) == typeof(double) => d,
+                decimal m when typeof(T) == typeof(decimal) => m,
+                DateTime dt when typeof(T) == typeof(DateTime) => dt,
+                DateTimeOffset dto when typeof(T) == typeof(DateTimeOffset) => dto,
+                TomlArray arr when typeof(T) == typeof(TomlArray) => arr,
+                TomlTable tab when typeof(T) == typeof(TomlTable) => tab,
+                _ => null
+            };
+
+            if (coerced is T ok)
+            {
+                value = ok;
+                return true;
+            }
+
+            if (typeof(T) == typeof(string))
+            {
+                value = (T)(object)TomlValueToString(node);
+                return true;
+            }
+
+            return false;
         }
-        catch (Exception ex)
+        catch
         {
-            return Result.Fail("Failed to load TOML.")
-                .WithException(ex);
+            return false;
         }
     }
-
-    public Result InitializeFromFile(string filePath)
-    {
-        try
-        {
-            var text = File.ReadAllText(filePath);
-            return Initialize(text);
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to read TOML file: {filePath}")
-                .WithException(ex);
-        }
-    }
-
-    public string ToToml()
-    {
-        SyncBagIntoModelProperties();
-        var root = BuildTomlFromModel(_config);
-        return Toml.FromModel(root);
-    }
-
-    public Result SaveToFile(string filePath)
-    {
-        try
-        {
-            var toml = ToToml();
-
-            var fullPath = Path.GetFullPath(filePath);
-            var folder = Path.GetDirectoryName(fullPath)!;
-
-            Directory.CreateDirectory(folder);
-            File.WriteAllText(filePath, toml);
-
-            return Result.Ok();
-        }
-        catch (Exception ex)
-        {
-            return Result.Fail($"Failed to write TOML file: {filePath}")
-                .WithException(ex);
-        }
-    }
-
-    public ProjectConfig Config => _config;
-
-    public string GetProperty(string propertyName, string defaultValue)
-        => _properties.TryGetValue(propertyName, out var v) ? v ?? string.Empty : defaultValue;
-
-    public string GetProperty(string propertyName) => GetProperty(propertyName, string.Empty);
-
-    public void SetProperty(string propertyName, string stringEncodedValue)
-    {
-        if (string.IsNullOrEmpty(propertyName)) return;
-        _properties[propertyName] = stringEncodedValue ?? string.Empty;
-    }
-
-    public bool HasProperty(string propertyName) => _properties.ContainsKey(propertyName);
 
     private static ProjectConfig MapRootToModel(TomlTable root)
     {
@@ -148,59 +152,7 @@ public class ProjectConfigService : IProjectConfigService
             };
         }
 
-        return new ProjectConfig
-        {
-            Project = projectSection,
-            Python = pythonSection
-        };
-    }
-
-    private static TomlTable BuildTomlFromModel(ProjectConfig config)
-    {
-        var project = new TomlTable
-        {
-            ["project_version"] = config.Project.ProjectVersion ?? string.Empty,
-            ["celbridge_version"] = config.Project.CelbridgeVersion ?? string.Empty
-        };
-
-        var props = new TomlTable();
-        foreach (var (k, v) in config.Project.Properties)
-        {
-            props[k] = v ?? string.Empty;
-        }
-        project["properties"] = props;
-
-        var python = new TomlTable();
-        if (!string.IsNullOrEmpty(config.Python.Version))
-        {
-            python["version"] = config.Python.Version;
-        }
-
-        if (config.Python.Packages is { Count: > 0 })
-        {
-            var packageArray = new TomlArray();
-            foreach (var p in config.Python.Packages)
-            {
-                packageArray.Add(p);
-            }
-            python["packages"] = packageArray;
-        }
-
-        if (config.Python.Scripts is { Count: > 0 })
-        {
-            var scripts = new TomlTable();
-            foreach (var (k, v) in config.Python.Scripts)
-            {
-                scripts[k] = v ?? string.Empty;
-            }
-            python["scripts"] = scripts;
-        }
-
-        return new TomlTable
-        {
-            ["project"] = project,
-            ["python"] = python
-        };
+        return new ProjectConfig { Project = projectSection, Python = pythonSection };
     }
 
     private static string TomlValueToString(object? value) =>
@@ -235,11 +187,4 @@ public class ProjectConfigService : IProjectConfigService
             TomlTable or TomlArray => "\"<complex>\"",
             _ => $"\"{item.ToString()?.Replace("\"", "\\\"")}\""
         };
-
-    private void SyncBagIntoModelProperties()
-    {
-        var propsCopy = new Dictionary<string, string>(_properties);
-        var newProject = _config.Project with { Properties = propsCopy };
-        _config = _config with { Project = newProject };
-    }
 }
