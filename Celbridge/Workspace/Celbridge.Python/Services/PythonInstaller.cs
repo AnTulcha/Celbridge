@@ -7,6 +7,7 @@ namespace Celbridge.Python.Services;
 public static class PythonInstaller
 {
     private const string PythonFolderName = "Python";
+    private const string PythonAssetsFolder = "Assets\\Python";
     private const string UVZipAssetPath = "ms-appx:///Assets/UV/uv-x86_64-pc-windows-msvc.zip";
 
     public static async Task<Result<string>> InstallPythonAsync()
@@ -31,9 +32,9 @@ public static class PythonInstaller
                 var uvTempFile = await uvZipFile.CopyAsync(ApplicationData.Current.TemporaryFolder, "uv.zip", NameCollisionOption.ReplaceExisting);
                 ZipFile.ExtractToDirectory(uvTempFile.Path, pythonFolder.Path, overwriteFiles: true);
 
-                // Copy the embedded python modules (i.e. celbridge)
+                // Copy the celbridge python module
                 StorageFolder installedLocation = Package.Current.InstalledLocation;
-                StorageFolder extrasFolder = await installedLocation.GetFolderAsync("Assets\\PythonModules");
+                StorageFolder extrasFolder = await installedLocation.GetFolderAsync(PythonAssetsFolder);
                 await CopyStorageFolderAsync(extrasFolder, pythonFolder.Path);
             }
 
