@@ -170,17 +170,17 @@ public abstract class Result
     /// <summary>
     /// Creates a failure result with no error message.
     /// </summary>
-    public static Result Fail()
+    public static FailureResult Fail()
     {
-        return new Failure(string.Empty, string.Empty, 0);
+        return new FailureResult(string.Empty, string.Empty, 0);
     }
 
     /// <summary>
     /// Creates a failure result with an error message.
     /// </summary>
-    public static Result Fail(string error, [CallerFilePath] string fileName = "", [CallerLineNumber] int lineNumber = 0)
+    public static FailureResult Fail(string error, [CallerFilePath] string fileName = "", [CallerLineNumber] int lineNumber = 0)
     {
-        return new Failure(error, fileName, lineNumber);
+        return new FailureResult(error, fileName, lineNumber);
     }
 
     /// <summary>
@@ -196,9 +196,32 @@ public abstract class Result
         public OkResult() : base(true, string.Empty) { }
     }
 
-    private sealed class Failure : Result
+    /// <summary>
+    /// This non-generic type can be implicitly converted to any Result<T> failure result.
+    /// This avoids the need to specify the generic return type, e.g. Result<IProject>.Fail() -> Result.Fail() 
+    /// </summary>
+    public sealed class FailureResult : Result
     {
-        internal Failure(string error, string fileName, int lineNumber) : base(false, error, fileName, lineNumber) { }
+        public FailureResult(string error, string fileName, int lineNumber)
+            : base(false, error, fileName, lineNumber) { }
+
+        /// <summary>
+        /// Redeclare the base method to keep the static type as FailureResult when chaining.
+        /// </summary>
+        public new FailureResult WithErrors(Result otherResult)
+        {
+            base.WithErrors(otherResult);
+            return this;
+        }
+
+        /// <summary>
+        /// Redeclare the base method to keep the static type as FailureResult when chaining.
+        /// </summary>
+        public new FailureResult WithException(Exception exception, [CallerFilePath] string fileName = "", [CallerLineNumber] int lineNumber = 0)
+        {
+            base.WithException(exception, fileName, lineNumber);
+            return this;
+        }
     }
 }
 
@@ -266,12 +289,24 @@ public class Result<T> : Result where T : notnull
     }
 
     /// <summary>
-    /// Implicitly convert a value of T into a successful Result&lt;T&gt;.
-    /// Enables: `return module;` when the return type is Result&lt;IModule&gt;.
+    /// Implicitly convert a value of T into a success Result<T>.
+    /// For concrete types, this allows you to return the value directly instead of explicitly wrapping it in a Result<T>.
+    /// For interfaces, the C# compiler can't resolve the implicit operator, so use the .OkResult() extension method on the returned object to wrap it with a Result<T>.
     /// </summary>
     public static implicit operator Result<T>(T value)
     {
         if (value is null) throw new ArgumentNullException(nameof(value));
         return Result<T>.Ok(value);
+    }
+
+    /// <summary>
+    /// Implicitly convert a concrete FailureResult into a generic Result<T>, copying all errors.
+    /// This allows you to 
+    /// </summary>
+    public static implicit operator Result<T>(FailureResult failure)
+    {
+        var r = Result<T>.Fail();
+        r.WithErrors(failure);
+        return r;
     }
 }
