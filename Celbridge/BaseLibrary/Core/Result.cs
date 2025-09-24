@@ -2,6 +2,19 @@ using System.Runtime.CompilerServices;
 
 namespace Celbridge.Core;
 
+public static class ResultExtensions
+{
+    /// <summary>
+    /// Extension helper method that wraps a value in a success Result<T>.
+    /// Allows you to use `return myValue.OkResult<T>()` instead of `return Result<T>.Ok(myValue)`
+    /// Usually T can be inferred, so in general you can simply use `return myValue.OkResult()`
+    /// </summary>
+    public static Result<T> OkResult<T>(this T value) where T : notnull
+    {
+        return Result<T>.Ok(value);
+    }
+}
+
 /**
  * A lightweight Result type for returning success or failure from methods.
  * This is used in situations where an operation is expected to fail in a well 
@@ -19,7 +32,7 @@ public abstract class Result
         public Exception? Exception;
     }
 
-    private List<ErrorInfo> _errors = new List<ErrorInfo>();
+    private readonly List<ErrorInfo> _errors = new();
 
     /// <summary>
     /// Gets a concatenated string of all error messages, including file names and line numbers.
@@ -92,6 +105,7 @@ public abstract class Result
     protected Result(bool isSuccess, string error, [CallerFilePath] string fileName = "", [CallerLineNumber] int lineNumber = 0)
     {
         IsSuccess = isSuccess;
+
         if (isSuccess && !string.IsNullOrEmpty(error))
         {
             throw new ArgumentException("Error must be null if the result is a success.");
@@ -144,10 +158,11 @@ public abstract class Result
     }
 
     /// <summary>
-    /// Adds errors from another result to this result.
+    /// Adds errors from another result to this result (works across different generic payload types).
     /// </summary>
     public Result WithErrors(Result otherResult)
     {
+        if (otherResult is null) return this;
         _errors.InsertRange(0, otherResult._errors);
         return this;
     }
@@ -176,12 +191,12 @@ public abstract class Result
         return new OkResult();
     }
 
-    private class OkResult : Result
+    private sealed class OkResult : Result
     {
         public OkResult() : base(true, string.Empty) { }
     }
 
-    private class Failure : Result
+    private sealed class Failure : Result
     {
         internal Failure(string error, string fileName, int lineNumber) : base(false, error, fileName, lineNumber) { }
     }
@@ -212,6 +227,7 @@ public class Result<T> : Result where T : notnull
     /// </summary>
     public static Result<T> Ok(T value)
     {
+        if (value is null) throw new ArgumentNullException(nameof(value));
         return new Result<T>(value);
     }
 
@@ -247,5 +263,15 @@ public class Result<T> : Result where T : notnull
     {
         base.WithException(exception, fileName, lineNumber);
         return this;
+    }
+
+    /// <summary>
+    /// Implicitly convert a value of T into a successful Result&lt;T&gt;.
+    /// Enables: `return module;` when the return type is Result&lt;IModule&gt;.
+    /// </summary>
+    public static implicit operator Result<T>(T value)
+    {
+        if (value is null) throw new ArgumentNullException(nameof(value));
+        return Result<T>.Ok(value);
     }
 }
